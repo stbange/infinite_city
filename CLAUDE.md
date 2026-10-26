@@ -36,3 +36,4 @@ openspec validate --all --strict
 - World content = f(seed, integer coordinates). Never use global RNG state or `randi()` in generation.
 - Use `Vector3i` cell/chunk coordinates for identity; render positions are relative to the floating origin.
 - Keep scenario names in specs and test names in sync so a reader can trace one to the other.
+- Static typing is enforced: untyped declarations (including `for` loop variables) are parse errors.
