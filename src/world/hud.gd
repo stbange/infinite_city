@@ -4,6 +4,7 @@ extends CanvasLayer
 
 @export var world_path: NodePath
 @export var camera_path: NodePath
+@export var pocket_manager_path: NodePath
 
 const _REFRESH_SECONDS := 0.1
 
@@ -12,6 +13,7 @@ var _since_refresh: float = 0.0
 
 
 func _ready() -> void:
+	add_to_group(&"hud")
 	_label = Label.new()
 	_label.name = "Readout"
 	_label.position = Vector2(16, 12)
@@ -46,6 +48,10 @@ func refresh() -> void:
 		if AABB(block.min_local(), block.size).has_point(local):
 			kind = block.kind
 	var lines := LocationInfo.describe(world.layout, cell, kind)
+	var pockets := get_node_or_null(pocket_manager_path) as PocketManager \
+			if not pocket_manager_path.is_empty() else null
+	if pockets != null and pockets.is_inside():
+		lines = LocationInfo.describe_pocket(pockets.pocket_info())
 	lines += "\nSpeed %d m/s  ·  %d chunks  ·  %d fps" % [
 			roundi(camera.model.cruise_speed), world.loaded_chunks().size(), Engine.get_frames_per_second()]
 	_label.text = lines

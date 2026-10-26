@@ -20,6 +20,7 @@ var _block_buffer := PackedFloat32Array()
 var _bridge_buffer := PackedFloat32Array()
 var _blocks_mmi: MultiMeshInstance3D
 var _bridges_mmi: MultiMeshInstance3D
+var _doorway_views: Array[DoorwayView] = []
 
 
 static func box_mesh() -> BoxMesh:
@@ -44,7 +45,8 @@ static func bridge_material() -> ShaderMaterial:
 	return _bridge_material
 
 
-func build(data: ChunkData, layout: CityLayout, origin: FloatingOrigin) -> void:
+func build(data: ChunkData, layout: CityLayout, origin: FloatingOrigin,
+		doorways: Array[DoorwayInfo] = []) -> void:
 	chunk = data.chunk
 	name = "Chunk_%d_%d_%d" % [chunk.x, chunk.y, chunk.z]
 	position = origin.scene_position_of_chunk(chunk)
@@ -76,6 +78,18 @@ func build(data: ChunkData, layout: CityLayout, origin: FloatingOrigin) -> void:
 
 	_blocks_mmi = _make_instance("Blocks", block_material(), _block_buffer, data.blocks.size(), true)
 	_bridges_mmi = _make_instance("Bridges", bridge_material(), _bridge_buffer, data.bridges.size(), false)
+
+	for doorway in doorways:
+		var view := DoorwayView.new()
+		add_child(view)
+		view.build(doorway)
+		view.transform = Transform3D(doorway.door.basis,
+				(Vector3(doorway.cell - origin_cell) + half) * cell_size + doorway.door.origin)
+		_doorway_views.append(view)
+
+
+func doorway_views() -> Array[DoorwayView]:
+	return _doorway_views
 
 
 func block_count() -> int:

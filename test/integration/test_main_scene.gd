@@ -71,3 +71,28 @@ func test_hud_names_the_block_the_camera_is_inside() -> void:
 	var hud := main.get_node("Hud") as Hud
 	hud.refresh()
 	assert_string_contains(hud.text(), "Inside: " + BlockTypes.display_name(block.kind))
+
+
+func test_main_scene_has_a_pocket_manager() -> void:
+	var manager := main.get_node("PocketManager") as PocketManager
+	assert_not_null(manager)
+	var sun := main.get_node("Sun") as DirectionalLight3D
+	assert_eq(sun.light_cull_mask & PocketManager.POCKET_LAYERS, 0, "the sun must not light pocket spaces")
+
+
+func test_hud_shows_the_pocket_read_out_inside() -> void:
+	var world := _world()
+	var manager := main.get_node("PocketManager") as PocketManager
+	var doorway := ScreenshotCapture.showcase_doorway(world, Vector3i(0, 0, 0))
+	assert_not_null(doorway)
+	manager.place_camera_before(doorway, 20.0)
+	for i in 40:
+		world.tick()
+	manager.update()
+	assert_not_null(manager.active_doorway())
+	manager.enter()
+	assert_true(manager.is_inside())
+	var hud := main.get_node("Hud") as Hud
+	hud.refresh()
+	assert_string_contains(hud.text(), "Pocket space: ")
+	assert_string_contains(hud.text(), "behind cell %d, %d, %d" % [doorway.cell.x, doorway.cell.y, doorway.cell.z])

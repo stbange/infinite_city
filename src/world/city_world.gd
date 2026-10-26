@@ -26,8 +26,12 @@ const ANCHORED_GROUP := &"world_anchored"
 @export var auto_tick: bool = true
 
 var layout: CityLayout
+var pocket_layout: PocketLayout
 var planner: StreamingPlanner
 var origin: FloatingOrigin
+## When set, chunks stream around this node instead of the camera (e.g. the entrance doorway
+## while the player is inside a pocket space). Rebasing always follows the camera.
+var streaming_focus: Node3D = null
 
 var _loaded: Dictionary = {}   # Vector3i -> ChunkView, or null for empty chunks
 
@@ -36,6 +40,7 @@ func _ready() -> void:
 	if config == null:
 		config = CityConfig.new()
 	layout = CityLayout.new(config)
+	pocket_layout = PocketLayout.new(layout)
 	planner = StreamingPlanner.for_config(config, radius_h, radius_v)
 	planner.budget = chunks_per_tick
 	origin = FloatingOrigin.for_config(config)
@@ -66,8 +71,15 @@ func focus_node() -> Node3D:
 	return get_node_or_null(focus_path) as Node3D if not focus_path.is_empty() else null
 
 
+## Node chunks are streamed around: the streaming focus if set, else the camera.
+func streaming_node() -> Node3D:
+	if streaming_focus != null and is_instance_valid(streaming_focus):
+		return streaming_focus
+	return focus_node()
+
+
 func focus_chunk() -> Vector3i:
-	var focus := focus_node()
+	var focus := streaming_node()
 	return origin.absolute_chunk_of(focus.global_position if focus != null else Vector3.ZERO)
 
 
@@ -84,6 +96,16 @@ func loaded_chunks() -> Array[Vector3i]:
 
 func chunk_view(chunk: Vector3i) -> ChunkView:
 	return _loaded.get(chunk) as ChunkView
+
+
+## Doorways of all loaded chunks.
+func doorway_views() -> Array[DoorwayView]:
+	var result: Array[DoorwayView] = []
+	for chunk: Vector3i in _loaded:
+		var view := _loaded[chunk] as ChunkView
+		if view != null:
+			result.append_array(view.doorway_views())
+	return result
 
 
 ## Moves the origin by `delta` chunks and shifts all world content to match.
@@ -115,9 +137,9 @@ func teleport_focus(absolute: PackedFloat64Array) -> void:
 	origin_shifted.emit(origin.origin_chunk - old_origin)
 
 
-## Depth of the focus below the top of the roof layer, in layers (negative above it).
+## Depth of the streaming focus below the top of the roof layer, in layers (negative above it).
 func focus_depth_layers() -> float:
-	var focus := focus_node()
+	var focus := streaming_node()
 	var absolute_y := origin.absolute_metres(focus.global_position if focus != null else Vector3.ZERO)[1]
 	var roof_top := float(config.roof_layer + 1) * config.cell_size.y
 	return (roof_top - absolute_y) / config.cell_size.y
@@ -129,7 +151,7 @@ func _load(chunk: Vector3i) -> void:
 	if not data.is_empty():
 		view = ChunkView.new()
 		add_child(view)
-		view.build(data, layout, origin)
+		view.build(data, layout, origin, pocket_layout.doorways_for_blocks(data.blocks))
 	_loaded[chunk] = view
 	chunk_loaded.emit(chunk)
 

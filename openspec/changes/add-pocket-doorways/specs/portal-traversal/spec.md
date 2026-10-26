@@ -37,6 +37,10 @@ the city outside the same way.
 - **WHEN** the player is inside a pocket space
 - **THEN** the portal camera's pose equals the camera's pose mapped from the inner door to the outer door
 
+#### Scenario: Nothing in front of the far door blocks the view
+- **WHEN** the camera looks straight at the active doorway from 30 m in front of it
+- **THEN** the portal camera does not draw anything closer than the far door (its near plane lies between 29 m and 30 m)
+
 ### Requirement: Crossing a doorway
 When the camera crosses a door's plane from its front to its back within the 4 m × 6 m opening,
 the player SHALL be moved through the pair in the same frame: position relative to the door,

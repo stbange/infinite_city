@@ -148,3 +148,45 @@ func test_roof_height_reaches_the_block_shader() -> void:
 	world.tick()
 	var roof_y: float = ChunkView.block_material().get_shader_parameter("roof_y")
 	assert_almost_eq(roof_y, world.origin.scene_position_of_cell(Vector3i(0, 1, 0)).y, 0.001)
+
+
+func _place_entrance_marker() -> Node3D:
+	var marker := Node3D.new()
+	world.add_child(marker)
+	marker.add_to_group(CityWorld.ANCHORED_GROUP)
+	marker.position = Vector3(128, -100, 128)  # chunk (0, -1, 0)
+	return marker
+
+
+func test_city_stays_loaded_while_inside() -> void:
+	var entrance := _place_entrance_marker()
+	world.streaming_focus = entrance
+	camera.position = entrance.position + Vector3(0, 12000, 0)
+	_fill()
+	var entrance_chunk := world.origin.absolute_chunk_of(entrance.global_position)
+	assert_eq(entrance_chunk, Vector3i(0, -1, 0))
+	var expected := {}
+	for chunk in world.planner.load_order(entrance_chunk):
+		expected[chunk] = true
+	assert_eq(_loaded_set(), expected)
+
+
+func test_origin_follows_the_camera_while_inside() -> void:
+	var entrance := _place_entrance_marker()
+	world.streaming_focus = entrance
+	camera.position = entrance.position + Vector3(0, 12000, 0)
+	world.tick()
+	for axis in 3:
+		assert_lte(absf(camera.position[axis]), 512.0)
+	var entrance_chunk := world.origin.absolute_chunk_of(entrance.global_position)
+	assert_eq(entrance_chunk, Vector3i(0, -1, 0), "entrance keeps its absolute place")
+
+
+func test_clearing_the_focus_streams_around_the_camera_again() -> void:
+	var entrance := _place_entrance_marker()
+	world.streaming_focus = entrance
+	world.tick()
+	world.streaming_focus = null
+	camera.position = Vector3(128 + 256 * 2, -100, 128)
+	world.tick()
+	assert_eq(world.focus_chunk(), world.origin.absolute_chunk_of(camera.global_position))
