@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  godot-tests:
+    name: GUT tests (Godot 4.7.2, headless)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Godot binary
+        uses: actions/cache@v4
+        with:
+          path: .tools/godot
+          key: godot-4.7.2-stable-linux-x86_64
+
+      - name: Install Godot
+        run: scripts/install-godot.sh
+
+      - name: Run tests
+        run: scripts/test.sh -gdisable_colors
+
+  openspec:
+    name: OpenSpec validation
+    runs-on: ubuntu-24.04
+    env:
+      OPENSPEC_TELEMETRY: "0"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate specs and changes
+        run: npx -y @fission-ai/openspec@1.15.0 validate --all --strict --no-interactive
+      - name: Archived changes have all tasks completed
+        run: npx -y @fission-ai/openspec@1.15.0 validate --archived --no-interactive

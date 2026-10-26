@@ -1,0 +1,20 @@
+# Godot
+.godot/
+.import/
+export.cfg
+export_credentials.cfg
+*.translation
+# Mono
+.mono/
+data_*/
+mono_crash.*.json
+
+# Local tooling (Godot binary downloaded by scripts/install-godot.sh)
+.tools/
+
+# Screenshots rendered by scripts/screenshot.sh
+/screenshots/tmp/
+
+# OS
+.DS_Store
+Thumbs.db

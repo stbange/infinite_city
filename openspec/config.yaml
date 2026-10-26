@@ -1,0 +1,34 @@
+schema: spec-driven
+
+context: |
+  Infinite City is a science-fiction game set in a city of floating blocks in space,
+  built with Godot 4.7 and statically typed GDScript.
+
+  World shape: the city has exactly one border, its upper boundary (the roof). Above
+  the roof only a few sparse floating blocks and a light source exist. Downward and in
+  every horizontal direction the city is unbounded.
+
+  Hard constraints:
+  - Every piece of world content is a pure function of (world seed, integer
+    coordinates). Any region must be reproducible in any order, on any machine, with
+    identical results. No global mutable generation state.
+  - World identity uses integer coordinates (Vector3i cells and chunks). Floats are
+    only used for render positions relative to the floating origin.
+  - Pure logic lives in RefCounted/Resource classes under src/core/ with no scene-tree
+    dependency, so it can be unit-tested headless. Scene nodes live under src/world/.
+  - Development is test-driven with GUT (addons/gut). Tests live in test/unit/ (pure
+    logic) and test/integration/ (scene tree). scripts/test.sh runs them headless.
+  - Visuals must work in both the Forward+ and Compatibility renderers.
+
+rules:
+  proposal:
+    - State explicitly what is out of scope and which later change picks it up
+  specs:
+    - Every scenario must be checkable by an automated GUT test
+    - Use concrete numbers in scenarios (seeds, coordinates, counts) where it helps a test
+  design:
+    - Name the classes and files that will be created or changed
+    - Call out determinism and floating-point precision risks
+  tasks:
+    - Order work test-first - each implementation task is preceded by the test task that drives it
+    - End with running scripts/test.sh and openspec validate --all --strict
