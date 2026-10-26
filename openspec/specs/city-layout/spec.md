@@ -144,3 +144,13 @@ blocks of its cells, and the result MUST equal querying each cell individually.
 #### Scenario: Chunks above the city are empty
 - **WHEN** a chunk lying entirely above layer R + S is generated
 - **THEN** it contains no blocks and no bridges
+
+### Requirement: Floor grid
+The bottom and top of every block SHALL lie on the world-wide 4 m floor grid (absolute heights
+that are whole multiples of 4 m), so that every block holds a whole number of floors, between 9
+and 13.
+
+#### Scenario: Blocks on the floor grid
+- **WHEN** 2000 blocks are examined
+- **THEN** the absolute heights of each block's bottom and top are whole multiples of 4 m within 1 mm
+- **AND** each block is between 36 m and 52 m tall
