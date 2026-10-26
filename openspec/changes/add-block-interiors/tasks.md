@@ -7,13 +7,13 @@
 
 ## 2. Plans (spec: block-interiors)
 
-- [ ] 2.1 Write `test/unit/test_interior_plan.gd` ("Floor levels", "Corridor cross", "Units and doors", "Entrances at bridges", determinism); verify it fails
-- [ ] 2.2 Implement `InteriorPlan`, `InteriorUnit`, `EntranceInfo` and `InteriorLayout.plan_of()`; verify `-gselect=interior_plan` passes
+- [x] 2.1 Write `test/unit/test_interior_plan.gd` ("Floor levels", "Corridor cross", "Units and doors", "Entrances at bridges", determinism); verify it fails
+- [x] 2.2 Implement `InteriorPlan`, `InteriorUnit`, `EntranceInfo` and `InteriorLayout.plan_of()`; verify `-gselect=interior_plan` passes
 
 ## 3. Floors and furnishing (spec: block-interiors)
 
-- [ ] 3.1 Write `test/unit/test_interior_floor.gd` ("Flights per floor", "Roof access", "Window grid", "Furnished flats", "Signature items", "Nothing in the way", "Lit rooms", determinism); verify it fails
-- [ ] 3.2 Implement `InteriorFloor`, `RoomInfo`, `Furnisher` and `InteriorLayout.floor_of()`; verify `-gselect=interior_floor` passes
+- [x] 3.1 Write `test/unit/test_interior_floor.gd` ("Flights per floor", "Roof access", "Window grid", "Furnished flats", "Signature items", "Nothing in the way", "Lit rooms", determinism); verify it fails
+- [x] 3.2 Implement `InteriorFloor`, `RoomInfo`, `Furnisher` and `InteriorLayout.floor_of()`; verify `-gselect=interior_floor` passes
 
 ## 4. Entering blocks (spec: block-interiors)
 
