@@ -92,12 +92,17 @@ area in front of every door free.
 - **THEN** every item lies inside its room, overlaps no other item, and stays out of every door's clear area
 
 ### Requirement: Room light
-Every room SHALL have a ceiling light and offer it as a light anchor; room light colours are warm,
-cool or neon so that interiors stay dim and moody.
+Every room SHALL have a ceiling light; room light colours are warm, cool or neon so that
+interiors stay dim and moody. While the player is inside an entered block, the room lights of the
+player's floor, and of no other floor, SHALL be offered as light anchors to the city's light pool.
 
 #### Scenario: Lit rooms
 - **WHEN** 50 floors are examined
 - **THEN** every room has at least one light inside it, below its ceiling
+
+#### Scenario: Light where the player is
+- **WHEN** the player stands in the bedroom of a flat on floor index 2 of an entered block
+- **THEN** the light pool has a light inside that bedroom, and every room light offered by the block lies on floor index 2
 
 ### Requirement: Deterministic interiors
 Plans and furnishing SHALL be a pure function of the seed and the block's cell (and floor).

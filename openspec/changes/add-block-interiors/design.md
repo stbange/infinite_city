@@ -55,7 +55,10 @@ layer with `facade.gdshader`: dark concrete, the sun mask of the block shader, a
 surfaces facing away from the block centre (so inner faces of roof-layer walls stay dark).
 Furniture is drawn with per-instance colours (matte MultiMesh) and glowing items (screens, lamps,
 grow lights, neon strips) with an emissive MultiMesh. Room lights are light anchors for the
-existing `CityLights` pool.
+existing `CityLights` pool — only those of the player's floor (slabs cast no shadows, and lights
+just under the feet would otherwise win the nearest-first pool), with a softer falloff
+(`LightAnchor.attenuation` 1.0) so floors 3.3 m below a light are lit, not only nearby walls. The
+Compatibility renderer's per-object light cap is raised to 16, since a floor is one object.
 
 ## Risks / Trade-offs
 

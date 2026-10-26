@@ -12,6 +12,8 @@ const FADE_SECONDS := 0.3
 @export var world_path: NodePath
 ## Any Node3D whose position is the viewer (the fly camera or the walking player).
 @export var viewer_path: NodePath
+## Optional: the InteriorManager whose room lights join the pool.
+@export var interiors_path: NodePath
 
 var _lights: Array[OmniLight3D] = []
 var _anchor_ids: Array[int] = []
@@ -52,6 +54,10 @@ func refresh() -> void:
 	if world == null or viewer == null or world.origin == null:
 		return
 	var anchors := world.light_anchors_near(viewer.global_position)
+	var interiors := get_node_or_null(interiors_path) as InteriorManager \
+			if not interiors_path.is_empty() else null
+	if interiors != null:
+		anchors.append_array(interiors.light_anchors())
 	var current: Array[int] = []
 	for id in _anchor_ids:
 		if id >= 0:
@@ -90,6 +96,7 @@ func _place(index: int, anchor: LightAnchor, fresh: bool) -> void:
 	light.global_position = anchor.position
 	light.light_color = anchor.color
 	light.omni_range = anchor.light_range
+	light.omni_attenuation = anchor.attenuation
 	_target_energy[index] = anchor.energy
 	if fresh:
 		light.light_energy = 0.0

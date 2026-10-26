@@ -158,8 +158,8 @@ func floor_of(plan: InteriorPlan, k: int) -> InteriorFloor:
 	var cell := block.cell
 	_slab(plan, f, f.y, k > 0, f.slabs)
 	_outer_walls(plan, f, k)
-	_corridors(plan, f, k)
-	_stairs(plan, f, k)
+	_corridors(plan, f)
+	_stairs(plan, f)
 	for unit in plan.units:
 		_unit_walls(plan, f, unit)
 		if unit.is_core:
@@ -278,7 +278,7 @@ static func _face_box(axis: int, lat: int, a: float, b: float, l0: float, l1: fl
 	return AABB(p, s)
 
 
-func _corridors(plan: InteriorPlan, f: InteriorFloor, k: int) -> void:
+func _corridors(plan: InteriorPlan, f: InteriorFloor) -> void:
 	var color := CORRIDOR_COLORS[DetHash.hash_cell(city.config.world_seed, SALT_FLOOR + 1, plan.block.cell) % CORRIDOR_COLORS.size()]
 	for corridor in plan.corridors:
 		var along_x := corridor.size.x > corridor.size.y
@@ -292,8 +292,6 @@ func _corridors(plan: InteriorPlan, f: InteriorFloor, k: int) -> void:
 			var strip := Vector3(1.6, 0.05, 0.2) if along_x else Vector3(0.2, 0.05, 1.6)
 			f.lamps.append(AABB(Vector3(centre.x - strip.x * 0.5, f.y + CEILING - 0.06, centre.y - strip.z * 0.5), strip))
 			f.lamp_colors.append(color)
-	if k < 0:
-		return
 
 
 func _unit_walls(plan: InteriorPlan, f: InteriorFloor, unit: InteriorUnit) -> void:
@@ -317,7 +315,7 @@ func _unit_walls(plan: InteriorPlan, f: InteriorFloor, unit: InteriorUnit) -> vo
 		f.walls.append(AABB(Vector3(r.end.x - t, y, r.position.y), Vector3(t, CEILING, r.size.y)))
 
 
-func _stairs(plan: InteriorPlan, f: InteriorFloor, k: int) -> void:
+func _stairs(plan: InteriorPlan, f: InteriorFloor) -> void:
 	var x0 := plan.core.position.x
 	var z0 := plan.core.position.y
 	var y := f.y
@@ -344,8 +342,6 @@ func _stairs(plan: InteriorPlan, f: InteriorFloor, k: int) -> void:
 	f.rooms.append(RoomInfo.new("Stairwell", plan.core, -1, Vector3(centre.x, y + 3.2, centre.y), Color(0.9, 0.85, 0.7), 0.6))
 	f.lamps.append(AABB(Vector3(centre.x - 0.3, y + CEILING - 0.06, z0 + 0.3), Vector3(0.6, 0.05, 0.3)))
 	f.lamp_colors.append(Color(0.9, 0.85, 0.7))
-	if k < 0:
-		return
 
 
 func _hut(plan: InteriorPlan, f: InteriorFloor) -> void:

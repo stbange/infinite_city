@@ -42,6 +42,10 @@ var _doorways: Array[DoorwayInfo] = []
 var _cell_size := Vector3.ONE
 var _origin_cell := Vector3i.ZERO
 var _body: StaticBody3D
+## Collision shapes of each block, by cell.
+var _block_shapes: Dictionary = {}
+## Cells whose block is hidden (an entered block draws and collides through its interior).
+var _hidden: Dictionary = {}
 
 
 static func box_mesh() -> BoxMesh:
@@ -168,11 +172,16 @@ func set_collision_enabled(enabled: bool) -> void:
 	var doorway_by_cell := {}
 	for doorway in _doorways:
 		doorway_by_cell[doorway.cell] = doorway
+	_block_shapes.clear()
 	for block in _data.blocks:
 		var centre := _cell_centre(block.cell)
 		var doorway: DoorwayInfo = doorway_by_cell.get(block.cell)
+		var shapes: Array[CollisionShape3D] = []
 		for box in block_collision_boxes(block, doorway):
-			_add_box(AABB(box.position + centre, box.size))
+			var shape := _add_box(AABB(box.position + centre, box.size))
+			shape.disabled = _hidden.has(block.cell)
+			shapes.append(shape)
+		_block_shapes[block.cell] = shapes
 	for i in _data.bridges.size():
 		_add_box_transform(bridge_transform(i))
 	for i in railing_count():
@@ -229,17 +238,57 @@ func _cell_centre(cell: Vector3i) -> Vector3:
 	return (Vector3(cell - _origin_cell) + Vector3(0.5, 0.5, 0.5)) * _cell_size
 
 
-func _add_box(box: AABB) -> void:
+func _add_box(box: AABB) -> CollisionShape3D:
 	var shape := BoxShape3D.new()
 	shape.size = box.size
 	var node := CollisionShape3D.new()
 	node.shape = shape
 	node.position = box.get_center()
 	_body.add_child(node)
+	return node
+
+
+func blocks() -> Array[BlockInfo]:
+	return _data.blocks if _data != null else ([] as Array[BlockInfo])
+
+
+## Hides a block (drawing and collision) or shows it again.
+func set_block_hidden(cell: Vector3i, hidden: bool) -> void:
+	var index := -1
+	for i in _data.blocks.size():
+		if _data.blocks[i].cell == cell:
+			index = i
+	if index < 0:
+		return
+	if hidden:
+		_hidden[cell] = true
+	else:
+		_hidden.erase(cell)
+	var xf := block_transform(index)
+	if hidden:
+		xf = Transform3D(Basis.from_scale(Vector3.ZERO), xf.origin)
+	_blocks_mmi.multimesh.set_instance_transform(index, xf)
+	for shape: CollisionShape3D in _block_shapes.get(cell, []):
+		shape.disabled = hidden
+
+
+func is_block_hidden(cell: Vector3i) -> bool:
+	return _hidden.has(cell)
+
+
+## True when the block's box currently collides.
+func is_block_solid(cell: Vector3i) -> bool:
+	if _body == null or not _block_shapes.has(cell):
+		return false
+	for shape: CollisionShape3D in _block_shapes[cell]:
+		if shape.disabled:
+			return false
+	return true
 
 
 func _add_box_transform(xf: Transform3D) -> void:
 	_add_box(AABB(xf.origin - xf.basis.get_scale() * 0.5, xf.basis.get_scale()))
+	return
 
 
 func _build_railings() -> void:
@@ -278,7 +327,7 @@ func light_anchors() -> Array[LightAnchor]:
 	var result: Array[LightAnchor] = []
 	for anchor in _local_anchors:
 		result.append(LightAnchor.new(anchor.id, position + anchor.position, anchor.color, anchor.energy,
-				anchor.light_range))
+				anchor.light_range, anchor.attenuation))
 	return result
 
 

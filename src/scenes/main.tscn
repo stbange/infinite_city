@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://src/world/game_main.gd" id="1_main"]
 [ext_resource type="Script" path="res://src/world/city_world.gd" id="2_world"]
@@ -9,6 +9,7 @@
 [ext_resource type="Script" path="res://src/core/city_config.gd" id="7_config"]
 [ext_resource type="Script" path="res://src/world/pocket_manager.gd" id="8_pockets"]
 [ext_resource type="Script" path="res://src/world/city_lights.gd" id="9_lights"]
+[ext_resource type="Script" path="res://src/world/interior_manager.gd" id="10_interiors"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_sky"]
 shader = ExtResource("5_sky")
@@ -69,19 +70,27 @@ script = ExtResource("8_pockets")
 world_path = NodePath("../CityWorld")
 camera_path = NodePath("../Player")
 
+[node name="InteriorManager" type="Node3D" parent="."]
+script = ExtResource("10_interiors")
+world_path = NodePath("../CityWorld")
+player_path = NodePath("../Player")
+
 [node name="CityLights" type="Node3D" parent="."]
 script = ExtResource("9_lights")
 world_path = NodePath("../CityWorld")
 viewer_path = NodePath("../Player")
+interiors_path = NodePath("../InteriorManager")
 
 [node name="Hud" type="CanvasLayer" parent="."]
 script = ExtResource("4_hud")
 world_path = NodePath("../CityWorld")
 camera_path = NodePath("../Player")
 pocket_manager_path = NodePath("../PocketManager")
+interiors_path = NodePath("../InteriorManager")
 
 [node name="ScreenshotCapture" type="Node" parent="."]
 script = ExtResource("6_capture")
 world_path = NodePath("../CityWorld")
 camera_path = NodePath("../Player")
 pocket_manager_path = NodePath("../PocketManager")
+interiors_path = NodePath("../InteriorManager")

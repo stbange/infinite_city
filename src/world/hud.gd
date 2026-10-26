@@ -5,6 +5,7 @@ extends CanvasLayer
 @export var world_path: NodePath
 @export var camera_path: NodePath
 @export var pocket_manager_path: NodePath
+@export var interiors_path: NodePath
 
 const _REFRESH_SECONDS := 0.1
 
@@ -52,6 +53,12 @@ func refresh() -> void:
 			if not pocket_manager_path.is_empty() else null
 	if pockets != null and pockets.is_inside():
 		lines = LocationInfo.describe_pocket(pockets.pocket_info())
+	var interiors := get_node_or_null(interiors_path) as InteriorManager \
+			if not interiors_path.is_empty() else null
+	var inside := interiors.view_at(camera.global_position) if interiors != null else null
+	if inside != null:
+		lines += "\n" + LocationInfo.describe_interior(inside.floor_index_at(camera.global_position),
+				inside.plan.floors, inside.room_at(camera.global_position))
 	var moving := "Walking" if camera.mode == Player.Mode.WALK else "Flying %d m/s" % roundi(camera.model.cruise_speed)
 	lines += "\n%s  ·  %d chunks  ·  %d fps" % [moving, world.loaded_chunks().size(), Engine.get_frames_per_second()]
 	_label.text = lines

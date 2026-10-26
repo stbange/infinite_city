@@ -245,6 +245,7 @@ func _update_shader_roof() -> void:
 	var roof_bottom := origin.scene_position_of_cell(Vector3i(0, config.roof_layer, 0)).y
 	ChunkView.block_material().set_shader_parameter("roof_bottom_y", roof_bottom)
 	ChunkView.bridge_material().set_shader_parameter("roof_bottom_y", roof_bottom)
+	InteriorView.facade_material().set_shader_parameter("roof_bottom_y", roof_bottom)
 
 
 func _apply_atmosphere() -> void:

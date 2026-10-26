@@ -1,5 +1,5 @@
 // Neon signs and lamp heads. Per instance: COLOR = neon colour,
-// INSTANCE_CUSTOM = (pattern seed, flicker flag, solid flag, 0).
+// INSTANCE_CUSTOM = (pattern seed, flicker flag, solid flag, solid intensity or 0 for the default).
 // Signs show a glowing tube border and hashed glyph strokes; solid instances glow evenly.
 shader_type spatial;
 render_mode cull_back;
@@ -47,7 +47,8 @@ void fragment() {
 		flicker = step(0.2, hash21(vec2(t, v_custom.x * 17.0)));
 	}
 	float pattern = max(border, glyph) * 3.2 + 0.18;
-	float intensity = mix(pattern, 3.0, v_custom.z) * flicker;
+	float solid = v_custom.w > 0.0 ? v_custom.w : 3.0;
+	float intensity = mix(pattern, solid, v_custom.z) * flicker;
 	ALBEDO = vec3(0.02);
 	ROUGHNESS = 0.4;
 	EMISSION = v_color.rgb * intensity;

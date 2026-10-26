@@ -17,8 +17,8 @@
 
 ## 4. Entering blocks (spec: block-interiors)
 
-- [ ] 4.1 Write `test/integration/test_interiors.gd` ("Approaching a block", "Walking in", "Leaving", "Up the first flight", "Read-out in a room"); verify it fails
-- [ ] 4.2 Implement `InteriorView`, `InteriorManager`, `facade.gdshader`, `ChunkView.set_block_hidden()`, room light anchors, HUD read-out and wire them into `main.tscn`; verify the tests pass
+- [x] 4.1 Write `test/integration/test_interiors.gd` ("Approaching a block", "Walking in", "Leaving", "Up the first flight", "Read-out in a room", "Light where the player is"); verify it fails
+- [x] 4.2 Implement `InteriorView`, `InteriorManager`, `facade.gdshader`, `ChunkView.set_block_hidden()`, room light anchors, HUD read-out and wire them into `main.tscn`; verify the tests pass
 
 ## 5. Visual check and integration
 

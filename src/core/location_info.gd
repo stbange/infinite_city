@@ -24,3 +24,12 @@ static func describe_pocket(pocket: PocketSpaceInfo) -> String:
 	lines.append("%d × %d × %d m" % [roundi(pocket.size.x), roundi(pocket.size.y), roundi(pocket.size.z)])
 	lines.append("behind cell %d, %d, %d" % [pocket.cell.x, pocket.cell.y, pocket.cell.z])
 	return "\n".join(lines)
+
+
+## Read-out inside an entered block (spec block-interiors / Read-out inside a block): the floor,
+## counted from 1, out of the block's floors, and the room if there is one.
+static func describe_interior(floor_index: int, floors: int, room: RoomInfo) -> String:
+	var line := "Floor %d of %d" % [floor_index + 1, floors]
+	if room != null:
+		line += "  ·  %s" % room.name
+	return line
