@@ -90,3 +90,60 @@ func test_empty_chunk_view() -> void:
 	var view := _make_view(ChunkData.new(Vector3i(0, 5, 0)))
 	assert_eq(view.block_count(), 0)
 	assert_eq(view.bridge_count(), 0)
+
+
+func _lit_chunk() -> Array:
+	var lighting := CityLighting.new(layout)
+	var pockets := PocketLayout.new(layout)
+	for x in range(0, 20):
+		var data := layout.generate_chunk(Vector3i(x, -2, 2))
+		var signs: Array[SignInfo] = []
+		for block in data.blocks:
+			signs.append_array(lighting.signs_of(block, pockets.doorway_for_block(block)))
+		var lamps: Array[LampInfo] = []
+		for bridge in data.bridges:
+			lamps.append_array(lighting.lamps_of(bridge))
+		if signs.size() >= 3 and lamps.size() >= 4:
+			return [data, signs, lamps]
+	return []
+
+
+func test_signs_and_lamps_are_drawn() -> void:
+	var lit := _lit_chunk()
+	assert_false(lit.is_empty())
+	var data: ChunkData = lit[0]
+	var signs: Array[SignInfo] = lit[1]
+	var lamps: Array[LampInfo] = lit[2]
+	var view := ChunkView.new()
+	add_child_autofree(view)
+	view.build(data, layout, origin, [], signs, lamps)
+	assert_eq(view.sign_count(), signs.size())
+	assert_eq(view.lamp_count(), lamps.size())
+	for i in signs.size():
+		var sign := signs[i]
+		var xf := view.sign_transform(i)
+		assert_almost_eq(view.position + xf.origin, origin.scene_position_of_cell_center(sign.cell) + sign.centre, Vector3.ONE * EPS)
+		var scale := xf.basis.get_scale()
+		var lat := CityLighting.lateral_axis(sign.face_axis)
+		assert_almost_eq(scale[lat], sign.size.x, EPS)
+		assert_almost_eq(scale.y, sign.size.y, EPS)
+
+
+func test_signs_and_lamps_offer_light_anchors() -> void:
+	var lit := _lit_chunk()
+	var data: ChunkData = lit[0]
+	var signs: Array[SignInfo] = lit[1]
+	var lamps: Array[LampInfo] = lit[2]
+	var view := ChunkView.new()
+	add_child_autofree(view)
+	view.build(data, layout, origin, [], signs, lamps)
+	var anchors := view.light_anchors()
+	assert_eq(anchors.size(), signs.size() + lamps.size())
+	var ids := {}
+	for anchor in anchors:
+		ids[anchor.id] = true
+	assert_eq(ids.size(), anchors.size(), "anchor ids must be unique")
+	var lamp_anchor := anchors[signs.size()]
+	var expected := origin.scene_position_of_cell_center(lamps[0].cell_a) + lamps[0].position
+	assert_almost_eq(lamp_anchor.position, expected, Vector3.ONE * 0.5)
+	assert_eq(lamp_anchor.color, lamps[0].color)

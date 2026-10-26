@@ -27,6 +27,7 @@ const ANCHORED_GROUP := &"world_anchored"
 
 var layout: CityLayout
 var pocket_layout: PocketLayout
+var lighting: CityLighting
 var planner: StreamingPlanner
 var origin: FloatingOrigin
 ## When set, chunks stream around this node instead of the camera (e.g. the entrance doorway
@@ -41,6 +42,7 @@ func _ready() -> void:
 		config = CityConfig.new()
 	layout = CityLayout.new(config)
 	pocket_layout = PocketLayout.new(layout)
+	lighting = CityLighting.new(layout)
 	planner = StreamingPlanner.for_config(config, radius_h, radius_v)
 	planner.budget = chunks_per_tick
 	origin = FloatingOrigin.for_config(config)
@@ -98,6 +100,19 @@ func chunk_view(chunk: Vector3i) -> ChunkView:
 	return _loaded.get(chunk) as ChunkView
 
 
+## Light anchors (signs, lamps) of the loaded chunks within `chunk_radius` chunks of a scene position.
+func light_anchors_near(scene_position: Vector3, chunk_radius: int = 1) -> Array[LightAnchor]:
+	var centre := origin.absolute_chunk_of(scene_position)
+	var result: Array[LightAnchor] = []
+	for dx in range(-chunk_radius, chunk_radius + 1):
+		for dy in range(-chunk_radius, chunk_radius + 1):
+			for dz in range(-chunk_radius, chunk_radius + 1):
+				var view := chunk_view(centre + Vector3i(dx, dy, dz))
+				if view != null:
+					result.append_array(view.light_anchors())
+	return result
+
+
 ## Doorways of all loaded chunks.
 func doorway_views() -> Array[DoorwayView]:
 	var result: Array[DoorwayView] = []
@@ -151,7 +166,18 @@ func _load(chunk: Vector3i) -> void:
 	if not data.is_empty():
 		view = ChunkView.new()
 		add_child(view)
-		view.build(data, layout, origin, pocket_layout.doorways_for_blocks(data.blocks))
+		var doorways := pocket_layout.doorways_for_blocks(data.blocks)
+		var signs: Array[SignInfo] = []
+		for block in data.blocks:
+			var doorway: DoorwayInfo = null
+			for candidate in doorways:
+				if candidate.cell == block.cell:
+					doorway = candidate
+			signs.append_array(lighting.signs_of(block, doorway))
+		var lamps: Array[LampInfo] = []
+		for bridge in data.bridges:
+			lamps.append_array(lighting.lamps_of(bridge))
+		view.build(data, layout, origin, doorways, signs, lamps)
 	_loaded[chunk] = view
 	chunk_loaded.emit(chunk)
 
@@ -172,8 +198,9 @@ func _replace_chunk_views() -> void:
 
 
 func _update_shader_roof() -> void:
-	var roof_top := origin.scene_position_of_cell(Vector3i(0, config.roof_layer + 1, 0)).y
-	ChunkView.block_material().set_shader_parameter("roof_y", roof_top)
+	var roof_bottom := origin.scene_position_of_cell(Vector3i(0, config.roof_layer, 0)).y
+	ChunkView.block_material().set_shader_parameter("roof_bottom_y", roof_bottom)
+	ChunkView.bridge_material().set_shader_parameter("roof_bottom_y", roof_bottom)
 
 
 func _apply_atmosphere() -> void:
@@ -184,6 +211,7 @@ func _apply_atmosphere() -> void:
 		var env := env_node.environment
 		var haze := Atmosphere.fog_color(depth)
 		env.fog_light_color = haze
+		env.fog_density = Atmosphere.fog_density(depth)
 		env.ambient_light_energy = Atmosphere.ambient_energy(depth)
 		var sky_material := env.sky.sky_material as ShaderMaterial if env.sky != null else null
 		if sky_material != null:

@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://src/world/game_main.gd" id="1_main"]
 [ext_resource type="Script" path="res://src/world/city_world.gd" id="2_world"]
@@ -8,6 +8,7 @@
 [ext_resource type="Script" path="res://src/world/screenshot_capture.gd" id="6_capture"]
 [ext_resource type="Script" path="res://src/core/city_config.gd" id="7_config"]
 [ext_resource type="Script" path="res://src/world/pocket_manager.gd" id="8_pockets"]
+[ext_resource type="Script" path="res://src/world/city_lights.gd" id="9_lights"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_sky"]
 shader = ExtResource("5_sky")
@@ -19,20 +20,19 @@ sky_material = SubResource("ShaderMaterial_sky")
 background_mode = 2
 sky = SubResource("Sky_space")
 ambient_light_source = 2
-ambient_light_color = Color(0.55, 0.6, 0.8, 1)
-ambient_light_energy = 0.6
-tonemap_mode = 3
+ambient_light_color = Color(0.42, 0.45, 0.65, 1)
+ambient_light_energy = 0.04
+tonemap_mode = 2
 glow_enabled = true
-glow_intensity = 0.45
-glow_hdr_threshold = 1.2
+glow_intensity = 1.0
+glow_bloom = 0.12
+glow_hdr_threshold = 0.6
 fog_enabled = true
-fog_mode = 1
-fog_light_color = Color(0.42, 0.5, 0.72, 1)
-fog_density = 1.0
+fog_mode = 0
+fog_light_color = Color(0.06, 0.05, 0.1, 1)
+fog_light_energy = 1.0
+fog_density = 0.008
 fog_sky_affect = 0.0
-fog_depth_curve = 1.4
-fog_depth_begin = 220.0
-fog_depth_end = 760.0
 
 [sub_resource type="Resource" id="Resource_config"]
 script = ExtResource("7_config")
@@ -46,8 +46,8 @@ environment = SubResource("Environment_city")
 [node name="Sun" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.866025, -0.469846, 0.17101, 0, 0.34202, 0.939693, -0.5, -0.813798, 0.296198, 0, 0, 0)
 light_color = Color(1, 0.95, 0.86, 1)
-light_energy = 1.2
-light_cull_mask = 4294967293
+light_energy = 1.4
+light_cull_mask = 1
 
 [node name="CityWorld" type="Node3D" parent="."]
 script = ExtResource("2_world")
@@ -68,6 +68,11 @@ far = 3000.0
 script = ExtResource("8_pockets")
 world_path = NodePath("../CityWorld")
 camera_path = NodePath("../FlyCamera")
+
+[node name="CityLights" type="Node3D" parent="."]
+script = ExtResource("9_lights")
+world_path = NodePath("../CityWorld")
+viewer_path = NodePath("../FlyCamera")
 
 [node name="Hud" type="CanvasLayer" parent="."]
 script = ExtResource("4_hud")

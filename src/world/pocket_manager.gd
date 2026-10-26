@@ -10,8 +10,8 @@ extends Node3D
 const ACTIVATION_RADIUS := 160.0
 const POCKET_OFFSET := Vector3(0.0, 12000.0, 0.0)
 ## Visual layer bits: the city is drawn on layer 1, pocket spaces on layer 2.
-const CITY_LAYERS := 1
-const POCKET_LAYERS := 2
+const CITY_LAYERS := RenderLayers.CITY
+const POCKET_LAYERS := RenderLayers.POCKET
 const INTERIOR_GROUP := &"pocket_interior"
 
 @export var world_path: NodePath

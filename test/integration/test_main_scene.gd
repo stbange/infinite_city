@@ -96,3 +96,34 @@ func test_hud_shows_the_pocket_read_out_inside() -> void:
 	hud.refresh()
 	assert_string_contains(hud.text(), "Pocket space: ")
 	assert_string_contains(hud.text(), "behind cell %d, %d, %d" % [doorway.cell.x, doorway.cell.y, doorway.cell.z])
+
+
+func test_sun_lights_only_the_outside() -> void:
+	var sun := main.get_node("Sun") as DirectionalLight3D
+	assert_eq(sun.light_cull_mask & RenderLayers.CITY, RenderLayers.CITY)
+	assert_eq(sun.light_cull_mask & RenderLayers.INTERIOR, 0)
+	assert_eq(sun.light_cull_mask & RenderLayers.POCKET, 0)
+
+
+func test_fog_follows_the_depth() -> void:
+	await wait_process_frames(3)
+	var env := (main.get_node("WorldEnvironment") as WorldEnvironment).environment
+	assert_true(env.fog_enabled)
+	assert_eq(env.fog_mode, Environment.FOG_MODE_EXPONENTIAL)
+	assert_almost_eq(env.fog_density, Atmosphere.fog_density(_world().focus_depth_layers()), 1e-5)
+	assert_lte(env.ambient_light_energy, 0.05)
+
+
+func test_real_lights_follow_the_player() -> void:
+	var world := _world()
+	world.teleport_focus(PackedFloat64Array([100.0, -1250.0, -2900.0]))  # a canyon below the roof
+	for i in 60:
+		world.tick()
+	var lights := main.get_node("CityLights") as CityLights
+	lights.refresh()
+	var active := lights.active_lights()
+	assert_gt(active.size(), 0)
+	assert_lte(active.size(), CityLights.POOL_SIZE)
+	var camera := _camera().global_position
+	for light in active:
+		assert_lt(light.global_position.distance_to(camera), 600.0)

@@ -144,12 +144,6 @@ func test_teleport_to_absolute_position() -> void:
 		assert_lte(world.planner.region_distance(chunk - focus_chunk), 1.0)
 
 
-func test_roof_height_reaches_the_block_shader() -> void:
-	world.tick()
-	var roof_y: float = ChunkView.block_material().get_shader_parameter("roof_y")
-	assert_almost_eq(roof_y, world.origin.scene_position_of_cell(Vector3i(0, 1, 0)).y, 0.001)
-
-
 func _place_entrance_marker() -> Node3D:
 	var marker := Node3D.new()
 	world.add_child(marker)
@@ -190,3 +184,28 @@ func test_clearing_the_focus_streams_around_the_camera_again() -> void:
 	camera.position = Vector3(128 + 256 * 2, -100, 128)
 	world.tick()
 	assert_eq(world.focus_chunk(), world.origin.absolute_chunk_of(camera.global_position))
+
+
+func test_roof_bottom_reaches_the_shaders() -> void:
+	world.tick()
+	var roof_bottom := world.origin.scene_position_of_cell(Vector3i(0, world.config.roof_layer, 0)).y
+	assert_almost_eq(float(ChunkView.block_material().get_shader_parameter("roof_bottom_y")), roof_bottom, 0.001)
+	assert_almost_eq(float(ChunkView.bridge_material().get_shader_parameter("roof_bottom_y")), roof_bottom, 0.001)
+	camera.position += Vector3(0, -700, 0)
+	world.tick()
+	roof_bottom = world.origin.scene_position_of_cell(Vector3i(0, world.config.roof_layer, 0)).y
+	assert_almost_eq(float(ChunkView.block_material().get_shader_parameter("roof_bottom_y")), roof_bottom, 0.001)
+
+
+func test_loaded_chunks_have_signs_and_lamps() -> void:
+	_fill()
+	var signs := 0
+	var lamps := 0
+	for chunk in world.loaded_chunks():
+		var view := world.chunk_view(chunk)
+		if view != null:
+			signs += view.sign_count()
+			lamps += view.lamp_count()
+	assert_gt(signs, 0)
+	assert_gt(lamps, 0)
+	assert_gt(world.light_anchors_near(camera.global_position).size(), 0)
