@@ -22,8 +22,8 @@
 
 ## 5. Visual check and integration
 
-- [ ] 5.1 Render screenshots: walking up to an entrance, a corridor, a furnished flat, a shop or farm unit, the view out of a window; verify by eye
-- [ ] 5.2 Run `scripts/test.sh` (all green) and `openspec validate --all --strict`
+- [x] 5.1 Render screenshots: walking up to an entrance, a corridor, a furnished flat, a shop or farm unit, the view out of a window; verify by eye
+- [x] 5.2 Run `scripts/test.sh` (all green) and `openspec validate --all --strict`
 
 ## Workflow follow-up
 
