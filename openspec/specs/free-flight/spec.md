@@ -55,8 +55,9 @@ inside a block.
 - **THEN** the read-out shows "Altitude 2 layers above the roof" instead of a depth
 
 ### Requirement: Starting point
-The game SHALL start the player 2 layers above the roof at the rim of the shaft nearest to the
-origin, looking down into it, so the first view shows both the roof and a way down.
+When the game starts in flight mode, it SHALL place the player 2 layers above the roof at the rim
+of the shaft nearest to the origin, looking down into it, so the first view shows both the roof
+and a way down.
 
 #### Scenario: Start at a shaft
 - **WHEN** the start point is computed with seed 1337
