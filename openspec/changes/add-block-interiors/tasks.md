@@ -2,8 +2,8 @@
 
 ## 1. Floor grid (specs: city-layout, city-bridges)
 
-- [ ] 1.1 Add "Blocks on the floor grid" to `test/unit/test_block_geometry.gd` and "Deck on the cell centre line and the floor grid" to `test/unit/test_bridges.gd`; verify they fail
-- [ ] 1.2 Snap block heights and bridge decks in `CityLayout`; verify the whole suite stays green
+- [x] 1.1 Add "Blocks on the floor grid" to `test/unit/test_block_geometry.gd` and "Deck on the cell centre line and the floor grid" to `test/unit/test_bridges.gd`; verify they fail
+- [x] 1.2 Snap block heights and bridge decks in `CityLayout`; verify the whole suite stays green
 
 ## 2. Plans (spec: block-interiors)
 

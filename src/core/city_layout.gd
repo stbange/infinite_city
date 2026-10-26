@@ -217,6 +217,19 @@ const _SERVICE_ATTEMPTS := 64
 var _plan_cache: Dictionary = {}   # Vector3i district -> Dictionary(Vector3i cell -> kind)
 
 
+## Height of one floor; block bottoms/tops and bridge decks lie on this world-wide grid.
+const FLOOR_HEIGHT := 4.0
+
+
+func min_floors() -> int:
+	return ceili(config.cell_size.y * config.block_fill_min / FLOOR_HEIGHT)
+
+
+func max_floors() -> int:
+	var tallest := minf(config.cell_size.y * config.block_fill_max, config.cell_size.y - config.min_street_gap)
+	return floori(tallest / FLOOR_HEIGHT)
+
+
 ## The block in a cell, or null for open air.
 func block_at(cell: Vector3i) -> BlockInfo:
 	if not is_solid(cell):
@@ -226,6 +239,19 @@ func block_at(cell: Vector3i) -> BlockInfo:
 	var offset := Vector3()
 	for axis in 3:
 		var cell_len: float = config.cell_size[axis]
+		if axis == Vector3.AXIS_Y:
+			# Whole floors on the world-wide floor grid (spec city-layout / Floor grid).
+			var floors := rng.range_int(min_floors(), max_floors())
+			var height := floors * FLOOR_HEIGHT
+			var limit := cell_len * 0.5 - config.min_street_gap * 0.5
+			var core := FLOOR_HEIGHT  # every block covers the cell centre +- one floor
+			var b_lo := ceilf(maxf(-limit, core - height) / FLOOR_HEIGHT) * FLOOR_HEIGHT
+			var b_hi := floorf(minf(-core, limit - height) / FLOOR_HEIGHT) * FLOOR_HEIGHT
+			var steps := maxi(0, roundi((b_hi - b_lo) / FLOOR_HEIGHT))
+			var bottom := b_lo + FLOOR_HEIGHT * rng.range_int(0, steps)
+			size.y = height
+			offset.y = bottom + height * 0.5
+			continue
 		var fill := rng.range_float(config.block_fill_min, config.block_fill_max)
 		var length := minf(cell_len * fill, cell_len - config.min_street_gap)
 		var free := cell_len - length - config.min_street_gap
@@ -287,8 +313,6 @@ func _place_by_scan(plan: Dictionary, origin: Vector3i, service: int) -> void:
 
 # --- Bridges -----------------------------------------------------------------------------
 
-## Keeps the deck this far from the top and bottom of both blocks, in metres.
-const _DECK_MARGIN := 2.0
 const BRIDGE_AXES: Array[int] = [Vector3.AXIS_X, Vector3.AXIS_Z]
 
 
@@ -335,17 +359,16 @@ func _bridge_rng(cell_a: Vector3i, axis: int) -> CellRandom:
 	return rng if rng.next_float() < config.bridge_chance else null
 
 
+## The deck runs along the line through both cell centres (lateral 0) at a floor-grid level
+## with at least one floor of both blocks above it (spec city-bridges / Bridge geometry) and,
+## so that doorways at its end keep a margin, never on either block's lowest floor.
 func _shape_bridge(rng: CellRandom, a: BlockInfo, b: BlockInfo, axis: int) -> BridgeInfo:
-	var lateral := Vector3.AXIS_Z if axis == Vector3.AXIS_X else Vector3.AXIS_X
-	var half_width := config.bridge_width * 0.5
-	var lat_lo := maxf(a.min_local()[lateral], b.min_local()[lateral]) + half_width
-	var lat_hi := minf(a.max_local()[lateral], b.max_local()[lateral]) - half_width
-	var y_lo := maxf(a.min_local().y, b.min_local().y) + _DECK_MARGIN
-	var y_hi := minf(a.max_local().y, b.max_local().y) - _DECK_MARGIN
+	var lowest := maxf(a.min_local().y, b.min_local().y) + FLOOR_HEIGHT
+	var highest := minf(a.max_local().y, b.max_local().y) - FLOOR_HEIGHT
+	var levels := maxi(0, roundi((highest - lowest) / FLOOR_HEIGHT))
 	var start := Vector3()
 	start[axis] = a.max_local()[axis]
-	start[lateral] = rng.range_float(lat_lo, lat_hi) if lat_hi > lat_lo else (lat_lo + lat_hi) * 0.5
-	start.y = rng.range_float(y_lo, y_hi) if y_hi > y_lo else (y_lo + y_hi) * 0.5
+	start.y = lowest + FLOOR_HEIGHT * rng.range_int(0, levels)
 	var end := start
 	end[axis] = config.cell_size[axis] + b.min_local()[axis]
 	return BridgeInfo.new(a.cell, b.cell, axis, start, end, config.bridge_width)

@@ -130,3 +130,15 @@ func test_bridges_are_generated_once() -> void:
 						if owners.has(key):
 							assert_eq(owners[key].size(), 1, "bridge %s generated more than once" % key)
 	assert_gt(expected, 0)
+
+
+func test_deck_on_the_cell_centre_line_and_the_floor_grid() -> void:
+	var cell_height := layout.config.cell_size.y
+	for bridge in _collect_bridges(500):
+		var lateral := Vector3.AXIS_Z if bridge.axis == Vector3.AXIS_X else Vector3.AXIS_X
+		assert_almost_eq(bridge.start[lateral], 0.0, 0.001)
+		var deck := (bridge.cell_a.y + 0.5) * cell_height + bridge.start.y
+		assert_almost_eq(deck - roundf(deck / 4.0) * 4.0, 0.0, 0.001)
+		for cell: Vector3i in [bridge.cell_a, bridge.cell_b]:
+			var block := layout.block_at(cell)
+			assert_gte(block.max_local().y - bridge.start.y, 4.0 - 0.001)

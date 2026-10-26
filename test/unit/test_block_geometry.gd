@@ -61,3 +61,16 @@ func test_block_world_aabb_near_origin() -> void:
 	var aabb := layout.block_aabb(block)
 	assert_almost_eq(aabb.get_center(), layout.cell_center(block.cell) + block.offset, Vector3.ONE * EPS)
 	assert_almost_eq(aabb.size, block.size, Vector3.ONE * EPS)
+
+
+func _on_grid(height: float) -> bool:
+	return absf(height - roundf(height / 4.0) * 4.0) < 0.001
+
+
+func test_blocks_on_the_floor_grid() -> void:
+	var cell_height := layout.config.cell_size.y
+	for block in _collect_blocks(2000):
+		var centre_y := (block.cell.y + 0.5) * cell_height
+		assert_true(_on_grid(centre_y + block.min_local().y), "bottom of %s off the grid" % block.cell)
+		assert_true(_on_grid(centre_y + block.max_local().y), "top of %s off the grid" % block.cell)
+		assert_between(block.size.y, 36.0 - EPS, 52.0 + EPS)
