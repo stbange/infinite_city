@@ -9,6 +9,7 @@ scripts/install-godot.sh        # once: downloads Godot 4.7.2 into .tools/godot/
 scripts/test.sh                 # run all GUT tests headless (exit code != 0 on failure)
 scripts/test.sh -gselect=hash   # run only test files whose name contains "hash"
 scripts/screenshot.sh out.png   # render a frame of the main scene (needs Xvfb)
+scripts/screenshot.sh out.jpg --doorway --inside --no-hud   # visit the nearest doorway
 openspec list                   # active changes
 openspec validate --all --strict
 ```
