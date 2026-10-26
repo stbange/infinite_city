@@ -40,11 +40,16 @@ clamped to ±89° so the view never flips over.
 
 ### Requirement: Location read-out
 The view SHALL show the camera's absolute cell, its depth below the roof in layers and metres,
-its district, and the function of the block in the current cell or "Open air".
+its district, and the function of the block the camera is inside, or "Open air" when it is not
+inside a block.
 
 #### Scenario: Read-out content
 - **WHEN** the camera is in open air in cell (3, -12, 5) with the default configuration
 - **THEN** the read-out contains "Cell 3, -12, 5", "Depth 12 layers (768 m)", "District 0, -2, 0" and "Open air"
+
+#### Scenario: Inside a block
+- **WHEN** the camera is inside a hospital block
+- **THEN** the read-out contains "Inside: Hospital" and not "Open air"
 
 #### Scenario: Above the roof
 - **WHEN** the camera is in cell (0, 2, 0)

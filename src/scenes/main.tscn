@@ -1,0 +1,73 @@
+[gd_scene load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://src/world/game_main.gd" id="1_main"]
+[ext_resource type="Script" path="res://src/world/city_world.gd" id="2_world"]
+[ext_resource type="Script" path="res://src/world/fly_camera.gd" id="3_camera"]
+[ext_resource type="Script" path="res://src/world/hud.gd" id="4_hud"]
+[ext_resource type="Shader" path="res://src/world/shaders/space_sky.gdshader" id="5_sky"]
+[ext_resource type="Script" path="res://src/world/screenshot_capture.gd" id="6_capture"]
+[ext_resource type="Script" path="res://src/core/city_config.gd" id="7_config"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_sky"]
+shader = ExtResource("5_sky")
+
+[sub_resource type="Sky" id="Sky_space"]
+sky_material = SubResource("ShaderMaterial_sky")
+
+[sub_resource type="Environment" id="Environment_city"]
+background_mode = 2
+sky = SubResource("Sky_space")
+ambient_light_source = 2
+ambient_light_color = Color(0.55, 0.6, 0.8, 1)
+ambient_light_energy = 0.6
+tonemap_mode = 3
+glow_enabled = true
+glow_intensity = 0.45
+glow_hdr_threshold = 1.2
+fog_enabled = true
+fog_mode = 1
+fog_light_color = Color(0.42, 0.5, 0.72, 1)
+fog_density = 1.0
+fog_sky_affect = 0.0
+fog_depth_curve = 1.4
+fog_depth_begin = 220.0
+fog_depth_end = 760.0
+
+[sub_resource type="Resource" id="Resource_config"]
+script = ExtResource("7_config")
+
+[node name="Main" type="Node3D"]
+script = ExtResource("1_main")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_city")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.866025, -0.469846, 0.17101, 0, 0.34202, 0.939693, -0.5, -0.813798, 0.296198, 0, 0, 0)
+light_color = Color(1, 0.95, 0.86, 1)
+light_energy = 1.2
+
+[node name="CityWorld" type="Node3D" parent="."]
+script = ExtResource("2_world")
+config = SubResource("Resource_config")
+focus_path = NodePath("../FlyCamera")
+world_environment_path = NodePath("../WorldEnvironment")
+sun_path = NodePath("../Sun")
+
+[node name="FlyCamera" type="Node3D" parent="."]
+script = ExtResource("3_camera")
+
+[node name="Camera3D" type="Camera3D" parent="FlyCamera"]
+fov = 75.0
+near = 0.3
+far = 3000.0
+
+[node name="Hud" type="CanvasLayer" parent="."]
+script = ExtResource("4_hud")
+world_path = NodePath("../CityWorld")
+camera_path = NodePath("../FlyCamera")
+
+[node name="ScreenshotCapture" type="Node" parent="."]
+script = ExtResource("6_capture")
+world_path = NodePath("../CityWorld")
+camera_path = NodePath("../FlyCamera")

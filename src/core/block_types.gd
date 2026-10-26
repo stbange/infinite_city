@@ -62,19 +62,19 @@ const _NAMES := {
 }
 
 const _COLORS := {
-	Kind.HOUSING: Color(0.78, 0.70, 0.62),
-	Kind.FARM: Color(0.35, 0.75, 0.40),
-	Kind.MARKET: Color(0.95, 0.62, 0.25),
-	Kind.OFFICE: Color(0.45, 0.62, 0.85),
-	Kind.INDUSTRY: Color(0.55, 0.50, 0.48),
-	Kind.PARK: Color(0.30, 0.85, 0.55),
+	Kind.HOUSING: Color(0.64, 0.6, 0.56),
+	Kind.FARM: Color(0.3, 0.58, 0.34),
+	Kind.MARKET: Color(0.82, 0.52, 0.24),
+	Kind.OFFICE: Color(0.38, 0.5, 0.68),
+	Kind.INDUSTRY: Color(0.45, 0.43, 0.43),
+	Kind.PARK: Color(0.26, 0.66, 0.44),
 	Kind.HOSPITAL: Color(0.96, 0.96, 0.98),
-	Kind.FIRE_STATION: Color(0.90, 0.20, 0.15),
-	Kind.SECURITY: Color(0.20, 0.35, 0.90),
-	Kind.SCHOOL: Color(0.95, 0.85, 0.30),
-	Kind.POWER_PLANT: Color(0.85, 0.40, 0.95),
-	Kind.WATER_WORKS: Color(0.25, 0.80, 0.90),
-	Kind.TRANSIT_HUB: Color(0.70, 0.40, 1.00),
+	Kind.FIRE_STATION: Color(0.92, 0.2, 0.14),
+	Kind.SECURITY: Color(0.2, 0.36, 0.95),
+	Kind.SCHOOL: Color(0.98, 0.84, 0.25),
+	Kind.POWER_PLANT: Color(0.82, 0.36, 0.98),
+	Kind.WATER_WORKS: Color(0.2, 0.84, 0.92),
+	Kind.TRANSIT_HUB: Color(0.62, 0.32, 1.0),
 }
 
 

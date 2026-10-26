@@ -13,7 +13,7 @@ mono_crash.*.json
 .tools/
 
 # Screenshots rendered by scripts/screenshot.sh
-/screenshots/tmp/
+/screenshots/
 
 # OS
 .DS_Store
