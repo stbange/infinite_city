@@ -4,7 +4,7 @@ extends GutTest
 const EPS := 0.01
 
 var world: CityWorld
-var fly: FlyCamera
+var fly: Player
 var manager: PocketManager
 
 
@@ -15,17 +15,18 @@ func before_each() -> void:
 	world.radius_v = 1
 	world.chunks_per_tick = 64
 	world.auto_tick = false
-	fly = FlyCamera.new()
-	fly.name = "FlyCamera"
+	fly = Player.new()
+	fly.name = "Player"
 	fly.input_enabled = false
+	fly.start_mode = Player.Mode.FLY
 	world.add_child(fly)
-	world.focus_path = NodePath("FlyCamera")
+	world.focus_path = NodePath("Player")
 	manager = PocketManager.new()
 	manager.name = "PocketManager"
 	manager.auto_update = false
 	world.add_child(manager)
 	manager.world_path = NodePath("..")
-	manager.camera_path = NodePath("../FlyCamera")
+	manager.camera_path = NodePath("../Player")
 	add_child_autofree(world)
 
 
@@ -203,7 +204,7 @@ func test_crossing_from_behind_does_nothing() -> void:
 	manager.place_camera_before(doorway, -1.0)  # a teleport, not a crossing
 	manager.update()
 	var outer := _outer_xf()
-	assert_almost_eq(fly.global_position, outer * Vector3(0, 3, -1), Vector3.ONE * EPS)
+	assert_almost_eq(fly.eye_position(), outer * Vector3(0, 3, -1), Vector3.ONE * EPS)
 	fly.global_position = outer * Vector3(0, 3, 1)
 	manager.update()
 	assert_false(manager.is_inside())
@@ -227,8 +228,8 @@ func test_stepping_through_from_a_distance_lands_inside_the_room() -> void:
 	manager.update()
 	manager.enter()
 	assert_true(manager.is_inside())
-	var local := _inner_xf().affine_inverse() * fly.global_position
-	assert_between(local.z, 0.0, 1.0, "camera should stand just inside the room")
+	var local := _inner_xf().affine_inverse() * fly.eye_position()
+	assert_between(local.z, 0.0, 1.0, "the eyes should be just inside the room")
 	assert_almost_eq(local.y, 3.0, EPS)
 
 

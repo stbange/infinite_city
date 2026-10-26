@@ -14,6 +14,10 @@ const DECK_THICKNESS := 1.2
 const SIGN_THICKNESS := 0.3
 const POST_SIZE := Vector3(0.14, 3.2, 0.14)
 const HEAD_SIZE := Vector3(0.6, 0.18, 0.6)
+const RAILING_HEIGHT := 1.1
+const RAILING_THICKNESS := 0.08
+## Depth of the walkable gap a magic doorway leaves in its block's collision shape.
+const DOORWAY_GAP := 1.0
 const _WINDOW_SALT := 99
 
 static var _box_mesh: BoxMesh
@@ -32,6 +36,12 @@ var _sign_buffer := PackedFloat32Array()
 var _lamp_count: int = 0
 ## Light anchors with positions relative to this node.
 var _local_anchors: Array[LightAnchor] = []
+var _railing_buffer := PackedFloat32Array()
+var _data: ChunkData
+var _doorways: Array[DoorwayInfo] = []
+var _cell_size := Vector3.ONE
+var _origin_cell := Vector3i.ZERO
+var _body: StaticBody3D
 
 
 static func box_mesh() -> BoxMesh:
@@ -79,6 +89,10 @@ func build(data: ChunkData, layout: CityLayout, origin: FloatingOrigin,
 	position = origin.scene_position_of_chunk(chunk)
 	var cell_size := layout.config.cell_size
 	var origin_cell := layout.chunk_origin_cell(chunk)
+	_data = data
+	_doorways = doorways
+	_cell_size = cell_size
+	_origin_cell = origin_cell
 	var half := Vector3(0.5, 0.5, 0.5)
 
 	_block_buffer.resize(data.blocks.size() * BLOCK_STRIDE)
@@ -116,10 +130,135 @@ func build(data: ChunkData, layout: CityLayout, origin: FloatingOrigin,
 
 	_build_signs(signs, layout, origin_cell)
 	_build_lamps(lamps, layout, origin_cell)
+	_build_railings()
 
 
 func doorway_views() -> Array[DoorwayView]:
 	return _doorway_views
+
+
+func railing_count() -> int:
+	return _railing_buffer.size() / BRIDGE_STRIDE
+
+
+func railing_transform(index: int) -> Transform3D:
+	return _read_transform(_railing_buffer, index * BRIDGE_STRIDE)
+
+
+func has_collision() -> bool:
+	return _body != null
+
+
+## Number of collision boxes while collision is enabled.
+func collision_box_count() -> int:
+	return 0 if _body == null else _body.get_child_count()
+
+
+## Builds or drops the solid shapes of this chunk (spec on-foot-movement / Solid city near the player).
+func set_collision_enabled(enabled: bool) -> void:
+	if enabled == (_body != null):
+		return
+	if not enabled:
+		_body.queue_free()
+		_body = null
+		return
+	_body = StaticBody3D.new()
+	_body.name = "Solid"
+	add_child(_body)
+	var doorway_by_cell := {}
+	for doorway in _doorways:
+		doorway_by_cell[doorway.cell] = doorway
+	for block in _data.blocks:
+		var centre := _cell_centre(block.cell)
+		var doorway: DoorwayInfo = doorway_by_cell.get(block.cell)
+		for box in block_collision_boxes(block, doorway):
+			_add_box(AABB(box.position + centre, box.size))
+	for i in _data.bridges.size():
+		_add_box_transform(bridge_transform(i))
+	for i in railing_count():
+		_add_box_transform(railing_transform(i))
+
+
+## Solid boxes of a block relative to its cell centre: the block's box, or — with a magic
+## doorway — the box with a DOORWAY_GAP deep opening in front of the doorway.
+static func block_collision_boxes(block: BlockInfo, doorway: DoorwayInfo) -> Array[AABB]:
+	var lo := block.min_local()
+	var hi := block.max_local()
+	var boxes: Array[AABB] = []
+	if doorway == null:
+		boxes.append(AABB(lo, hi - lo))
+		return boxes
+	var axis := doorway.face_axis
+	var lat := CityLighting.lateral_axis(axis)
+	var core_lo := lo
+	var core_hi := hi
+	var slab_lo := lo
+	var slab_hi := hi
+	if doorway.face_sign > 0:
+		core_hi[axis] -= DOORWAY_GAP
+		slab_lo[axis] = core_hi[axis]
+	else:
+		core_lo[axis] += DOORWAY_GAP
+		slab_hi[axis] = core_lo[axis]
+	boxes.append(AABB(core_lo, core_hi - core_lo))
+	var door_lat := doorway.door.origin[lat]
+	var half := PocketLayout.DOOR_SIZE.x * 0.5
+	var door_bottom := doorway.door.origin.y
+	var door_top := door_bottom + PocketLayout.DOOR_SIZE.y
+	# Four slab pieces around the opening: left, right (full height), below and above.
+	var pieces: Array[Array] = [
+		[slab_lo[lat], door_lat - half, slab_lo.y, slab_hi.y],
+		[door_lat + half, slab_hi[lat], slab_lo.y, slab_hi.y],
+		[door_lat - half, door_lat + half, slab_lo.y, door_bottom],
+		[door_lat - half, door_lat + half, door_top, slab_hi.y],
+	]
+	for piece in pieces:
+		if piece[1] - piece[0] <= 0.001 or piece[3] - piece[2] <= 0.001:
+			continue
+		var p_lo := slab_lo
+		var p_hi := slab_hi
+		p_lo[lat] = piece[0]
+		p_hi[lat] = piece[1]
+		p_lo.y = piece[2]
+		p_hi.y = piece[3]
+		boxes.append(AABB(p_lo, p_hi - p_lo))
+	return boxes
+
+
+func _cell_centre(cell: Vector3i) -> Vector3:
+	return (Vector3(cell - _origin_cell) + Vector3(0.5, 0.5, 0.5)) * _cell_size
+
+
+func _add_box(box: AABB) -> void:
+	var shape := BoxShape3D.new()
+	shape.size = box.size
+	var node := CollisionShape3D.new()
+	node.shape = shape
+	node.position = box.get_center()
+	_body.add_child(node)
+
+
+func _add_box_transform(xf: Transform3D) -> void:
+	_add_box(AABB(xf.origin - xf.basis.get_scale() * 0.5, xf.basis.get_scale()))
+
+
+func _build_railings() -> void:
+	_railing_buffer.resize(_data.bridges.size() * 2 * BRIDGE_STRIDE)
+	var half := Vector3(0.5, 0.5, 0.5)
+	for i in _data.bridges.size():
+		var bridge := _data.bridges[i]
+		var lat := CityLighting.lateral_axis(bridge.axis)
+		var scale := Vector3()
+		scale[bridge.axis] = bridge.length()
+		scale[lat] = RAILING_THICKNESS
+		scale.y = RAILING_HEIGHT
+		for side in 2:
+			var centre := (Vector3(bridge.cell_a - _origin_cell) + half) * _cell_size + (bridge.start + bridge.end) * 0.5
+			centre[lat] += (1.0 if side == 1 else -1.0) * (bridge.width * 0.5 - RAILING_THICKNESS * 0.5)
+			centre.y += RAILING_HEIGHT * 0.5
+			_write_transform(_railing_buffer, (i * 2 + side) * BRIDGE_STRIDE, Transform3D(Basis.from_scale(scale), centre))
+	if _data.bridges.size() > 0:
+		_make_instance("Railings", post_material(), _railing_buffer, _data.bridges.size() * 2, false)
 
 
 func sign_count() -> int:

@@ -12,6 +12,8 @@ signal chunk_loaded(chunk: Vector3i)
 signal chunk_unloaded(chunk: Vector3i)
 
 const ANCHORED_GROUP := &"world_anchored"
+## Chunks this close (Chebyshev distance) to the player or the streaming focus are solid.
+const COLLISION_RADIUS := 1
 
 @export var config: CityConfig
 @export var radius_h: int = 4
@@ -66,7 +68,42 @@ func tick() -> void:
 		_unload(chunk)
 	for chunk in planner.next_loads(focus_chunk, _loaded, chunks_per_tick):
 		_load(chunk)
+	_update_collision()
 	_apply_atmosphere()
+
+
+## Loads the chunks around the player and the streaming focus right now (ignoring the budget)
+## and makes them solid — used after teleports so a walking player has ground at once.
+func prime_focus() -> void:
+	for node: Node3D in [focus_node(), streaming_node()]:
+		if node == null:
+			continue
+		var centre := origin.absolute_chunk_of(node.global_position)
+		for dx in range(-COLLISION_RADIUS, COLLISION_RADIUS + 1):
+			for dy in range(-COLLISION_RADIUS, COLLISION_RADIUS + 1):
+				for dz in range(-COLLISION_RADIUS, COLLISION_RADIUS + 1):
+					var chunk := centre + Vector3i(dx, dy, dz)
+					if chunk.y <= planner.top_chunk_y and not _loaded.has(chunk):
+						_load(chunk)
+	_update_collision()
+
+
+## Chunks within COLLISION_RADIUS of the player or the streaming focus are solid; others are not.
+func _update_collision() -> void:
+	var centres: Array[Vector3i] = []
+	for node: Node3D in [focus_node(), streaming_node()]:
+		if node != null:
+			centres.append(origin.absolute_chunk_of(node.global_position))
+	for chunk: Vector3i in _loaded:
+		var view := _loaded[chunk] as ChunkView
+		if view == null:
+			continue
+		var near := false
+		for centre in centres:
+			var d := chunk - centre
+			if maxi(absi(d.x), maxi(absi(d.y), absi(d.z))) <= COLLISION_RADIUS:
+				near = true
+		view.set_collision_enabled(near)
 
 
 func focus_node() -> Node3D:
@@ -130,6 +167,8 @@ func rebase(delta: Vector3i) -> void:
 		var node3d := node as Node3D
 		if node3d != null:
 			node3d.global_position -= shift
+		if node.has_method("on_origin_shifted"):
+			node.call("on_origin_shifted", shift)
 	_replace_chunk_views()
 	_update_shader_roof()
 	origin_shifted.emit(delta)
@@ -145,8 +184,13 @@ func teleport_focus(absolute: PackedFloat64Array) -> void:
 		var node3d := node as Node3D
 		if node3d != null and node3d != focus:
 			node3d.global_position -= shift
+		if node.has_method("on_origin_shifted"):
+			node.call("on_origin_shifted", shift)
 	if focus != null:
 		focus.global_position = local
+		var body := focus as CharacterBody3D
+		if body != null:
+			body.velocity = Vector3.ZERO
 	_replace_chunk_views()
 	_update_shader_roof()
 	origin_shifted.emit(origin.origin_chunk - old_origin)

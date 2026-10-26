@@ -37,7 +37,7 @@ func text() -> String:
 
 func refresh() -> void:
 	var world := get_node_or_null(world_path) as CityWorld
-	var camera := get_node_or_null(camera_path) as FlyCamera
+	var camera := get_node_or_null(camera_path) as Player
 	if world == null or camera == null or world.layout == null:
 		return
 	var cell := world.origin.absolute_cell_of(camera.global_position)
@@ -52,8 +52,8 @@ func refresh() -> void:
 			if not pocket_manager_path.is_empty() else null
 	if pockets != null and pockets.is_inside():
 		lines = LocationInfo.describe_pocket(pockets.pocket_info())
-	lines += "\nSpeed %d m/s  ·  %d chunks  ·  %d fps" % [
-			roundi(camera.model.cruise_speed), world.loaded_chunks().size(), Engine.get_frames_per_second()]
+	var moving := "Walking" if camera.mode == Player.Mode.WALK else "Flying %d m/s" % roundi(camera.model.cruise_speed)
+	lines += "\n%s  ·  %d chunks  ·  %d fps" % [moving, world.loaded_chunks().size(), Engine.get_frames_per_second()]
 	_label.text = lines
 
 
@@ -84,7 +84,7 @@ func _build_legend() -> void:
 func _build_controls() -> void:
 	var hint := Label.new()
 	hint.name = "Controls"
-	hint.text = "Click: look around   WASD: fly   Space/E: up   Q/Ctrl: down   Shift: boost   Wheel: speed   Esc: release mouse"
+	hint.text = "Click: look   WASD: move   Space: jump / up   Shift: sprint / boost   F: walk ⇄ fly   Q/Ctrl: down (fly)   Wheel: fly speed   Esc: release mouse"
 	hint.add_theme_font_size_override("font_size", 13)
 	hint.add_theme_color_override("font_outline_color", Color.BLACK)
 	hint.add_theme_constant_override("outline_size", 4)

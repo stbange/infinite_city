@@ -42,3 +42,25 @@ func test_absolute_metres_of_spawn() -> void:
 	var absolute := spawn.absolute_metres(layout.config.cell_size)
 	for axis in 3:
 		assert_almost_eq(absolute[axis], spawn.cell[axis] * 64.0 + spawn.offset[axis], 1e-6)
+
+
+func test_on_foot_start() -> void:
+	var spawn := SpawnFinder.find_on_foot(layout)
+	assert_not_null(spawn)
+	assert_eq(spawn.cell.y, layout.config.roof_layer)
+	var block := layout.block_at(spawn.cell)
+	assert_not_null(block, "the start must be on a block")
+	var feet := spawn.offset - layout.config.cell_size * 0.5  # relative to the cell centre
+	assert_almost_eq(feet.y, block.max_local().y, 0.001, "feet on the roof surface")
+	assert_true(feet.x > block.min_local().x and feet.x < block.max_local().x)
+	assert_true(feet.z > block.min_local().z and feet.z < block.max_local().z)
+	var near_shaft := false
+	for dx in range(-2, 3):
+		for dz in range(-2, 3):
+			if layout.in_shaft(spawn.cell + Vector3i(dx, 0, dz)):
+				near_shaft = true
+	assert_true(near_shaft)
+	var forward := Basis.from_euler(Vector3(spawn.pitch, spawn.yaw, 0)) * Vector3(0, 0, -1)
+	var position := Vector3(spawn.cell) * layout.config.cell_size + spawn.offset
+	var to_centre := spawn.shaft_center - position
+	assert_gt(Vector2(forward.x, forward.z).normalized().dot(Vector2(to_centre.x, to_centre.z).normalized()), 0.95)

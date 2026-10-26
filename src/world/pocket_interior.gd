@@ -14,6 +14,7 @@ var info: PocketSpaceInfo
 var inner_door_local: Transform3D
 ## The inside of the doorway, on the entrance wall.
 var door_view: DoorwayView
+var _collision_boxes: Array[AABB] = []
 
 
 func build(pocket: PocketSpaceInfo, doorway: DoorwayInfo) -> void:
@@ -89,6 +90,49 @@ func build(pocket: PocketSpaceInfo, doorway: DoorwayInfo) -> void:
 
 	for node in find_children("*", "VisualInstance3D", true, false):
 		(node as VisualInstance3D).layers = PocketManager.POCKET_LAYERS
+
+	_build_collision(pocket, contents)
+
+
+## Solid boxes in interior coordinates (spec pocket-spaces / Solid pocket spaces).
+func collision_boxes() -> Array[AABB]:
+	return _collision_boxes
+
+
+func _build_collision(pocket: PocketSpaceInfo, contents: PocketContents) -> void:
+	var w := pocket.size.x
+	var h := pocket.size.y
+	var d := pocket.size.z
+	var t := 1.0
+	var door := PortalMath.DOOR_SIZE
+	var boxes: Array[AABB] = [
+		AABB(Vector3(-w * 0.5 - t, -t, -d * 0.5 - t), Vector3(w + 2.0 * t, t, d + 2.0 * t)),   # floor
+		AABB(Vector3(-w * 0.5 - t, h, -d * 0.5 - t), Vector3(w + 2.0 * t, t, d + 2.0 * t)),    # ceiling
+		AABB(Vector3(-w * 0.5 - t, 0, -d * 0.5), Vector3(t, h, d)),                            # left wall
+		AABB(Vector3(w * 0.5, 0, -d * 0.5), Vector3(t, h, d)),                                 # right wall
+		AABB(Vector3(-w * 0.5, 0, d * 0.5), Vector3(w, h, t)),                                 # back wall
+		# Entrance wall, around the inner door's opening.
+		AABB(Vector3(-w * 0.5, 0, -d * 0.5 - t), Vector3(w * 0.5 - door.x * 0.5, h, t)),
+		AABB(Vector3(door.x * 0.5, 0, -d * 0.5 - t), Vector3(w * 0.5 - door.x * 0.5, h, t)),
+		AABB(Vector3(-door.x * 0.5, door.y, -d * 0.5 - t), Vector3(door.x, h - door.y, t)),
+	]
+	boxes.append_array(contents.pillars)
+	for i in contents.props.size():
+		var prop := contents.props[i]
+		if prop.position.y < 2.5:  # tree crowns and floating platforms stay out of reach
+			boxes.append(prop)
+	boxes.append(contents.monument)
+	_collision_boxes = boxes
+	var body := StaticBody3D.new()
+	body.name = "Solid"
+	add_child(body)
+	for box in boxes:
+		var shape := BoxShape3D.new()
+		shape.size = box.size
+		var node := CollisionShape3D.new()
+		node.shape = shape
+		node.position = box.get_center()
+		body.add_child(node)
 
 
 ## World transform of the inner door.

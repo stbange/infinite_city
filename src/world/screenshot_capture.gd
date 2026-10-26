@@ -3,9 +3,10 @@ extends Node
 ## Headless visual check: with --screenshot=<file.png> on the user command line, waits until
 ## streaming is complete, saves the frame and quits.
 ## Optional: --pos=x,y,z (absolute metres)  --yaw=deg  --pitch=deg  --wait=frames
-##           --doorway [--doorway-distance=m] [--doorway-height=m] [--inside] [--walk=m] [--look-back]
-##             (stand before the doorway nearest the start, optionally step through it, walk
-##              into the room and turn around to look back at the city through the inner door)
+##           --doorway [--doorway-distance=m] [--doorway-height=m] [--inside] [--forward=m] [--look-back]
+##             (stand before the doorway nearest the start, optionally step through it, move
+##              forward into the room and turn around to look back at the city through the inner door)
+##           --on-foot (walk instead of floating; the player falls onto whatever is below)
 ##           --no-hud  --scale=0.6 (resize)  out.jpg saves a JPEG instead of a PNG
 ## Usage: scripts/screenshot.sh out.png --pos=0,200,0 --pitch=-30
 
@@ -20,7 +21,7 @@ var _entered: bool = false
 
 ## A doorway near `near_cell` on the roof rows with open air in front of it: at least 25 m,
 ## preferably a long clear view (up to 160 m) so the city can be seen through it from inside.
-static func showcase_doorway(world: CityWorld, near_cell: Vector3i) -> DoorwayInfo:
+static func showcase_doorway(world: CityWorld, near_cell: Vector3i, on_bridge: bool = false) -> DoorwayInfo:
 	var best: DoorwayInfo = null
 	var best_distance := INF
 	var near_chunk := world.layout.chunk_of(near_cell)
@@ -29,7 +30,7 @@ static func showcase_doorway(world: CityWorld, near_cell: Vector3i) -> DoorwayIn
 			for chunk_y: int in [0, -1]:
 				var chunk := Vector3i(near_chunk.x + dx, chunk_y, near_chunk.z + dz)
 				for doorway in world.pocket_layout.doorways_in_chunk(chunk):
-					if doorway.cell.y < world.config.roof_layer - 1:
+					if doorway.cell.y < world.config.roof_layer - 1 or (on_bridge and not doorway.on_bridge):
 						continue
 					var clear := _clear_view(world, doorway)
 					if clear < 25.0:
@@ -86,8 +87,10 @@ func _ready() -> void:
 
 func _apply_overrides() -> void:
 	var world := get_node(world_path) as CityWorld
-	var camera := get_node(camera_path) as FlyCamera
+	var camera := get_node(camera_path) as Player
 	camera.input_enabled = false
+	# Scripted views fly (they float where they are put) unless --on-foot is given.
+	camera.set_mode(Player.Mode.WALK if _args.has("on-foot") else Player.Mode.FLY)
 	if _args.has("no-hud"):
 		for hud in get_tree().get_nodes_in_group(&"hud"):
 			(hud as CanvasLayer).visible = false
@@ -99,7 +102,7 @@ func _apply_overrides() -> void:
 	camera.set_view(yaw, pitch)
 	if _args.has("doorway"):
 		var start := world.origin.absolute_cell_of(camera.global_position)
-		var doorway := showcase_doorway(world, start)
+		var doorway := showcase_doorway(world, start, _args.has("on-foot"))
 		if doorway != null:
 			print("doorway at ", doorway.cell)
 			_pockets().place_camera_before(doorway, float(_args.get("doorway-distance", "25")),
@@ -117,10 +120,10 @@ func _process(_delta: float) -> void:
 	if _args.has("inside") and not _entered and _pockets() != null and _pockets().active_doorway() != null:
 		_pockets().enter()
 		_entered = true
-		var camera := get_node(camera_path) as FlyCamera
-		if _args.has("walk"):
-			var forward := camera.global_transform.basis * Vector3(0, 0, -1)
-			camera.global_position += forward * float(_args["walk"])
+		var camera := get_node(camera_path) as Player
+		if _args.has("forward"):
+			var forward := camera.camera.global_transform.basis * Vector3(0, 0, -1)
+			camera.global_position += forward * float(_args["forward"])
 		if _args.has("look-back"):
 			camera.set_view(camera.yaw + PI, camera.pitch)
 		if _args.has("pitch"):

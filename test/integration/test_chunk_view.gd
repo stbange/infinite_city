@@ -147,3 +147,38 @@ func test_signs_and_lamps_offer_light_anchors() -> void:
 	var expected := origin.scene_position_of_cell_center(lamps[0].cell_a) + lamps[0].position
 	assert_almost_eq(lamp_anchor.position, expected, Vector3.ONE * 0.5)
 	assert_eq(lamp_anchor.color, lamps[0].color)
+
+
+func test_two_railings_per_deck() -> void:
+	var data := _interesting_chunk()
+	var view := _make_view(data)
+	assert_eq(view.railing_count(), data.bridges.size() * 2)
+	for i in data.bridges.size():
+		var bridge := data.bridges[i]
+		for side in 2:
+			var scale := view.railing_transform(i * 2 + side).basis.get_scale()
+			assert_almost_eq(scale[bridge.axis], bridge.length(), EPS)
+			assert_almost_eq(scale.y, 1.1, EPS)
+
+
+func test_magic_doorways_leave_a_gap_in_the_block() -> void:
+	var pockets := PocketLayout.new(layout)
+	var checked := 0
+	var rng := CellRandom.new(31)
+	while checked < 30:
+		var doorway := pockets.doorway_of(Vector3i(rng.range_int(-200, 200), rng.range_int(-100, 0), rng.range_int(-200, 200)))
+		if doorway == null:
+			continue
+		checked += 1
+		var block := layout.block_at(doorway.cell)
+		var boxes := ChunkView.block_collision_boxes(block, doorway)
+		# A point 0.6 m behind the face, in the middle of the opening, must be free.
+		var probe := doorway.door * Vector3(0, 3, -0.6)
+		var beside := doorway.door * Vector3(0, 3, -1.5)
+		var probe_hit := false
+		var beside_hit := false
+		for box in boxes:
+			probe_hit = probe_hit or box.has_point(probe)
+			beside_hit = beside_hit or box.has_point(beside)
+		assert_false(probe_hit, "the doorway gap of %s is blocked" % doorway.cell)
+		assert_true(beside_hit, "behind the gap the block of %s must be solid" % doorway.cell)

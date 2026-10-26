@@ -17,8 +17,8 @@ func _world() -> CityWorld:
 	return main.get_node("CityWorld") as CityWorld
 
 
-func _camera() -> FlyCamera:
-	return main.get_node("FlyCamera") as FlyCamera
+func _camera() -> Player:
+	return main.get_node("Player") as Player
 
 
 func test_exactly_one_downward_light() -> void:
@@ -36,9 +36,10 @@ func test_sky_shows_the_light_source() -> void:
 	assert_eq(sky_material.shader.resource_path, "res://src/world/shaders/space_sky.gdshader")
 
 
-func test_camera_starts_at_the_spawn_point() -> void:
+func test_player_starts_on_foot_at_the_spawn_point() -> void:
 	var world := _world()
-	var spawn := SpawnFinder.find(world.layout)
+	assert_eq(_camera().mode, Player.Mode.WALK)
+	var spawn := SpawnFinder.find_on_foot(world.layout)
 	assert_eq(world.origin.absolute_cell_of(_camera().global_position), spawn.cell)
 	assert_almost_eq(_camera().yaw, spawn.yaw, 1e-5)
 	assert_almost_eq(_camera().pitch, spawn.pitch, 1e-5)
@@ -52,8 +53,8 @@ func test_streaming_runs() -> void:
 func test_hud_shows_the_read_out() -> void:
 	var hud := main.get_node("Hud") as Hud
 	hud.refresh()
-	assert_string_contains(hud.text(), "Altitude 2 layers above the roof")
-	assert_string_contains(hud.text(), "Cell ")
+	assert_string_contains(hud.text(), "Depth 0 layers")
+	assert_string_contains(hud.text(), "Walking")
 
 
 func test_hud_names_the_block_the_camera_is_inside() -> void:

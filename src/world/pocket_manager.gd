@@ -5,7 +5,8 @@ extends Node3D
 ##
 ## Only one pocket space exists at a time. It is built 12 km above its doorway (out of sight of
 ## the city) and joins the world_anchored group so rebasing moves it with everything else.
-## Crossings are detected in door-local coordinates, which rebasing does not change.
+## Crossings are detected at the player's eyes in door-local coordinates, which rebasing does
+## not change; the body (feet), its view and its velocity are carried through the pair.
 
 const ACTIVATION_RADIUS := 160.0
 const POCKET_OFFSET := Vector3(0.0, 12000.0, 0.0)
@@ -58,8 +59,8 @@ func is_inside() -> bool:
 ## One step: choose the active doorway, detect crossings, place the portal camera.
 func update() -> void:
 	var world := _world()
-	var fly := _fly()
-	if world == null or fly == null or world.layout == null:
+	var player := _player()
+	if world == null or player == null or world.layout == null:
 		return
 	if _active != null and not is_instance_valid(_active):
 		_inside = false
@@ -70,17 +71,17 @@ func update() -> void:
 		_activate(wanted)
 	if _active == null:
 		return
-	_check_crossing(fly)
-	_update_portal_camera(fly)
+	_check_crossing(player)
+	_update_portal_camera(player)
 
 
 ## Nearest doorway (by opening centre) within `radius` metres of the camera, or null.
 func nearest_doorway_view(radius: float) -> DoorwayView:
 	var world := _world()
-	var fly := _fly()
-	if world == null or fly == null:
+	var player := _player()
+	if world == null or player == null:
 		return null
-	var position := fly.global_position
+	var position := player.eye_position()
 	var centre_chunk := world.origin.absolute_chunk_of(position)
 	var best: DoorwayView = null
 	var best_distance := radius
@@ -99,18 +100,18 @@ func nearest_doorway_view(radius: float) -> DoorwayView:
 	return best
 
 
-## Puts the camera `distance` m in front of a doorway, `height` m above its sill, facing it.
+## Puts the player's eyes `distance` m in front of a doorway, `height` m above its sill, facing it.
 func place_camera_before(doorway: DoorwayInfo, distance: float, height: float = 3.0) -> void:
 	var world := _world()
-	var fly := _fly()
+	var player := _player()
 	var cell_size := world.config.cell_size
-	var local := doorway.door * Vector3(0, height, distance)
+	var local := doorway.door * Vector3(0, height - WalkModel.EYE_HEIGHT, distance)
 	var absolute := PackedFloat64Array()
 	for axis in 3:
 		absolute.append((doorway.cell[axis] + 0.5) * cell_size[axis] + local[axis])
 	world.teleport_focus(absolute)
 	var facing := -doorway.door.basis.z
-	fly.set_view(atan2(-facing.x, -facing.z), 0.0)
+	player.set_view(atan2(-facing.x, -facing.z), 0.0)
 	_tracking = false
 
 
@@ -119,54 +120,56 @@ func place_camera_before(doorway: DoorwayInfo, distance: float, height: float = 
 func enter() -> void:
 	if _active == null or _inside:
 		return
-	var fly := _fly()
+	var player := _player()
 	var outer := _active.global_transform
-	var local := outer.affine_inverse() * fly.global_position
-	local.x = clampf(local.x, -PortalMath.DOOR_SIZE.x * 0.4, PortalMath.DOOR_SIZE.x * 0.4)
-	local.y = clampf(local.y, 0.5, PortalMath.DOOR_SIZE.y - 0.5)
-	local.z = -0.5
-	fly.global_position = outer * local
-	_enter(fly)
+	var eye := outer.affine_inverse() * player.eye_position()
+	eye.x = clampf(eye.x, -PortalMath.DOOR_SIZE.x * 0.4, PortalMath.DOOR_SIZE.x * 0.4)
+	eye.y = clampf(eye.y, 0.5, PortalMath.DOOR_SIZE.y - 0.5)
+	eye.z = -0.5
+	player.global_position += outer * eye - player.eye_position()
+	_enter(player)
 	_tracking = false
 
 
-func _check_crossing(fly: FlyCamera) -> void:
+func _check_crossing(player: Player) -> void:
 	var outer := _active.global_transform
 	var inner := _interior.inner_door_global()
-	var position := fly.global_position
+	var position := player.eye_position()
 	if _tracking:
 		if _inside:
 			if PortalMath.crossed(inner, PortalMath.DOOR_SIZE, inner * _prev_inner_local, position):
-				_leave(fly)
+				_leave(player)
 		elif PortalMath.crossed(outer, PortalMath.DOOR_SIZE, outer * _prev_outer_local, position):
-			_enter(fly)
-	position = fly.global_position
+			_enter(player)
+	position = player.eye_position()
 	_prev_outer_local = outer.affine_inverse() * position
 	_prev_inner_local = inner.affine_inverse() * position
 	_tracking = true
 
 
-func _enter(fly: FlyCamera) -> void:
-	_teleport(fly, PortalMath.pair(_active.global_transform, _interior.inner_door_global()))
+func _enter(player: Player) -> void:
+	_teleport(player, PortalMath.pair(_active.global_transform, _interior.inner_door_global()))
 	_inside = true
 	_world().streaming_focus = _active
 	_active.set_portal_texture(null)
 	_interior.door_view.set_portal_texture(_viewport.get_texture())
 
 
-func _leave(fly: FlyCamera) -> void:
-	_teleport(fly, PortalMath.pair(_interior.inner_door_global(), _active.global_transform))
+func _leave(player: Player) -> void:
+	_teleport(player, PortalMath.pair(_interior.inner_door_global(), _active.global_transform))
 	_inside = false
 	_world().streaming_focus = null
 	_interior.door_view.set_portal_texture(null)
 	_active.set_portal_texture(_viewport.get_texture())
 
 
-func _teleport(fly: FlyCamera, mapping: Transform3D) -> void:
-	var pose := mapping * fly.global_transform
-	fly.global_position = pose.origin
-	var look := PortalMath.yaw_pitch_of(pose.basis)
-	fly.set_view(look.x, look.y)
+func _teleport(player: Player, mapping: Transform3D) -> void:
+	var body := mapping * player.global_transform
+	var eye := mapping * player.camera.global_transform
+	player.global_position = body.origin
+	player.velocity = mapping.basis * player.velocity
+	var look := PortalMath.yaw_pitch_of(eye.basis)
+	player.set_view(look.x, look.y)
 
 
 func _activate(view: DoorwayView) -> void:
@@ -211,10 +214,10 @@ func _ensure_viewport() -> void:
 	_portal_camera.current = true
 
 
-func _update_portal_camera(fly: FlyCamera) -> void:
+func _update_portal_camera(player: Player) -> void:
 	var outer := _active.global_transform
 	var inner := _interior.inner_door_global()
-	var main_camera := fly.camera
+	var main_camera := player.camera
 	var mapping := PortalMath.pair(inner, outer) if _inside else PortalMath.pair(outer, inner)
 	var far_door := outer if _inside else inner
 	_portal_camera.global_transform = mapping * main_camera.global_transform
@@ -247,5 +250,5 @@ func _world() -> CityWorld:
 	return get_node_or_null(world_path) as CityWorld
 
 
-func _fly() -> FlyCamera:
-	return get_node_or_null(camera_path) as FlyCamera
+func _player() -> Player:
+	return get_node_or_null(camera_path) as Player
