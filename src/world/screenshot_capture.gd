@@ -7,9 +7,9 @@ extends Node
 ##             (stand before the doorway nearest the start, optionally step through it, move
 ##              forward into the room and turn around to look back at the city through the inner door)
 ##           --on-foot (walk instead of floating; the player falls onto whatever is below)
-##           --interior=entrance|corridor|flat|window|unit:KIND [--interior-distance=m] [--turn=deg]
+##           --interior=entrance|corridor|stairs|flat|window|unit:KIND [--interior-distance=m] [--turn=deg]
 ##             (a block near the start: on the bridge before an entrance, in the corridor behind
-##              it, in the door of a flat or of a unit of block kind KIND, or at a flat's window)
+##              it, before the stair core, in a flat or a unit of block kind KIND, or at a window)
 ##           --no-hud  --scale=0.6 (resize)  out.jpg saves a JPEG instead of a PNG
 ## Usage: scripts/screenshot.sh out.png --pos=0,200,0 --pitch=-30
 
@@ -141,7 +141,13 @@ func _place_in_interior(world: CityWorld, camera: Player, mode: String) -> void:
 		var plan := interiors.plan_of(block)
 		var local := Vector3.ZERO
 		var facing := Vector3.ZERO
-		if mode == "entrance" or mode == "corridor":
+		if mode == "stairs":
+			if plan.floors < 3:
+				continue
+			var k := 1
+			local = Vector3(plan.core.get_center().x - 0.4, plan.floor_y(k), plan.core.position.y - 1.6)
+			facing = Vector3(0.25, 0, 1).normalized()
+		elif mode == "entrance" or mode == "corridor":
 			if plan.entrances.is_empty():
 				continue
 			var entrance := plan.entrances[0]

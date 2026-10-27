@@ -1,6 +1,6 @@
 extends GutTest
 ## Spec block-interiors: Stairs, Windows, Flats, Themed units, Tidy furniture, Room light,
-## Deterministic interiors (floors).
+## Deterministic interiors (floors), Floors inside the outer walls, No overlapping surfaces.
 
 const EPS := 0.01
 
@@ -191,3 +191,73 @@ func test_same_floor_every_time() -> void:
 		assert_eq(a.item_names, b.item_names)
 		assert_eq(a.walls, b.walls)
 		assert_eq(a.glass, b.glass)
+
+
+func test_slabs_within_the_inner_footprint() -> void:
+	for block in _blocks(30, 8):
+		var plan := interiors.plan_of(block)
+		var inner := plan.inner.grow(EPS)
+		for k in plan.floors:
+			var f := interiors.floor_of(plan, k)
+			var slabs: Array[AABB] = []
+			slabs.append_array(f.slabs)
+			slabs.append_array(f.roof)
+			for slab in slabs:
+				var footprint := Rect2(slab.position.x, slab.position.z, slab.size.x, slab.size.z)
+				assert_true(inner.encloses(footprint), "slab %s of floor %d in %s pokes into the outer walls" % [slab, k, block.cell])
+
+
+func test_closed_facade() -> void:
+	for block in _blocks(30, 9):
+		var plan := interiors.plan_of(block)
+		for k in plan.floors:
+			var f := interiors.floor_of(plan, k)
+			var lowest := INF
+			var highest := -INF
+			for piece in f.outer_walls:
+				lowest = minf(lowest, piece.position.y)
+				highest = maxf(highest, piece.end.y)
+			var expected_low := plan.floor_y(k) - (InteriorLayout.SLAB if k == 0 else 0.0)
+			assert_almost_eq(lowest, expected_low, EPS, "outer walls of floor %d in %s" % [k, block.cell])
+			assert_almost_eq(highest, plan.floor_y(k) + 4.0, EPS, "outer walls of floor %d in %s" % [k, block.cell])
+
+
+## Pairs of boxes of different material groups that overlap by more than `tolerance` along
+## every axis (sweep along x).
+static func _fights(groups: Array[Dictionary], tolerance: float) -> PackedStringArray:
+	var boxes: Array[AABB] = []
+	var tags := PackedStringArray()
+	for g in groups.size():
+		for key: String in groups[g]:
+			for box: AABB in groups[g][key]:
+				boxes.append(box)
+				tags.append(key)
+	var order: Array[int] = []
+	for i in boxes.size():
+		order.append(i)
+	order.sort_custom(func(a: int, b: int) -> bool: return boxes[a].position.x < boxes[b].position.x)
+	var fights := PackedStringArray()
+	for oi in order.size():
+		var a := boxes[order[oi]]
+		for oj in range(oi + 1, order.size()):
+			var b := boxes[order[oj]]
+			if b.position.x >= a.end.x - tolerance:
+				break
+			if tags[order[oi]] == tags[order[oj]]:
+				continue
+			var o := a.intersection(b)
+			if o.size.x > tolerance and o.size.y > tolerance and o.size.z > tolerance:
+				fights.append("%s %s / %s %s" % [tags[order[oi]], a, tags[order[oj]], b])
+	return fights
+
+
+func test_nothing_fights_for_a_surface() -> void:
+	for block in _blocks(20, 10):
+		var plan := interiors.plan_of(block)
+		var floors: Array[int] = [0, 1, plan.floors / 2, plan.floors - 1]
+		for k in floors:
+			var groups: Array[Dictionary] = [interiors.floor_of(plan, k).material_groups()]
+			if k + 1 < plan.floors:
+				groups.append(interiors.floor_of(plan, k + 1).material_groups())
+			var fights := _fights(groups, 0.002)
+			assert_eq(fights.size(), 0, "floor %d of %s: %s" % [k, block.cell, fights.slice(0, 3)])

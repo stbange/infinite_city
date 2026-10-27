@@ -63,6 +63,31 @@ func solids() -> Array[AABB]:
 	return result
 
 
+## Drawn boxes by material, as InteriorView draws them: façade (outer walls, roof, hut), glass,
+## slab, wall, stair (stair solids and steps), furniture (matte items) and light (glowing items
+## and ceiling lamps).
+func material_groups() -> Dictionary:
+	var facade: Array[AABB] = []
+	facade.append_array(outer_walls)
+	facade.append_array(roof)
+	facade.append_array(hut)
+	var stairs: Array[AABB] = []
+	stairs.append_array(stair_solids)
+	stairs.append_array(steps)
+	var furniture: Array[AABB] = []
+	var lights: Array[AABB] = []
+	for i in items.size():
+		if item_glow[i] > 0.0:
+			lights.append(items[i])
+		else:
+			furniture.append(items[i])
+	lights.append_array(lamps)
+	return {
+		"facade": facade, "glass": glass, "slab": slabs, "wall": walls, "stair": stairs,
+		"furniture": furniture, "light": lights,
+	}
+
+
 ## The room containing a point of the x/z plane, or null.
 func room_at(point: Vector2) -> RoomInfo:
 	for room in rooms:

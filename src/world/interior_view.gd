@@ -236,10 +236,10 @@ func _build_floor(k: int) -> void:
 	var holder := Node3D.new()
 	holder.name = "Floor%dVisuals" % k
 	add_child(holder)
-	var facade: Array[AABB] = []
-	facade.append_array(f.outer_walls)
-	facade.append_array(f.roof)
-	facade.append_array(f.hut)
+	# One MultiMesh per material group (InteriorFloor.material_groups(), which the overlap test
+	# checks); furniture and lights need per-item colours, so they are collected below.
+	var groups := f.material_groups()
+	var facade: Array[AABB] = groups["facade"]
 	var accent := BlockTypes.color(plan.block.kind)
 	var facade_colors := PackedColorArray()
 	var facade_custom := PackedColorArray()
@@ -247,13 +247,10 @@ func _build_floor(k: int) -> void:
 		facade_colors.append(accent)
 		facade_custom.append(Color(plan.top(), 0.0, 0.0, 0.0))
 	_add_boxes(holder, "Facade", facade, facade_material(), RenderLayers.CITY, facade_colors, facade_custom)
-	_add_boxes(holder, "Glass", f.glass, _glass_material, RenderLayers.INTERIOR)
-	_add_boxes(holder, "Slabs", f.slabs, _slab_material, RenderLayers.INTERIOR)
-	_add_boxes(holder, "Walls", f.walls, _wall_material, RenderLayers.INTERIOR)
-	var stairs: Array[AABB] = []
-	stairs.append_array(f.stair_solids)
-	stairs.append_array(f.steps)
-	_add_boxes(holder, "Stairs", stairs, _stair_material, RenderLayers.INTERIOR)
+	_add_boxes(holder, "Glass", groups["glass"], _glass_material, RenderLayers.INTERIOR)
+	_add_boxes(holder, "Slabs", groups["slab"], _slab_material, RenderLayers.INTERIOR)
+	_add_boxes(holder, "Walls", groups["wall"], _wall_material, RenderLayers.INTERIOR)
+	_add_boxes(holder, "Stairs", groups["stair"], _stair_material, RenderLayers.INTERIOR)
 	var matte: Array[AABB] = []
 	var matte_colors := PackedColorArray()
 	var glowing: Array[AABB] = []

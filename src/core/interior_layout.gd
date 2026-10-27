@@ -42,7 +42,8 @@ func plan_of(block: BlockInfo) -> InteriorPlan:
 	var inner := plan.inner
 	plan.corridors.append(Rect2(inner.position.x, -CORRIDOR_HALF, inner.size.x, CORRIDOR_WIDTH))
 	plan.corridors.append(Rect2(-CORRIDOR_HALF, inner.position.y, CORRIDOR_WIDTH, inner.size.y))
-	plan.core = Rect2(CORRIDOR_HALF, CORRIDOR_HALF, CORE_SIZE.x, CORE_SIZE.y)
+	# The stair core starts on the inner face of its unit's west wall (spec: Stair core inside its unit).
+	plan.core = Rect2(CORRIDOR_HALF + UNIT_WALL, CORRIDOR_HALF, CORE_SIZE.x, CORE_SIZE.y)
 
 	# Rows of units on both z sides, each facing a corridor on its side nearer the centre.
 	var rows: Array[Array] = []  # [z0, z1, front_sign (+1: corridor on the high-z side), exterior]
@@ -119,7 +120,7 @@ func _add_unit(plan: InteriorPlan, rect: Rect2, front_sign: int, exterior: bool,
 	if not centres.is_empty():
 		door_x = centres[rng.next_int(centres.size())]
 	if is_core:
-		door_x = rect.position.x + CORE_SIZE.x * 0.5
+		door_x = plan.core.get_center().x
 	plan.units.append(InteriorUnit.new(plan.units.size(), rect, front_sign, door_x, exterior, is_core))
 
 
@@ -172,11 +173,10 @@ func floor_of(plan: InteriorPlan, k: int) -> InteriorFloor:
 	return f
 
 
-## A floor slab whose top is at `top`, optionally with the opening over the stair flights.
+## A floor slab whose top is at `top`, inside the outer walls, optionally with the opening over
+## the stair flights.
 func _slab(plan: InteriorPlan, _f: InteriorFloor, top: float, with_opening: bool, into: Array[AABB]) -> void:
-	var lo := plan.block.min_local()
-	var hi := plan.block.max_local()
-	var whole := Rect2(lo.x, lo.z, hi.x - lo.x, hi.z - lo.z)
+	var whole := plan.inner
 	var pieces: Array[Rect2] = [whole]
 	if with_opening:
 		pieces = _subtract(whole, _stair_opening(plan))
@@ -210,6 +210,8 @@ func _outer_walls(plan: InteriorPlan, f: InteriorFloor, k: int) -> void:
 	var lo := plan.block.min_local()
 	var hi := plan.block.max_local()
 	var y := f.y
+	# Floor 0's walls also cover the side of its slab, so the façade is closed at the bottom.
+	var bottom := y - SLAB if k == 0 else y
 	for axis: int in [Vector3.AXIS_X, Vector3.AXIS_Z]:
 		var lat := Vector3.AXIS_Z if axis == Vector3.AXIS_X else Vector3.AXIS_X
 		for sign: int in [1, -1]:
@@ -244,14 +246,14 @@ func _outer_walls(plan: InteriorPlan, f: InteriorFloor, k: int) -> void:
 				var oy0: float = opening[2]
 				var oy1: float = opening[3]
 				if o0 > cursor:
-					f.outer_walls.append(_face_box(axis, lat, face, inner_face, cursor, o0, y, y + GRID))
-				if oy0 > y:
-					f.outer_walls.append(_face_box(axis, lat, face, inner_face, o0, o1, y, oy0))
+					f.outer_walls.append(_face_box(axis, lat, face, inner_face, cursor, o0, bottom, y + GRID))
+				if oy0 > bottom:
+					f.outer_walls.append(_face_box(axis, lat, face, inner_face, o0, o1, bottom, oy0))
 				if oy1 < y + GRID:
 					f.outer_walls.append(_face_box(axis, lat, face, inner_face, o0, o1, oy1, y + GRID))
 				cursor = o1
 			if cursor < lat_hi:
-				f.outer_walls.append(_face_box(axis, lat, face, inner_face, cursor, lat_hi, y, y + GRID))
+				f.outer_walls.append(_face_box(axis, lat, face, inner_face, cursor, lat_hi, bottom, y + GRID))
 			# Coarse shell: windows count as solid; entrances stay open.
 			var shell_cursor := lat_lo
 			for opening in openings:
@@ -259,10 +261,12 @@ func _outer_walls(plan: InteriorPlan, f: InteriorFloor, k: int) -> void:
 					continue
 				var o0: float = opening[0]
 				var o1: float = opening[1]
-				f.shell.append(_face_box(axis, lat, face, inner_face, shell_cursor, o0, y, y + GRID))
+				f.shell.append(_face_box(axis, lat, face, inner_face, shell_cursor, o0, bottom, y + GRID))
+				if opening[2] > bottom:
+					f.shell.append(_face_box(axis, lat, face, inner_face, o0, o1, bottom, opening[2]))
 				f.shell.append(_face_box(axis, lat, face, inner_face, o0, o1, opening[3], y + GRID))
 				shell_cursor = o1
-			f.shell.append(_face_box(axis, lat, face, inner_face, shell_cursor, lat_hi, y, y + GRID))
+			f.shell.append(_face_box(axis, lat, face, inner_face, shell_cursor, lat_hi, bottom, y + GRID))
 
 
 ## A box between two planes perpendicular to `axis`, spanning [l0, l1] laterally and [y0, y1].

@@ -1,6 +1,6 @@
 extends GutTest
 ## Spec block-interiors: Floors, Corridors reach every face, Units open onto corridors,
-## Entrances, Deterministic interiors (plans).
+## Entrances, Deterministic interiors (plans), Stairs (core inside its unit).
 
 const EPS := 0.01
 
@@ -117,3 +117,15 @@ func test_same_plan_every_time() -> void:
 		for i in a.units.size():
 			assert_eq(a.units[i].rect, b.units[i].rect)
 			assert_eq(a.units[i].door_x, b.units[i].door_x)
+
+
+func test_stair_core_inside_its_unit() -> void:
+	for block in _blocks(50, 7):
+		var plan := interiors.plan_of(block)
+		var core_unit: InteriorUnit = null
+		for unit in plan.units:
+			if unit.is_core:
+				core_unit = unit
+		assert_not_null(core_unit)
+		assert_true(core_unit.rect.encloses(plan.core), "core outside its unit in %s" % block.cell)
+		assert_almost_eq(plan.core.position.x, core_unit.rect.position.x + InteriorLayout.UNIT_WALL, EPS)
