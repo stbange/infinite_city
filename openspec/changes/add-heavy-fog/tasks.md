@@ -13,5 +13,5 @@
 ## 3. Visual check and integration
 
 - [x] 3.1 Render a canyon, the roof, a bridge entrance, a window view and the start on foot; verify by eye (heavy fog, sunlit haze on top, clear rooms, no artefacts)
-- [ ] 3.2 Re-render the README screenshots
+- [x] 3.2 Re-render the README screenshots
 - [x] 3.3 Run `scripts/test.sh` (all green) and `openspec validate --all --strict`

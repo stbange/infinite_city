@@ -2,23 +2,26 @@
 
 A science-fiction city of floating blocks in space, built with **Godot 4.7**. Cyberpunk in
 blockspace: the city has exactly one border, its roof. Only the uppermost layer sees the light
-source above it; everything below lives on neon, lamps and lit windows, deep in a violet fog.
+source above it and stands clear above a sea of fog; everything below lives on neon, lamps and
+lit windows, drowned in heavy violet fog.
 Downward and to every side the city never ends. Canyons and shafts open it up for travel in
 every direction, bridges join neighbouring blocks, and you can walk across them into any block:
 along its corridors, up its stairs and into flats, shops, farms and offices. Some doors open
 into spaces far bigger than the blocks that hold them.
 
-| On a bridge, 21 layers down | Inside: the corridor behind the entrance |
+| On a bridge in the fog, 21 layers down | Inside: the corridor behind the entrance |
 |---|---|
 | ![Entrance](docs/images/interior-entrance.jpg) | ![Corridor](docs/images/interior-corridor.jpg) |
-| **A flat's living room** | **A shop** |
-| ![Flat](docs/images/interior-flat.jpg) | ![Shop](docs/images/interior-shop.jpg) |
-| **Out of the window into the canyon** (with the read-out) | **On foot at the start** |
-| ![Window](docs/images/interior-window.jpg) | ![On foot](docs/images/on-foot.jpg) |
-| **Above the roof: the only sunlit layer** | **Up a shaft to the light** |
-| ![Roof](docs/images/roof.jpg) | ![Shaft](docs/images/shaft-light.jpg) |
-| **Inside a canyon, 22 layers down** | **640,000 km down: same precision** |
-| ![Canyon](docs/images/canyon.jpg) | ![Deep](docs/images/deep.jpg) |
+| **The stair core** | **A flat's living room** |
+| ![Stairs](docs/images/interior-stairs.jpg) | ![Flat](docs/images/interior-flat.jpg) |
+| **A shop** | **Out of the window into the fog** (with the read-out) |
+| ![Shop](docs/images/interior-shop.jpg) | ![Window](docs/images/interior-window.jpg) |
+| **On foot at the start: sunlit roofs on a sea of fog** | **Above the roof** |
+| ![On foot](docs/images/on-foot.jpg) | ![Roof](docs/images/roof.jpg) |
+| **From the top of the fog sea up to the light** | **Inside a canyon, 22 layers down** |
+| ![Shaft](docs/images/shaft-light.jpg) | ![Canyon](docs/images/canyon.jpg) |
+| **640,000 km down: same precision** | |
+| ![Deep](docs/images/deep.jpg) | |
 | **A magic doorway…** | **…opens into a hall hundreds of metres long** |
 | ![Doorway outside](docs/images/doorway-outside.jpg) | ![Doorway inside](docs/images/doorway-inside.jpg) |
 | **Looking back out at the city from inside** | |
@@ -60,13 +63,29 @@ The city is not a heightmap. It is a **3D lattice of 64 m cells**, and every cel
   directional light by height (it fades out within 16 m below the roof layer) and the light
   dims to nothing as the player descends. Interiors are on their own visual layer the sun
   never reaches.
-- **Dark and foggy:** near-zero ambient light, exponential fog that limits sight to a few
-  hundred metres below the roof and darkens with depth, filmic tone mapping and bloom.
+- **Dark:** near-zero ambient light, filmic tone mapping, and bloom wide enough that neon and
+  lamps glow into the fog.
 - **Artificial light:** neon signs on the façades (markets the most, every service in its own
   colour, some flickering), lamps along every bridge, lit windows in a neon-tinted palette, and
   a pool of 12 real lights that follows the player to the nearest signs, lamps and room lights.
 
-### 3. Walk-in interiors for every block
+### 3. Heavy fog as a shader
+
+- **A full-screen fog pass:** a quad in front of the camera reads the depth buffer and marches
+  12 jittered steps along each view ray, accumulating fog and blending it over the frame. It
+  replaces the engine's uniform fog.
+- **A fog sea:** density and colour depend on the height of every point along the ray. The sunlit
+  roof layer holds only a light haze; from its bottom down there is heavy fog (0.02 per metre and
+  more deeper down, so after ~150 m nothing shows through); above the roof it clears within a few
+  dozen metres, so the light source and the sky blocks stay visible. The top of the fog sea glows
+  in the sunlight; below, it is dark violet.
+- **Drifting banks:** two octaves of value noise move with a slow wind. The noise is anchored to
+  absolute positions (the floating origin modulo 1024 m, computed exactly in integers), so banks
+  do not jump when the origin moves.
+- **Clear indoors:** no fog inside entered blocks (the march skips their boxes) or pocket spaces
+  (by visual layer); the portal view of the city from inside a pocket is fogged like the city.
+
+### 4. Walk-in interiors for every block
 
 - **A plan for every block,** derived from (seed, cell) like everything else: a corridor cross
   along the cell centre lines reaching all four faces, more corridors in deep blocks, rows of
@@ -80,10 +99,12 @@ The city is not a heightmap. It is a **3D lattice of 64 m cells**, and every cel
   (~1.5 ms) starting at the player's floor. Only when every floor exists is the block's sealed
   box swapped for the real shell, so the swap is invisible. Full collision exists only for the
   player's floor and the floors next to it; the outer shell is solid everywhere.
+- **No flicker:** floors and stairs sit inside the walls, and a test checks that no two drawn
+  boxes of different materials overlap anywhere, so no surfaces fight over the same pixels.
 - **Moody rooms:** only the room lights of the player's floor join the light pool, with a soft
   falloff, so rooms are lit in warm, cool or neon tones while the rest of the block stays dark.
 
-### 4. Magic doorways (bigger on the inside)
+### 5. Magic doorways (bigger on the inside)
 
 - **Doorways are transform pairs.** The outer door A sits on a block; the inner door B sits on
   the wall of the pocket space. A pose is carried through with `M = B · R_y(π) · A⁻¹`, so what is
@@ -133,10 +154,12 @@ Git history follows this rhythm (*Propose → Implement → Archive*) for each c
 | `add-cyberpunk-atmosphere` | `city-lighting`, `city-rendering` |
 | `add-on-foot-movement` | `on-foot-movement`, `free-flight`, `city-rendering`, `pocket-spaces`, `portal-traversal` |
 | `add-block-interiors` | `block-interiors`, `city-layout`, `city-bridges` |
+| `fit-interiors-inside-walls` | `block-interiors` |
+| `add-heavy-fog` | `city-fog`, `city-rendering` |
 
 ```bash
 scripts/install-godot.sh              # once: Godot 4.7.2 into .tools/godot/
-scripts/test.sh                       # 259 GUT tests, headless (~90 s)
+scripts/test.sh                       # 275 GUT tests, headless (~90 s)
 scripts/test.sh -gselect=interior     # only test files matching "interior"
 scripts/screenshot.sh out.jpg --doorway --inside           # headless render (needs Xvfb)
 scripts/screenshot.sh out.jpg --interior=flat --pos=100,-1300,60
@@ -160,9 +183,9 @@ every push. Static typing is enforced, so untyped declarations are parse errors.
    stairs between layers.
 4. **`add-city-life`**: people in corridors and flats, doors that open, interactive objects,
    and services that work: fire stations dispatch, hospitals treat.
-5. **Atmosphere:** rain, steam vents, volumetric light shafts from the roof.
-6. **Performance:** chunk and interior generation on worker threads, level of detail beyond the
-   streaming radius, lower-resolution portal views.
+5. **Atmosphere:** rain, steam vents, light cones of lamps in the fog, light shafts from the roof.
+6. **Performance:** stream and draw only what the fog lets through, chunk and interior
+   generation on worker threads, lower-resolution portal views.
 7. **Gameplay:** what the player *does* in the city. A story, jobs, exploration goals. This is
    the big open design question.
 
@@ -173,5 +196,6 @@ every push. Static typing is enforced, so untyped declarations are parse errors.
   is swapped for its interior.
 - Lights cast no shadows, so walls and floors do not block light. That is why only the
   player's floor is lit.
+- Lamps and signs do not light the fog itself; their halos come from bloom.
 - One live portal at a time. Other doorways shimmer until you are within 160 m.
 - Furniture is made of boxes.
