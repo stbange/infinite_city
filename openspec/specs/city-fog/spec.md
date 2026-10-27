@@ -1,7 +1,10 @@
 # city-fog Specification
 
 ## Purpose
-TBD - created by archiving change add-heavy-fog. Update Purpose after archive.
+Heavy, drifting fog that swallows the city below its sunlit top layer: a fog sea whose density
+and colour depend on the height of every point along a view ray, banks that drift with the wind
+but stay anchored to the world, clear air inside buildings and pocket spaces, and the same fog in
+every camera that looks at the city.
 
 ## Requirements
 
