@@ -254,9 +254,8 @@ func _apply_atmosphere() -> void:
 			if not world_environment_path.is_empty() else null
 	if env_node != null and env_node.environment != null:
 		var env := env_node.environment
+		# Fog itself is drawn by CityFog; the sky takes its colour at the horizon.
 		var haze := Atmosphere.fog_color(depth)
-		env.fog_light_color = haze
-		env.fog_density = Atmosphere.fog_density(depth)
 		env.ambient_light_energy = Atmosphere.ambient_energy(depth)
 		var sky_material := env.sky.sky_material as ShaderMaterial if env.sky != null else null
 		if sky_material != null:

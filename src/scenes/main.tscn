@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://src/world/game_main.gd" id="1_main"]
 [ext_resource type="Script" path="res://src/world/city_world.gd" id="2_world"]
@@ -10,6 +10,7 @@
 [ext_resource type="Script" path="res://src/world/pocket_manager.gd" id="8_pockets"]
 [ext_resource type="Script" path="res://src/world/city_lights.gd" id="9_lights"]
 [ext_resource type="Script" path="res://src/world/interior_manager.gd" id="10_interiors"]
+[ext_resource type="Script" path="res://src/world/city_fog.gd" id="11_fog"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_sky"]
 shader = ExtResource("5_sky")
@@ -25,15 +26,12 @@ ambient_light_color = Color(0.42, 0.45, 0.65, 1)
 ambient_light_energy = 0.04
 tonemap_mode = 2
 glow_enabled = true
+glow_levels/5 = 1.0
+glow_levels/6 = 0.6
 glow_intensity = 1.0
 glow_bloom = 0.12
 glow_hdr_threshold = 0.6
-fog_enabled = true
-fog_mode = 0
-fog_light_color = Color(0.06, 0.05, 0.1, 1)
-fog_light_energy = 1.0
-fog_density = 0.008
-fog_sky_affect = 0.0
+fog_enabled = false
 
 [sub_resource type="Resource" id="Resource_config"]
 script = ExtResource("7_config")
@@ -74,6 +72,13 @@ camera_path = NodePath("../Player")
 script = ExtResource("10_interiors")
 world_path = NodePath("../CityWorld")
 player_path = NodePath("../Player")
+
+[node name="CityFog" type="Node" parent="."]
+script = ExtResource("11_fog")
+world_path = NodePath("../CityWorld")
+camera_path = NodePath("../Player")
+pocket_manager_path = NodePath("../PocketManager")
+interiors_path = NodePath("../InteriorManager")
 
 [node name="CityLights" type="Node3D" parent="."]
 script = ExtResource("9_lights")

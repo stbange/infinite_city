@@ -173,7 +173,7 @@ func test_looking_back_at_the_city_from_inside() -> void:
 	var expected := PortalMath.pair(_inner_xf(), _outer_xf()) * fly.camera.global_transform
 	var actual := manager.portal_camera().global_transform
 	assert_almost_eq(actual.origin, expected.origin, Vector3.ONE * 0.01)
-	assert_eq(manager.portal_camera().cull_mask, PocketManager.CITY_LAYERS)
+	assert_eq(manager.portal_camera().cull_mask, PocketManager.OUTSIDE_LAYERS)
 
 
 func test_city_stays_loaded_while_inside() -> void:

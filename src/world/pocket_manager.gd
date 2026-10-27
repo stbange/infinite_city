@@ -12,6 +12,8 @@ const ACTIVATION_RADIUS := 160.0
 const POCKET_OFFSET := Vector3(0.0, 12000.0, 0.0)
 ## Visual layer bits: the city is drawn on layer 1, pocket spaces on layer 2.
 const CITY_LAYERS := RenderLayers.CITY
+## What the portal camera draws when it shows the city from inside a pocket space.
+const OUTSIDE_LAYERS := RenderLayers.CITY | RenderLayers.INTERIOR | RenderLayers.FOG
 const POCKET_LAYERS := RenderLayers.POCKET
 const INTERIOR_GROUP := &"pocket_interior"
 
@@ -221,7 +223,7 @@ func _update_portal_camera(player: Player) -> void:
 	var mapping := PortalMath.pair(inner, outer) if _inside else PortalMath.pair(outer, inner)
 	var far_door := outer if _inside else inner
 	_portal_camera.global_transform = mapping * main_camera.global_transform
-	_portal_camera.cull_mask = CITY_LAYERS if _inside else POCKET_LAYERS
+	_portal_camera.cull_mask = OUTSIDE_LAYERS if _inside else POCKET_LAYERS
 	_portal_camera.fov = main_camera.fov
 	_portal_camera.far = main_camera.far
 	_portal_camera.near = _clip_near(_portal_camera.global_transform, far_door, main_camera.near)

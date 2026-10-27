@@ -106,12 +106,9 @@ func test_sun_lights_only_the_outside() -> void:
 	assert_eq(sun.light_cull_mask & RenderLayers.POCKET, 0)
 
 
-func test_fog_follows_the_depth() -> void:
+func test_dark_ambience() -> void:
 	await wait_process_frames(3)
 	var env := (main.get_node("WorldEnvironment") as WorldEnvironment).environment
-	assert_true(env.fog_enabled)
-	assert_eq(env.fog_mode, Environment.FOG_MODE_EXPONENTIAL)
-	assert_almost_eq(env.fog_density, Atmosphere.fog_density(_world().focus_depth_layers()), 1e-5)
 	assert_lte(env.ambient_light_energy, 0.05)
 
 

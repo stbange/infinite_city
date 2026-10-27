@@ -8,3 +8,7 @@ const CITY := 1
 const POCKET := 2
 ## Building interiors (rooms, furniture).
 const INTERIOR := 4
+## The full-screen city fog (cameras that draw this layer see the fog).
+const FOG := 8
+## Layer number of FOG for set_cull_mask_value() (bit 4).
+const FOG_LAYER_NUMBER := 4

@@ -1,6 +1,6 @@
 extends GutTest
-## Specs city-rendering (Depth atmosphere) and city-lighting (Sunlight only on the uppermost
-## layer, Dark ambience).
+## Specs city-rendering (Depth atmosphere), city-fog (Fog by height) and city-lighting (Sunlight
+## only on the uppermost layer, Dark ambience).
 
 
 func test_deeper_is_darker() -> void:
@@ -17,8 +17,26 @@ func test_above_the_roof_is_brightest() -> void:
 
 
 func test_dense_fog_below_the_roof() -> void:
-	for depth: float in [1.0, 5.0, 50.0, 10000.0]:
-		assert_gte(Atmosphere.fog_density(depth), 0.0075, "fog too thin at depth %s" % depth)
+	for depth: float in [1.5, 5.0, 50.0, 10000.0]:
+		assert_gte(Atmosphere.fog_density(depth), 0.018, "fog too thin at depth %s" % depth)
+
+
+func test_heavier_deeper_down() -> void:
+	assert_gt(Atmosphere.fog_density(500.0), Atmosphere.fog_density(1.5))
+
+
+func test_light_haze_in_the_roof_layer() -> void:
+	assert_lte(Atmosphere.local_density(0.0, 0.02), 0.004)
+	assert_lte(Atmosphere.local_density(0.5, 0.02), 0.004)
+
+
+func test_fog_sea() -> void:
+	assert_almost_eq(Atmosphere.local_density(1.5, 0.02), 0.02, 1e-6)
+	assert_almost_eq(Atmosphere.local_density(20.0, 0.02), 0.02, 1e-6)
+
+
+func test_clearing_above_the_roof() -> void:
+	assert_lt(Atmosphere.local_density(-3.0, 0.02), 0.05 * Atmosphere.local_density(0.0, 0.02))
 
 
 func test_thinner_fog_above_the_roof() -> void:
