@@ -68,7 +68,7 @@ func test_density_of_uncarved_cells() -> void:
 		sampled += 1
 		if layout.is_solid(cell):
 			solid += 1
-	assert_between(float(solid) / sampled, 0.57, 0.67)
+	assert_between(float(solid) / sampled, 0.86, 0.94)
 
 
 func test_moved_roof_moves_the_boundary() -> void:

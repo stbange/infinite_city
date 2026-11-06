@@ -42,6 +42,7 @@ const SALT_PLAZA := 5
 const SALT_BLOCK := 6
 const SALT_SERVICES := 7
 const SALT_BRIDGE := 8
+const SALT_LANE := 9
 
 const _CACHE_LIMIT := 4096
 
@@ -221,13 +222,26 @@ var _plan_cache: Dictionary = {}   # Vector3i district -> Dictionary(Vector3i ce
 const FLOOR_HEIGHT := 4.0
 
 
-func min_floors() -> int:
-	return ceili(config.cell_size.y * config.block_fill_min / FLOOR_HEIGHT)
+## True when the boundary between cells `boundary` − 1 and `boundary` on `axis` is a major
+## traffic lane: an endless plane of open space (spec city-layout / Major traffic lanes).
+func is_lane(axis: int, boundary: int) -> bool:
+	return DetHash.u01(DetHash.hash2(config.world_seed, SALT_LANE, axis, boundary)) < config.lane_chance
 
 
-func max_floors() -> int:
-	var tallest := minf(config.cell_size.y * config.block_fill_max, config.cell_size.y - config.min_street_gap)
-	return floori(tallest / FLOOR_HEIGHT)
+## How far a block face sits back from the cell face behind it (spec city-layout / Block
+## geometry). `r` is the face's random number in [0, 1); it is drawn for every face so that the
+## random stream does not depend on lanes.
+func _setback(axis: int, lane: bool, low_face: bool, r: float) -> float:
+	if axis == Vector3.AXIS_Y:
+		if lane:
+			return config.lane_vertical_setback()
+		# Whole floors: bottoms 0 or 4 m above, tops 4 or 8 m below the cell face, so vertical
+		# gaps are 4-12 m, every block stays on the floor grid, and a roof is never on the cell
+		# face (a player standing on it is inside the block's own cell).
+		return FLOOR_HEIGHT * ((0.0 if low_face else 1.0) + floorf(r * 2.0))
+	if lane:
+		return config.lane_setback + r * config.lane_setback_jitter
+	return lerpf(config.street_setback_min, config.street_setback_max, r)
 
 
 ## The block in a cell, or null for open air.
@@ -238,25 +252,11 @@ func block_at(cell: Vector3i) -> BlockInfo:
 	var size := Vector3()
 	var offset := Vector3()
 	for axis in 3:
-		var cell_len: float = config.cell_size[axis]
-		if axis == Vector3.AXIS_Y:
-			# Whole floors on the world-wide floor grid (spec city-layout / Floor grid).
-			var floors := rng.range_int(min_floors(), max_floors())
-			var height := floors * FLOOR_HEIGHT
-			var limit := cell_len * 0.5 - config.min_street_gap * 0.5
-			var core := FLOOR_HEIGHT  # every block covers the cell centre +- one floor
-			var b_lo := ceilf(maxf(-limit, core - height) / FLOOR_HEIGHT) * FLOOR_HEIGHT
-			var b_hi := floorf(minf(-core, limit - height) / FLOOR_HEIGHT) * FLOOR_HEIGHT
-			var steps := maxi(0, roundi((b_hi - b_lo) / FLOOR_HEIGHT))
-			var bottom := b_lo + FLOOR_HEIGHT * rng.range_int(0, steps)
-			size.y = height
-			offset.y = bottom + height * 0.5
-			continue
-		var fill := rng.range_float(config.block_fill_min, config.block_fill_max)
-		var length := minf(cell_len * fill, cell_len - config.min_street_gap)
-		var free := cell_len - length - config.min_street_gap
-		size[axis] = length
-		offset[axis] = rng.range_float(-free * 0.5, free * 0.5) if free > 0.0 else 0.0
+		var half: float = config.cell_size[axis] * 0.5
+		var lo := -half + _setback(axis, is_lane(axis, cell[axis]), true, rng.next_float())
+		var hi := half - _setback(axis, is_lane(axis, cell[axis] + 1), false, rng.next_float())
+		size[axis] = hi - lo
+		offset[axis] = (lo + hi) * 0.5
 	var general := BlockTypes.GENERAL[rng.pick_weighted(
 			BlockTypes.general_weights(BlockTypes.depth_band(cell.y - config.roof_layer)))]
 	var kind: int = district_plan(district_of(cell)).get(cell, general)

@@ -24,13 +24,13 @@ func before_each() -> void:
 	add_child_autofree(world)
 
 
-## A bridge of 12-24 m between two blocks without magic doorways on the facing sides.
+## A bridge of 8-40 m between two blocks without magic doorways on the facing sides.
 func _bridge() -> BridgeInfo:
 	var pockets := world.pocket_layout
 	for x in range(-10, 10):
 		for z in range(-10, 10):
 			var bridge := world.layout.bridge_between(Vector3i(x, -2, z), Vector3.AXIS_X)
-			if bridge == null or bridge.length() < 12.0 or bridge.length() > 24.0:
+			if bridge == null or bridge.length() < 8.0 or bridge.length() > 40.0:
 				continue
 			var door_a := pockets.doorway_of(bridge.cell_a)
 			var door_b := pockets.doorway_of(bridge.cell_b)
