@@ -20,6 +20,8 @@ into spaces far bigger than the blocks that hold them.
 | ![On foot](docs/images/on-foot.jpg) | ![Roof](docs/images/roof.jpg) |
 | **From the top of the fog sea up to the light** | **Inside a canyon, 22 layers down** |
 | ![Shaft](docs/images/shaft-light.jpg) | ![Canyon](docs/images/canyon.jpg) |
+| **A major traffic lane: an avenue through the fog** | **A flight level between two layers** |
+| ![Avenue](docs/images/avenue.jpg) | ![Flight level](docs/images/flight-level.jpg) |
 | **640,000 km down: same precision** | |
 | ![Deep](docs/images/deep.jpg) | |
 | **A magic doorway…** | **…opens into a hall hundreds of metres long** |
@@ -45,6 +47,12 @@ The city is not a heightmap. It is a **3D lattice of 64 m cells**, and every cel
 - **Canyons that go on forever** come from integer rules per district (8×8×8 cells), so they
   stay continuous without needing their neighbours. Vertical shafts depend only on the district
   column (x, z), and X/Z canyons depend only on the district row. Plazas add local open space.
+- **Narrow streets, wide lanes:** blocks are packed tight. Each face sits only 2–6 m back from
+  its cell edge, so neighbours are 4–12 m apart, and 90% of cells hold a block. About one cell
+  boundary in six per axis is a *major traffic lane*: an endless plane where blocks keep 16–18 m
+  back, giving 32–36 m avenues (open up and down) and horizontal flight levels between layers.
+  The decision depends only on the seed and the boundary index, so a lane runs straight through
+  the whole infinite city.
 - **A real city:** blocks are housing, farms, markets, offices, industry and parks, with a mix
   that changes with depth (farms and industry deep down, markets and offices near the roof).
   Every district has exactly one hospital, fire station, security station, school, power
@@ -156,10 +164,11 @@ Git history follows this rhythm (*Propose → Implement → Archive*) for each c
 | `add-block-interiors` | `block-interiors`, `city-layout`, `city-bridges` |
 | `fit-interiors-inside-walls` | `block-interiors` |
 | `add-heavy-fog` | `city-fog`, `city-rendering` |
+| `add-streets-and-lanes` | `city-layout` |
 
 ```bash
 scripts/install-godot.sh              # once: Godot 4.7.2 into .tools/godot/
-scripts/test.sh                       # 275 GUT tests, headless (~90 s)
+scripts/test.sh                       # 280 GUT tests, headless (~90 s)
 scripts/test.sh -gselect=interior     # only test files matching "interior"
 scripts/screenshot.sh out.jpg --doorway --inside           # headless render (needs Xvfb)
 scripts/screenshot.sh out.jpg --interior=flat --pos=100,-1300,60
