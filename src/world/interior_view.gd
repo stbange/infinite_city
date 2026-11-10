@@ -33,6 +33,10 @@ var _floor_bodies: Dictionary = {} # int -> StaticBody3D
 var _shell_body: StaticBody3D
 var _ready_flag: bool = false
 var _collision_centre: int = -1000
+## Callable(cell, floor, unit) -> String naming who is behind a door (door plates).
+var plate_namer: Callable
+var _plate_centre: int = -1000
+var _plates: Node3D
 
 
 ## Shared by every entered block; CityWorld keeps its roof height current.
@@ -175,6 +179,44 @@ func set_collision_floors(center: int) -> void:
 	for k in range(maxi(0, center - 1), mini(plan.floors, center + 2)):
 		if not _floor_bodies.has(k):
 			_floor_bodies[k] = _floor_body(k)
+
+
+## Door plates on the floors centre - 1 .. centre + 1 (spec residents / Door plates).
+func set_plate_floors(center: int) -> void:
+	if not _ready_flag or center == _plate_centre or not plate_namer.is_valid():
+		return
+	_plate_centre = center
+	if _plates != null:
+		_plates.queue_free()
+	_plates = Node3D.new()
+	_plates.name = "Plates"
+	add_child(_plates)
+	for k in range(maxi(0, center - 1), mini(plan.floors, center + 2)):
+		for unit in plan.units:
+			if unit.is_core:
+				continue
+			var text: String = plate_namer.call(cell, k, unit.index)
+			if text.is_empty():
+				continue
+			var label := Label3D.new()
+			label.text = text
+			label.font_size = 40
+			label.pixel_size = 0.004
+			label.outline_size = 8
+			label.modulate = Color(1.0, 0.8, 0.55)
+			label.layers = RenderLayers.INTERIOR
+			label.position = Vector3(unit.door_x, plan.floor_y(k) + 2.45, unit.front_z() + unit.front_sign * 0.07)
+			label.rotation = Vector3(0.0, 0.0 if unit.front_sign > 0 else PI, 0.0)
+			_plates.add_child(label)
+
+
+func plate_texts() -> PackedStringArray:
+	var result := PackedStringArray()
+	if _plates == null:
+		return result
+	for child in _plates.get_children():
+		result.append((child as Label3D).text)
+	return result
 
 
 func collision_floors() -> Array[int]:

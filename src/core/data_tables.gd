@@ -26,6 +26,8 @@ const TABLES := {
 		"colors": "array", "reach_words": "array",
 	},
 	"events": {"templates": "dict"},
+	"workplaces": {"kinds": "dict", "words": "array", "skills": "array"},
+	"traits": {"axes": "array"},
 }
 
 static var _cache: Dictionary = {}

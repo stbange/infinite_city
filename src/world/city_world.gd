@@ -33,6 +33,11 @@ var lighting: CityLighting
 ## The generated past (spec city-history) and how it shows (spec faction-traces).
 var chronicle: CityChronicle
 var traces: TraceLayout
+## Residents and workplaces (specs residents, workplaces).
+var population: Population
+var background: BackgroundJobs
+var _prefetched: Dictionary = {}
+var _last_district := Vector3i(0, 1 << 20, 0)
 var planner: StreamingPlanner
 var origin: FloatingOrigin
 ## When set, chunks stream around this node instead of the camera (e.g. the entrance doorway
@@ -52,6 +57,10 @@ func _ready() -> void:
 	lighting = CityLighting.new(layout)
 	chronicle = CityChronicle.new(config)
 	traces = TraceLayout.new(chronicle, layout)
+	population = Population.new(layout, chronicle)
+	background = BackgroundJobs.new()
+	background.name = "BackgroundJobs"
+	add_child(background)
 	planner = StreamingPlanner.for_config(config, radius_h, radius_v)
 	planner.budget = chunks_per_tick
 	origin = FloatingOrigin.for_config(config)
@@ -77,6 +86,31 @@ func tick() -> void:
 		_load(chunk)
 	_update_collision()
 	_apply_atmosphere()
+	var player_district := layout.district_of(origin.absolute_cell_of(focus_node().global_position)) if focus_node() != null else _last_district
+	if player_district != _last_district:
+		_last_district = player_district
+		prefetch_job_market(player_district)
+	poll_background()
+
+
+## Builds a district's job market on a worker thread with its own layout (spec workplaces / Job
+## market budget); poll_background() hands it to the population when it is done.
+func prefetch_job_market(district: Vector3i) -> void:
+	if population.has_job_market(district) or _prefetched.has(district):
+		return
+	_prefetched[district] = true
+	var job_config := config
+	background.submit(["market", district], func() -> Variant:
+		return Population.new(CityLayout.new(job_config), null).job_market(district))
+
+
+func poll_background() -> void:
+	background.poll()
+	for district: Vector3i in _prefetched.keys():
+		var key := ["market", district]
+		if background.is_ready(key):
+			population.adopt_market(background.result(key))
+			_prefetched.erase(district)
 
 
 ## Loads the chunks around the player and the streaming focus right now (ignoring the budget)

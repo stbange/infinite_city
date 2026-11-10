@@ -1,0 +1,255 @@
+{
+ "kinds": {
+  "FARM": {
+   "m2_per_worker": 30,
+   "opens": 300,
+   "closes": 1140,
+   "trades": [
+    {
+     "name": "grow hall",
+     "pattern": "{family} Grow Hall {n}",
+     "food": false
+    },
+    {
+     "name": "seed lab",
+     "pattern": "{family} Seed Lab",
+     "food": false
+    }
+   ],
+   "skills": [
+    "hands",
+    "tech"
+   ]
+  },
+  "MARKET": {
+   "m2_per_worker": 25,
+   "opens": 480,
+   "closes": 1380,
+   "trades": [
+    {
+     "name": "noodle bar",
+     "pattern": "[{family}'s Noodles|{family}'s Noodle Bar|Noodles by {given}]",
+     "food": true
+    },
+    {
+     "name": "kitchen",
+     "pattern": "[{family}'s Kitchen|The {word} Kitchen|{given}'s Dumplings]",
+     "food": true
+    },
+    {
+     "name": "grocer",
+     "pattern": "[{family} Grocers|{word} Greens|{family}'s Pantry]",
+     "food": true
+    },
+    {
+     "name": "pharmacy",
+     "pattern": "[{family} Pharmacy|The {word} Dispensary]",
+     "food": false
+    },
+    {
+     "name": "electronics",
+     "pattern": "[{family} Electronics|{word} Circuits|{family} Repair]",
+     "food": false
+    },
+    {
+     "name": "clothes",
+     "pattern": "[{family} Tailors|{word} Threads]",
+     "food": false
+    }
+   ],
+   "skills": [
+    "words",
+    "numbers"
+   ]
+  },
+  "OFFICE": {
+   "m2_per_worker": 14,
+   "opens": 480,
+   "closes": 1080,
+   "trades": [
+    {
+     "name": "office",
+     "pattern": "[{family} & Partners|{family} Consulting|{word} Data|{family} Brokers]",
+     "food": false
+    }
+   ],
+   "skills": [
+    "numbers",
+    "words",
+    "tech"
+   ]
+  },
+  "INDUSTRY": {
+   "m2_per_worker": 22,
+   "opens": 360,
+   "closes": 1320,
+   "trades": [
+    {
+     "name": "workshop",
+     "pattern": "[{family} Fabrication|{word} Works|{family} Machine Shop]",
+     "food": false
+    }
+   ],
+   "skills": [
+    "hands",
+    "tech"
+   ]
+  },
+  "PARK": {
+   "m2_per_worker": 80,
+   "opens": 360,
+   "closes": 1320,
+   "trades": [
+    {
+     "name": "garden",
+     "pattern": "[{word} Garden|{family} Gardens]",
+     "food": false
+    }
+   ],
+   "skills": [
+    "hands",
+    "care"
+   ]
+  },
+  "HOSPITAL": {
+   "m2_per_worker": 14,
+   "opens": 0,
+   "closes": 1440,
+   "trades": [
+    {
+     "name": "ward",
+     "pattern": "[{word} Ward|{family} Ward]",
+     "food": false
+    }
+   ],
+   "skills": [
+    "care"
+   ]
+  },
+  "FIRE_STATION": {
+   "m2_per_worker": 25,
+   "opens": 0,
+   "closes": 1440,
+   "trades": [
+    {
+     "name": "fire station",
+     "pattern": "Fire Station {n}",
+     "food": false
+    }
+   ],
+   "skills": [
+    "hands",
+    "care"
+   ]
+  },
+  "SECURITY": {
+   "m2_per_worker": 25,
+   "opens": 0,
+   "closes": 1440,
+   "trades": [
+    {
+     "name": "security post",
+     "pattern": "Warden Post {n}",
+     "food": false
+    }
+   ],
+   "skills": [
+    "hands",
+    "words"
+   ]
+  },
+  "SCHOOL": {
+   "m2_per_worker": 18,
+   "opens": 420,
+   "closes": 1020,
+   "trades": [
+    {
+     "name": "classroom",
+     "pattern": "[{word} School|{family} Academy]",
+     "food": false
+    }
+   ],
+   "skills": [
+    "words",
+    "care"
+   ]
+  },
+  "POWER_PLANT": {
+   "m2_per_worker": 30,
+   "opens": 0,
+   "closes": 1440,
+   "trades": [
+    {
+     "name": "generator hall",
+     "pattern": "Generator Hall {n}",
+     "food": false
+    }
+   ],
+   "skills": [
+    "tech",
+    "hands"
+   ]
+  },
+  "WATER_WORKS": {
+   "m2_per_worker": 35,
+   "opens": 0,
+   "closes": 1440,
+   "trades": [
+    {
+     "name": "pump hall",
+     "pattern": "Pump Hall {n}",
+     "food": false
+    }
+   ],
+   "skills": [
+    "tech",
+    "hands"
+   ]
+  },
+  "TRANSIT_HUB": {
+   "m2_per_worker": 18,
+   "opens": 240,
+   "closes": 1440,
+   "trades": [
+    {
+     "name": "transit desk",
+     "pattern": "[{word} Transit Desk|Platform {n}]",
+     "food": false
+    }
+   ],
+   "skills": [
+    "words",
+    "numbers"
+   ]
+  }
+ },
+ "words": [
+  "Lucky",
+  "Golden",
+  "Blue",
+  "Jade",
+  "Silver",
+  "Red",
+  "Lantern",
+  "Neon",
+  "Copper",
+  "Night",
+  "Velvet",
+  "Iron",
+  "Little",
+  "Old",
+  "Bright",
+  "Ninth",
+  "Hollow",
+  "Quiet",
+  "Cinder",
+  "Pearl"
+ ],
+ "skills": [
+  "hands",
+  "numbers",
+  "care",
+  "words",
+  "tech"
+ ]
+}

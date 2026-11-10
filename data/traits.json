@@ -1,0 +1,24 @@
+{
+ "axes": [
+  [
+   "cold",
+   "warm"
+  ],
+  [
+   "timid",
+   "bold"
+  ],
+  [
+   "content",
+   "ambitious"
+  ],
+  [
+   "sly",
+   "honest"
+  ],
+  [
+   "sceptical",
+   "devout"
+  ]
+ ]
+}

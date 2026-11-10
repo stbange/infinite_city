@@ -60,9 +60,10 @@ func door_targets(near: Vector3) -> Array[Dictionary]:
 			if unit.is_core:
 				continue
 			var local := Vector3(unit.door_x, y, unit.front_z())
+			var who := _world().population.door_name(view.cell, k, unit.index) if _world() != null and _world().population != null else "Door"
 			result.append({
 				"position": view.global_position + local,
-				"label": "Door · Fl %d · Unit %d" % [k + 1, unit.index + 1],
+				"label": "%s · Fl %d · Unit %d" % [who, k + 1, unit.index + 1],
 				"kind": "door",
 				"payload": {"cell": view.cell, "floor": k, "unit": unit.index},
 			})
@@ -99,6 +100,8 @@ func update() -> void:
 		if not _views.has(block.cell):
 			var view := InteriorView.new()
 			view.setup(_layout.plan_of(block), _layout)
+			if world.population != null:
+				view.plate_namer = world.population.door_name
 			add_child(view)
 			view.global_position = world.origin.scene_position_of_cell_center(block.cell)
 			_views[block.cell] = view
@@ -111,6 +114,7 @@ func update() -> void:
 			if chunk != null and not chunk.is_block_hidden(view.cell):
 				chunk.set_block_hidden(view.cell, true)
 			view.set_collision_floors(player_floor)
+			view.set_plate_floors(player_floor)
 
 
 ## Blocks to keep or enter, by cell: nearest first, at most MAX_ACTIVE.

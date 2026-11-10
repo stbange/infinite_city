@@ -3,10 +3,16 @@ extends Node
 ## Results computed on worker threads and cached by key (spec content-data / Background jobs).
 ## Jobs must be pure (generators are), so running them off the main thread is safe.
 
-var _mutex := Mutex.new()
+## State shared with worker threads; tasks keep it alive even if this node is freed first.
+class Shared:
+	extends RefCounted
+	var mutex := Mutex.new()
+	var finished: Dictionary = {}   # key -> result, filled by workers
+
+
+var _shared := Shared.new()
 var _results: Dictionary = {}
 var _pending: Dictionary = {}   # key -> task id
-var _finished: Dictionary = {}  # key -> result, filled by workers
 
 
 func _process(_delta: float) -> void:
@@ -17,22 +23,22 @@ func _process(_delta: float) -> void:
 func submit(key: Variant, job: Callable) -> void:
 	if _results.has(key) or _pending.has(key):
 		return
-	_pending[key] = WorkerThreadPool.add_task(_run.bind(key, job))
+	_pending[key] = WorkerThreadPool.add_task(BackgroundJobs._run.bind(_shared, key, job))
 
 
-func _run(key: Variant, job: Callable) -> void:
+static func _run(shared: Shared, key: Variant, job: Callable) -> void:
 	var value: Variant = job.call()
-	_mutex.lock()
-	_finished[key] = value
-	_mutex.unlock()
+	shared.mutex.lock()
+	shared.finished[key] = value
+	shared.mutex.unlock()
 
 
 ## Moves finished results into the cache (main thread).
 func poll() -> void:
-	_mutex.lock()
-	var done := _finished.duplicate()
-	_finished.clear()
-	_mutex.unlock()
+	_shared.mutex.lock()
+	var done := _shared.finished.duplicate()
+	_shared.finished.clear()
+	_shared.mutex.unlock()
 	for key: Variant in done:
 		WorkerThreadPool.wait_for_task_completion(_pending[key])
 		_pending.erase(key)

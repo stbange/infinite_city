@@ -6,7 +6,10 @@ extends CanvasLayer
 @export var camera_path: NodePath
 @export var pocket_manager_path: NodePath
 @export var interiors_path: NodePath
-@export var interaction_path: NodePath
+@export var interaction_path: NodePath:
+	set(value):
+		interaction_path = value
+		_connect_interaction()
 @export var session_path: NodePath
 
 const _REFRESH_SECONDS := 0.1
@@ -14,6 +17,9 @@ const _REFRESH_SECONDS := 0.1
 var _label: Label
 var _prompt: Label
 var _debug: Label
+var _card: Label
+var _card_time: float = 0.0
+var _connected: Interaction
 var _since_refresh: float = 0.0
 
 
@@ -51,11 +57,27 @@ func _ready() -> void:
 	_debug.add_theme_constant_override("outline_size", 4)
 	_debug.visible = false
 	add_child(_debug)
+	_card = Label.new()
+	_card.name = "Card"
+	_card.anchor_left = 0.5
+	_card.anchor_right = 0.5
+	_card.anchor_top = 0.66
+	_card.anchor_bottom = 0.66
+	_card.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_card.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_card.add_theme_font_size_override("font_size", 15)
+	_card.add_theme_color_override("font_outline_color", Color.BLACK)
+	_card.add_theme_constant_override("outline_size", 6)
+	add_child(_card)
 	_build_legend()
 	_build_controls()
 
 
 func _process(delta: float) -> void:
+	if _card_time > 0.0:
+		_card_time -= delta
+		if _card_time <= 0.0:
+			_card.text = ""
 	_since_refresh += delta
 	if _since_refresh >= _REFRESH_SECONDS:
 		_since_refresh = 0.0
@@ -79,6 +101,54 @@ func _unhandled_input(event: InputEvent) -> void:
 		set_debug_visible(not _debug.visible)
 
 
+func card_text() -> String:
+	return _card.text
+
+
+## Shows who lives or works behind an interacted door (spec residents / Residents card).
+func show_card(target: Dictionary) -> void:
+	var world := get_node_or_null(world_path) as CityWorld
+	if world == null or world.population == null or target.get("kind") != "door":
+		return
+	var payload: Dictionary = target.get("payload", {})
+	var cell: Vector3i = payload["cell"]
+	var k: int = payload["floor"]
+	var unit: int = payload["unit"]
+	var population := world.population
+	var lines := PackedStringArray()
+	var block := world.layout.block_at(cell)
+	if block != null and block.kind == BlockTypes.Kind.HOUSING:
+		var people := population.residents(cell, k, unit)
+		if people.is_empty():
+			lines.append("Nobody lives here.")
+		for p in people:
+			var job := ""
+			if population.has_job_market(p.id.district):
+				var w := population.workplace_of(p.id)
+				job = " · works at %s" % w.name if w != null else (" · out of work" if p.age >= 18 and p.age <= 67 else "")
+			lines.append("%s, %d%s" % [p.full_name(), p.age, job])
+	else:
+		var w := population.workplace(cell, k, unit)
+		if w != null:
+			var staff := ""
+			if population.has_job_market(w.id.district):
+				var market := population.job_market(w.id.district)
+				var record := market.workplace_at(w.id)
+				staff = " · %d staff" % market.staff_of(record).size()
+			lines.append("%s (%s)%s · open %02d:00–%02d:00" % [w.name, w.trade, staff, w.opens / 60, (w.closes / 60) % 24])
+	_card.text = "\n".join(lines)
+	_card_time = 6.0
+
+
+func _connect_interaction() -> void:
+	if not is_inside_tree() or interaction_path.is_empty():
+		return
+	var interaction := get_node_or_null(interaction_path) as Interaction
+	if interaction != null and interaction != _connected:
+		_connected = interaction
+		interaction.interacted.connect(show_card)
+
+
 func prompt_text() -> String:
 	return _prompt.text
 
@@ -86,6 +156,7 @@ func prompt_text() -> String:
 ## Shows "E · <label>" for the current interaction target (spec interaction / Prompt).
 func refresh_prompt() -> void:
 	var interaction := get_node_or_null(interaction_path) as Interaction if not interaction_path.is_empty() else null
+	_connect_interaction()
 	var target := interaction.target() if interaction != null else {}
 	_prompt.text = "" if target.is_empty() else "E · %s" % target.get("label", "")
 
