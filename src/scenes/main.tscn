@@ -1,4 +1,4 @@
-[gd_scene load_steps=27 format=3]
+[gd_scene load_steps=30 format=3]
 
 [ext_resource type="Script" path="res://src/world/game_main.gd" id="1_main"]
 [ext_resource type="Script" path="res://src/world/city_world.gd" id="2_world"]
@@ -23,6 +23,9 @@
 [ext_resource type="Script" path="res://src/world/courier_shop.gd" id="21_shop"]
 [ext_resource type="Script" path="res://src/world/traversal_tools.gd" id="22_tools"]
 [ext_resource type="Script" path="res://src/world/simulation_runner.gd" id="23_sim"]
+[ext_resource type="Script" path="res://src/world/game_menu.gd" id="24_menu"]
+[ext_resource type="Script" path="res://src/world/address_book.gd" id="25_book"]
+[ext_resource type="Script" path="res://src/world/ambience.gd" id="26_ambience"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_sky"]
 shader = ExtResource("5_sky")
@@ -138,6 +141,7 @@ jobs_path = NodePath("../JobManager")
 panel_path = NodePath("../DialoguePanel")
 encounters_path = NodePath("../EncounterDirector")
 simulation_path = NodePath("../SimulationRunner")
+menu_path = NodePath("../GameMenu")
 
 [node name="ShopPanel" type="CanvasLayer" parent="."]
 script = ExtResource("20_dialogue")
@@ -161,6 +165,24 @@ player_path = NodePath("../Player")
 jobs_path = NodePath("../JobManager")
 encounters_path = NodePath("../EncounterDirector")
 story_path = NodePath("../StoryRunner")
+
+[node name="GameMenu" type="CanvasLayer" parent="."]
+script = ExtResource("24_menu")
+session_path = NodePath("../GameSession")
+player_path = NodePath("../Player")
+
+[node name="BookPanel" type="CanvasLayer" parent="."]
+script = ExtResource("20_dialogue")
+
+[node name="AddressBook" type="Node" parent="."]
+script = ExtResource("25_book")
+jobs_path = NodePath("../JobManager")
+story_path = NodePath("../StoryRunner")
+panel_path = NodePath("../BookPanel")
+
+[node name="Ambience" type="Node" parent="."]
+script = ExtResource("26_ambience")
+world_path = NodePath("../CityWorld")
 
 [node name="CityFog" type="Node" parent="."]
 script = ExtResource("11_fog")

@@ -11,6 +11,7 @@ const STORY_PAY := 15
 @export var panel_path: NodePath
 @export var encounters_path: NodePath
 @export var simulation_path: NodePath
+@export var menu_path: NodePath
 ## When false, update() must be called manually (used by tests).
 @export var auto_update: bool = true
 
@@ -40,8 +41,10 @@ func update() -> void:
 		_ensure_story_job(world, jobs)
 	var panel := _panel()
 	if not state.scene.is_empty() and panel != null and not panel.is_open():
-		panel.open(StoryDirector.scene_text(plot, state, world.config.world_seed),
-				StoryDirector.choice_texts(plot, state, world.config.world_seed))
+		var menu := get_node_or_null(menu_path) as GameMenu if not menu_path.is_empty() else null
+		var courier: Dictionary = menu.profile if menu != null else {}
+		panel.open(StoryDirector.scene_text(plot, state, world.config.world_seed, courier),
+				StoryDirector.choice_texts(plot, state, world.config.world_seed, courier))
 
 
 ## Casts right now on this thread (tests, or when no background jobs are available).

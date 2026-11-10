@@ -7,4 +7,4 @@
 
 - [x] 2.1 Write `test/integration/test_simulation_runner.gd`; verify it fails
 - [x] 2.2 Implement `SimulationRunner`, pay and customer overlays, HUD price line, main scene; verify it passes
-- [ ] 2.3 Run `scripts/test.sh` and `openspec validate --all --strict`
+- [x] 2.3 Run `scripts/test.sh` and `openspec validate --all --strict`

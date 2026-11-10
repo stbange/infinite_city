@@ -283,16 +283,24 @@ static func choose(plot: Dictionary, state: StoryState, index: int, deliveries: 
 
 # --- Text ----------------------------------------------------------------------------------
 
-static func scene_text(plot: Dictionary, state: StoryState, seed_value: int) -> String:
+## Slot values: the cast plus the courier ({courier.first}; "courier" when nobody was named).
+static func slot_values(state: StoryState, courier: Dictionary = {}) -> Dictionary:
+	var values := state.cast.duplicate()
+	var name := str(courier.get("name", "courier"))
+	values["courier"] = {"first": name, "name": name, "pronouns": str(courier.get("pronouns", "they/them"))}
+	return values
+
+
+static func scene_text(plot: Dictionary, state: StoryState, seed_value: int, courier: Dictionary = {}) -> String:
 	if state.scene.is_empty():
 		return ""
-	return TextTemplate.fill(str(plot["scenes"][state.scene]["text"]), state.cast, seed_value + state.scene.hash())
+	return TextTemplate.fill(str(plot["scenes"][state.scene]["text"]), slot_values(state, courier), seed_value + state.scene.hash())
 
 
-static func choice_texts(plot: Dictionary, state: StoryState, seed_value: int) -> PackedStringArray:
+static func choice_texts(plot: Dictionary, state: StoryState, seed_value: int, courier: Dictionary = {}) -> PackedStringArray:
 	var result := PackedStringArray()
 	for option: Dictionary in choices(plot, state):
-		result.append(TextTemplate.fill(str(option["text"]), state.cast, seed_value))
+		result.append(TextTemplate.fill(str(option["text"]), slot_values(state, courier), seed_value))
 	return result
 
 

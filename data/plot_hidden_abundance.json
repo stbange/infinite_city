@@ -412,7 +412,7 @@
  "scenes": {
   "first_night": {
    "speaker": "patron",
-   "text": "{patron.first} {patron.family} slides a warm bag across the counter of {patron.place}. \"[Rent's due Monday, courier|You look like you need the work]. Orders come in every hour. Find the door, keep it hot, don't feed the gangs.\"",
+   "text": "{patron.first} {patron.family} slides a warm bag across the counter of {patron.place}. \"[Rent's due Monday, {courier.first}|You look like you need the work, {courier.first}]. Orders come in every hour. Find the door, keep it hot, don't feed the gangs.\"",
    "choices": [
     {
      "text": "\"I'll find them.\""

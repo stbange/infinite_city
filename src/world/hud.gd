@@ -310,7 +310,7 @@ func _build_legend() -> void:
 func _build_controls() -> void:
 	var hint := Label.new()
 	hint.name = "Controls"
-	hint.text = "Click: look   WASD: move   E: interact   Space: jump / up / glide   Shift: sprint / boost   F: walk ⇄ fly   Q/Ctrl: down (fly)   Wheel: fly speed   Esc: release mouse\nU: shop   R: scan   G: grapple   X: flare   1–3: choose"
+	hint.text = "Click: look   WASD: move   E: interact   Space: jump / up / glide   Shift: sprint / boost   F: walk ⇄ fly   Q/Ctrl: down (fly)   Wheel: fly speed   Esc: release mouse\nU: shop   M: address book   R: scan   G: grapple   X: flare   1–3: choose   F5/F9: save/load   Esc: menu"
 	hint.add_theme_font_size_override("font_size", 13)
 	hint.add_theme_color_override("font_outline_color", Color.BLACK)
 	hint.add_theme_constant_override("outline_size", 4)
