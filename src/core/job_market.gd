@@ -159,6 +159,11 @@ func workplace_count() -> int:
 	return _w_local.size()
 
 
+## Packed unit id (slot 0) of the workplace at an index.
+func local_of(index: int) -> int:
+	return _w_local[index]
+
+
 func slots_of(index: int) -> int:
 	return _w_slots[index]
 
