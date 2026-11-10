@@ -12,6 +12,8 @@ extends CanvasLayer
 		_connect_interaction()
 @export var session_path: NodePath
 @export var jobs_path: NodePath
+@export var encounters_path: NodePath
+@export var hazards_path: NodePath
 
 const _REFRESH_SECONDS := 0.1
 
@@ -201,6 +203,10 @@ func refresh() -> void:
 	if session != null:
 		lines = session.clock.describe() + "\n" + lines
 	lines += _courier_lines(camera, session)
+	lines += _encounter_lines(world, camera)
+	var hazards := get_node_or_null(hazards_path) as HazardDirector if not hazards_path.is_empty() else null
+	if hazards != null and not hazards.last_message.is_empty():
+		lines += "\n" + hazards.last_message
 	var moving := "Walking" if camera.mode == Player.Mode.WALK else "Flying %d m/s" % roundi(camera.model.cruise_speed)
 	lines += "\n%s  ·  %d chunks  ·  %d fps" % [moving, world.loaded_chunks().size(), Engine.get_frames_per_second()]
 	_label.text = lines
@@ -227,6 +233,23 @@ func _courier_lines(camera: Player, session: GameSession) -> String:
 	if not jobs.carried.is_empty() and session != null:
 		var heat := CourierBoard.heat_of(jobs.carried[0], session.clock.total_minutes)
 		text += " · %s" % ("hot" if heat > 0.66 else ("warm" if heat > 0.0 else "cold"))
+	return text
+
+
+## The gang of the bridge underfoot and the encounter or its outcome (spec encounters).
+func _encounter_lines(world: CityWorld, camera: Player) -> String:
+	var director := get_node_or_null(encounters_path) as EncounterDirector if not encounters_path.is_empty() else null
+	if director == null or director.turf == null:
+		return ""
+	var text := ""
+	var bridge := director.bridge_under(world, camera.global_position)
+	if bridge != null:
+		var gang := director.turf.gang(director.turf.claim_of(bridge))
+		if gang != null:
+			text += "\nBridge held by %s" % gang.name
+	var line := director.hud_line()
+	if not line.is_empty():
+		text += "\n" + line
 	return text
 
 

@@ -14,6 +14,9 @@ const CAPSULE_HEIGHT := 1.8
 var mode: int = Mode.WALK
 var model := FlightModel.new()
 var walk := WalkModel.new()
+## Emitted when the player is put back on safe ground (a fall; hazards may emit it for car hits).
+signal rescued(reason: String)
+
 var fall_guard := FallGuard.new()
 var yaw: float = 0.0
 var pitch: float = 0.0
@@ -122,3 +125,4 @@ func _physics_process(delta: float) -> void:
 	if fall_guard.update(is_on_floor(), global_position, delta):
 		global_position = fall_guard.reset_point()
 		velocity = Vector3.ZERO
+		rescued.emit("fall")

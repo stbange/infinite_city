@@ -73,6 +73,11 @@ func advance_real(seconds: float) -> void:
 	_fraction -= whole
 
 
+## Game minutes including the fraction of the current minute.
+func exact_minutes() -> float:
+	return total_minutes + _fraction
+
+
 func light_level() -> float:
 	return light_at(minute_of_day())
 

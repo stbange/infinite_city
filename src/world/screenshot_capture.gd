@@ -10,6 +10,7 @@ extends Node
 ##           --interior=entrance|corridor|stairs|flat|window|unit:KIND [--interior-distance=m] [--turn=deg]
 ##             (a block near the start: on the bridge before an entrance, in the corridor behind
 ##              it, before the stair core, in a flat or a unit of block kind KIND, or at a window)
+##           --time=HH:MM [--day=n] (game time of day on the first day, or n days later)
 ##           --no-hud  --scale=0.6 (resize)  out.jpg saves a JPEG instead of a PNG
 ## Usage: scripts/screenshot.sh out.png --pos=0,200,0 --pitch=-30
 
@@ -117,6 +118,11 @@ func _apply_overrides() -> void:
 					float(_args.get("doorway-height", "3")))
 	if _args.has("interior"):
 		_place_in_interior(world, camera, _args["interior"])
+	if _args.has("time"):
+		var session := get_tree().current_scene.get_node_or_null("GameSession") as GameSession
+		var hm := str(_args["time"]).split(":")
+		if session != null and hm.size() == 2:
+			session.clock.total_minutes = (session.clock.day_number() + int(_args.get("day", "0"))) * GameClock.MINUTES_PER_DAY + int(hm[0]) * 60 + int(hm[1])
 
 
 ## Puts the camera at an interior viewpoint of the nearest suitable block (see the header).
@@ -262,6 +268,9 @@ func _process(_delta: float) -> void:
 	if _frames_ready < int(_args.get("wait", "20" if _wait_for_interior else "8")):
 		return
 	var path: String = _args["screenshot"]
+	var people := get_tree().current_scene.get_node_or_null("PeopleManager") as PeopleManager
+	if people != null:
+		print("people shown: ", people.agents().size(), " of ", people.candidate_count(), " candidates")
 	var image := get_viewport().get_texture().get_image()
 	if _args.has("scale"):
 		var factor := float(_args["scale"])

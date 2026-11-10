@@ -1,0 +1,143 @@
+extends GutTest
+## Spec encounters on a small world: tolls, no cargo, escape, capture.
+
+var world: CityWorld
+var player: Player
+var session: GameSession
+var jobs: JobManager
+var director: EncounterDirector
+
+
+func before_each() -> void:
+	world = CityWorld.new()
+	world.config = CityConfig.new()
+	world.radius_h = 1
+	world.radius_v = 1
+	world.auto_tick = false
+	player = Player.new()
+	player.name = "Player"
+	player.input_enabled = false
+	player.start_mode = Player.Mode.FLY
+	world.add_child(player)
+	world.focus_path = NodePath("Player")
+	session = GameSession.new()
+	session.name = "GameSession"
+	session.running = false
+	world.add_child(session)
+	session.world_path = NodePath("..")
+	session.player_path = NodePath("../Player")
+	jobs = JobManager.new()
+	jobs.name = "JobManager"
+	world.add_child(jobs)
+	jobs.world_path = NodePath("..")
+	jobs.session_path = NodePath("../GameSession")
+	director = EncounterDirector.new()
+	director.name = "EncounterDirector"
+	director.auto_update = false
+	world.add_child(director)
+	director.world_path = NodePath("..")
+	director.session_path = NodePath("../GameSession")
+	director.player_path = NodePath("../Player")
+	director.jobs_path = NodePath("../JobManager")
+	add_child_autofree(world)
+
+
+## A claimed bridge near the start and a game hour whose roll with one order is `wanted`.
+func _claimed_bridge(wanted: String) -> Array:
+	var turf := TurfMap.new(world.chronicle, world.layout)
+	var spawn := SpawnFinder.find_on_foot(world.layout)
+	var first_hour := session.clock.total_minutes / 60
+	for x in range(-10, 11):
+		for z in range(-10, 11):
+			for bridge in world.layout.bridges_of(spawn.cell + Vector3i(x, 0, z)):
+				if turf.claim_of(bridge).is_empty():
+					continue
+				for h in 48:
+					if EncounterRules.roll(world.config.world_seed, bridge, first_hour + h, 1, 0.0) == wanted:
+						return [bridge, first_hour + h]
+	return []
+
+
+func _stand_on(bridge: BridgeInfo, along: float) -> void:
+	var local := bridge.start.lerp(bridge.end, along) + Vector3(0, 0.02, 0)
+	var absolute := PackedFloat64Array()
+	for axis in 3:
+		absolute.append((bridge.cell_a[axis] + 0.5) * world.config.cell_size[axis] + local[axis])
+	world.teleport_focus(absolute)
+	world.prime_focus()
+	player.mode = Player.Mode.WALK
+
+
+func _carry_one() -> void:
+	var job := DeliveryJob.new()
+	job.id = "test"
+	jobs.carried.append(job)
+
+
+func _offer(wanted: String = "toll") -> BridgeInfo:
+	var found := _claimed_bridge(wanted)
+	assert_false(found.is_empty(), "a claimed bridge with a %s" % wanted)
+	var bridge: BridgeInfo = found[0]
+	session.clock.total_minutes = found[1] * 60 + 5
+	_carry_one()
+	_stand_on(bridge, 0.3)
+	director.update(0.016)
+	return bridge
+
+
+func test_a_toll_on_the_bridge() -> void:
+	_offer("toll")
+	assert_eq(director.state, EncounterDirector.State.OFFER)
+	assert_eq(director.kind, "toll")
+	assert_eq(director.price, EncounterRules.toll(1, 0.0))
+	assert_string_contains(director.hud_line(), "1 pay")
+	jobs.wallet.credits = 100
+	director.pay()
+	assert_eq(jobs.wallet.credits, 100 - EncounterRules.toll(1, 0.0))
+	assert_eq(director.state, EncounterDirector.State.IDLE)
+	assert_eq(jobs.carried.size(), 1)
+	# Once per bridge and hour.
+	director.update(0.016)
+	assert_eq(director.state, EncounterDirector.State.IDLE)
+
+
+func test_no_cargo_no_encounter() -> void:
+	var found := _claimed_bridge("toll")
+	var bridge: BridgeInfo = found[0]
+	session.clock.total_minutes = found[1] * 60 + 5
+	_stand_on(bridge, 0.3)
+	director.update(0.016)
+	assert_eq(director.state, EncounterDirector.State.IDLE)
+
+
+func test_escaping_a_chase() -> void:
+	var bridge := _offer("toll")
+	assert_eq(director.state, EncounterDirector.State.OFFER)
+	var gang := director.gang_key
+	var before := director.heat.value_at(gang, session.clock.total_minutes)
+	director.run()
+	assert_eq(director.state, EncounterDirector.State.CHASE)
+	# Off the bridge and far away along it, out of reach.
+	var away := bridge.start - Vector3(0, 0, 0)
+	away[bridge.axis] -= 60.0
+	var absolute := PackedFloat64Array()
+	for axis in 3:
+		absolute.append((bridge.cell_a[axis] + 0.5) * world.config.cell_size[axis] + away[axis])
+	world.teleport_focus(absolute)
+	director.update(0.016)
+	assert_eq(director.state, EncounterDirector.State.IDLE)
+	assert_eq(jobs.carried.size(), 1)
+	assert_gt(director.heat.value_at(gang, session.clock.total_minutes), before)
+
+
+func test_caught() -> void:
+	_offer("toll")
+	jobs.wallet.credits = 100
+	director.run()
+	for i in 200:
+		director.update(0.05)
+		if director.state != EncounterDirector.State.CHASE:
+			break
+	assert_eq(director.state, EncounterDirector.State.IDLE)
+	assert_eq(jobs.carried.size(), 0)
+	assert_lt(jobs.wallet.credits, 100)

@@ -19,6 +19,14 @@ func _process(_delta: float) -> void:
 	poll()
 
 
+## Waits for running tasks when freed: the worker pool aborts at exit if a task is never waited for.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_PREDELETE:
+		for key: Variant in _pending:
+			WorkerThreadPool.wait_for_task_completion(_pending[key])
+		_pending.clear()
+
+
 ## Starts `job` (a Callable returning the result) unless `key` is known already.
 func submit(key: Variant, job: Callable) -> void:
 	if _results.has(key) or _pending.has(key):

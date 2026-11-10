@@ -164,6 +164,13 @@ func door_position(cell: Vector3i, floor_index: int, unit_index: int) -> Vector3
 	return world.origin.scene_position_of_cell_center(cell) + Vector3(unit.door_x, plan.floor_y(floor_index) + 1.1, unit.front_z())
 
 
+## Drops all carried orders (taken by a gang or lost in a fall); returns how many were lost.
+func lose_cargo() -> int:
+	var lost := carried.size()
+	carried.clear()
+	return lost
+
+
 ## {position, label, floor} of the next door to go to: the first carried order's drop-off, or
 ## the patron's counter.
 func waypoint() -> Dictionary:
