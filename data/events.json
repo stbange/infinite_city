@@ -1,0 +1,46 @@
+{
+ "templates": {
+  "era": [
+   "{a} began."
+  ],
+  "founding": [
+   "[{a} was founded in {district}.|{a} started out in {district}.|{a} formed in {district}.]"
+  ],
+  "takeover": [
+   "[{a} took {district} from {b}.|{a} drove {b} out of {district}.|{district} fell to {a}, ending the rule of {b}.]"
+  ],
+  "feud": [
+   "[{a} and {b} went to war over the bridges.|Blood was spilled between {a} and {b}.|{a} feuded with {b}.]"
+  ],
+  "border_feud": [
+   "[{a} clashed with {b} on the border of the Reach.|{a} fought {b} from the next Reach over.]"
+  ],
+  "alliance": [
+   "[{a} allied with {b}.|{a} and {b} signed a pact.]"
+  ],
+  "election": [
+   "[{a} won the council elections.|{a} took the most seats in the councils.]"
+  ],
+  "strike": [
+   "[{a} struck against {b}.|{a} shut down {b}'s floors for a month.]"
+  ],
+  "split": [
+   "[{a} split from {b}.|A faction broke away from {b} and called itself {a}.]"
+  ],
+  "collapse": [
+   "[{a} fell apart.|{a} was broken and scattered.|{a} dissolved.]"
+  ],
+  "buyout": [
+   "[{a} bought {district} from {b}.|{a} bought out {b} in {district}.]"
+  ],
+  "raid": [
+   "[{a} raided {district}.|{a}'s enforcers burned blocks in {district}.]"
+  ],
+  "blackout": [
+   "[{a} cut the power to {district}.|{district} went dark when {a} pulled the grid.]"
+  ],
+  "revival": [
+   "[{a} filled its chapels.|{a} won thousands of new believers.]"
+  ]
+ }
+}

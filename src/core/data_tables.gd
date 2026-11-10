@@ -12,6 +12,20 @@ const TABLES := {
 			"codas": "array", "endings": "array",
 		}],
 	},
+	"eras": {
+		"eras": [{
+			"kind": "string", "names": "array", "min_years": "int", "max_years": "int",
+			"roles": "array", "deeds": "array",
+		}],
+		"war_names": "dict",
+	},
+	"factions": {
+		"authority_names": "array", "goods": "array", "company_suffix": "dict", "faith_names": "array",
+		"society_names": "array", "gang_first": "array", "gang_second": "array", "party_names": "array",
+		"guild_names": "array", "local_faith_names": "array", "local_company_suffix": "array",
+		"colors": "array", "reach_words": "array",
+	},
+	"events": {"templates": "dict"},
 }
 
 static var _cache: Dictionary = {}

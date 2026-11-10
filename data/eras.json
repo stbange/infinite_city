@@ -1,0 +1,127 @@
+{
+ "eras": [
+  {
+   "kind": "raising",
+   "names": [
+    "the Raising",
+    "the First Lift",
+    "the Founding"
+   ],
+   "min_years": 40,
+   "max_years": 80,
+   "roles": [
+    "founder",
+    "engineer",
+    "first warden"
+   ],
+   "deeds": [
+    "lifted the first blocks around the Light",
+    "drew the plans of the roof",
+    "led the first families up the shafts"
+   ]
+  },
+  {
+   "kind": "building_down",
+   "names": [
+    "Building Down",
+    "the Stacking",
+    "the Long Building"
+   ],
+   "min_years": 120,
+   "max_years": 200,
+   "roles": [
+    "architect",
+    "farm pioneer",
+    "layer surveyor"
+   ],
+   "deeds": [
+    "opened the farm layers",
+    "numbered the layers below the roof",
+    "built the great lanes"
+   ]
+  },
+  {
+   "kind": "sealing",
+   "names": [
+    "the Sealing",
+    "the Edict of Light",
+    "the Closing of the Roof"
+   ],
+   "min_years": 3,
+   "max_years": 15,
+   "roles": [
+    "director",
+    "dissenter"
+   ],
+   "deeds": [
+    "signed the Edict that sealed the roof",
+    "led the march against the Edict"
+   ]
+  },
+  {
+   "kind": "doorway_rush",
+   "names": [
+    "the Doorway Rush",
+    "the Threshold Years",
+    "the Door Fever"
+   ],
+   "min_years": 40,
+   "max_years": 80,
+   "roles": [
+    "doorway pioneer",
+    "courier",
+    "fortune hunter"
+   ],
+   "deeds": [
+    "found the first door that was bigger inside",
+    "carried word between the doorways",
+    "vanished behind a doorway"
+   ]
+  },
+  {
+   "kind": "war",
+   "names": [
+    "the War"
+   ],
+   "min_years": 5,
+   "max_years": 15,
+   "roles": [
+    "war hero",
+    "company boss",
+    "martyr"
+   ],
+   "deeds": [
+    "held the deep districts through the war",
+    "gave the order that started the war",
+    "died defending the farm layers"
+   ]
+  },
+  {
+   "kind": "quiet",
+   "names": [
+    "the Quiet",
+    "the Long Quiet",
+    "the Uneasy Peace"
+   ],
+   "min_years": 80,
+   "max_years": 130,
+   "roles": [
+    "council leader",
+    "gang boss",
+    "prophet"
+   ],
+   "deeds": [
+    "kept the peace in the councils",
+    "built an empire of bridge tolls",
+    "preached a city below the city"
+   ]
+  }
+ ],
+ "war_names": {
+  "food": "the Hunger Riots",
+  "power": "the Blackout War",
+  "water": "the Thirst War",
+  "transit": "the Lane War",
+  "medicine": "the Fever War"
+ }
+}
