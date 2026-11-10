@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=3]
+[gd_scene load_steps=24 format=3]
 
 [ext_resource type="Script" path="res://src/world/game_main.gd" id="1_main"]
 [ext_resource type="Script" path="res://src/world/city_world.gd" id="2_world"]
@@ -18,6 +18,8 @@
 [ext_resource type="Script" path="res://src/world/encounter_director.gd" id="16_encounters"]
 [ext_resource type="Script" path="res://src/world/traffic_manager.gd" id="17_traffic"]
 [ext_resource type="Script" path="res://src/world/hazard_director.gd" id="18_hazards"]
+[ext_resource type="Script" path="res://src/world/story_runner.gd" id="19_story"]
+[ext_resource type="Script" path="res://src/world/dialogue_panel.gd" id="20_dialogue"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_sky"]
 shader = ExtResource("5_sky")
@@ -122,6 +124,17 @@ player_path = NodePath("../Player")
 jobs_path = NodePath("../JobManager")
 traffic_path = NodePath("../TrafficManager")
 
+[node name="DialoguePanel" type="CanvasLayer" parent="."]
+script = ExtResource("20_dialogue")
+
+[node name="StoryRunner" type="Node" parent="."]
+script = ExtResource("19_story")
+world_path = NodePath("../CityWorld")
+session_path = NodePath("../GameSession")
+jobs_path = NodePath("../JobManager")
+panel_path = NodePath("../DialoguePanel")
+encounters_path = NodePath("../EncounterDirector")
+
 [node name="CityFog" type="Node" parent="."]
 script = ExtResource("11_fog")
 world_path = NodePath("../CityWorld")
@@ -146,6 +159,7 @@ session_path = NodePath("../GameSession")
 jobs_path = NodePath("../JobManager")
 encounters_path = NodePath("../EncounterDirector")
 hazards_path = NodePath("../HazardDirector")
+story_path = NodePath("../StoryRunner")
 
 [node name="ScreenshotCapture" type="Node" parent="."]
 script = ExtResource("6_capture")

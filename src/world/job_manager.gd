@@ -6,6 +6,9 @@ extends Node
 
 const MAX_CARRIED := 3
 
+## Emitted after a delivery has been paid.
+signal delivered(job: DeliveryJob)
+
 @export var world_path: NodePath
 @export var session_path: NodePath
 @export var interaction_path: NodePath
@@ -148,11 +151,12 @@ func _on_interacted(target: Dictionary) -> void:
 		_taken[job.id] = true
 		carried.append(job)
 		return
-	var delivered := _job_at(payload)
-	if delivered != null:
-		wallet.credits += CourierBoard.pay_for(delivered, session.clock.total_minutes)
-		carried.erase(delivered)
+	var done := _job_at(payload)
+	if done != null:
+		wallet.credits += CourierBoard.pay_for(done, session.clock.total_minutes)
+		carried.erase(done)
 		completed += 1
+		delivered.emit(done)
 
 
 ## Scene position of a unit's door, 1.1 m above its floor.

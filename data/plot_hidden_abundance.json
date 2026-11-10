@@ -1,0 +1,99 @@
+{
+ "id": "hidden_abundance",
+ "title": "The Hidden Abundance",
+ "roles": {
+  "patron": {"kind": "patron"},
+  "keeper": {"kind": "person", "min_age": 66, "max_age": 120, "radius": 3},
+  "friend": {"kind": "person", "min_age": 22, "max_age": 45, "radius": 3},
+  "rival": {"kind": "person", "min_age": 18, "max_age": 30, "radius": 4},
+  "monopolist": {"kind": "faction", "types": ["company"], "good": "food"},
+  "disruptor": {"kind": "faction", "types": ["gang"]},
+  "idealists": {"kind": "faction", "types": ["party", "guild"]}
+ },
+ "beats": [
+  {"id": "first_night", "act": 1, "trigger": "scene", "scene": "first_night",
+   "objective": "Take your first orders at {patron.place}"},
+  {"id": "keeper_order", "act": 1, "trigger": "job", "after": ["first_night"], "deliveries": 2,
+   "job": {"to": "keeper", "cargo": "noodles"}, "scene": "keeper_door",
+   "objective": "Bring {keeper.first} {keeper.family} the usual noodles"},
+  {"id": "friend_order", "act": 1, "trigger": "job", "after": ["first_night"], "deliveries": 3,
+   "job": {"to": "friend", "cargo": "soup"}, "scene": "friend_door",
+   "objective": "Take soup to {friend.first} before the night shift"},
+  {"id": "rival", "act": 1, "trigger": "scene", "after": ["first_night"], "deliveries": 4, "scene": "rival",
+   "objective": "Keep delivering"},
+  {"id": "blight", "act": 2, "trigger": "scene", "after": ["keeper_order", "friend_order", "rival"], "scene": "blight",
+   "objective": "Keep the district fed"},
+  {"id": "rationing", "act": 2, "trigger": "scene", "after": ["blight"], "since": ["blight", 1], "scene": "rationing",
+   "objective": "Decide whose door you reach first"},
+  {"id": "ration_keeper", "act": 2, "trigger": "job", "after": ["rationing"], "flags": ["fed_keeper"],
+   "job": {"to": "keeper", "cargo": "ration box"}, "scene": "ration_keeper",
+   "objective": "Bring the last ration box to {keeper.first}"},
+  {"id": "ration_friend", "act": 2, "trigger": "job", "after": ["rationing"], "flags": ["fed_friend"],
+   "job": {"to": "friend", "cargo": "ration box"}, "scene": "ration_friend",
+   "objective": "Bring the last ration box to {friend.first}"},
+  {"id": "hijack", "act": 2, "trigger": "scene", "after": ["blight"], "since": ["blight", 2], "scene": "hijack",
+   "heat": {"disruptor": 1.0}, "objective": "Watch the bridges"},
+  {"id": "rally", "act": 2, "trigger": "scene", "after": ["blight"], "since": ["blight", 3], "scene": "rally",
+   "objective": "Keep delivering"},
+  {"id": "keeper_call", "act": 2, "trigger": "scene", "after": ["hijack", "rally"], "any": ["ration_keeper", "ration_friend"],
+   "scene": "keeper_call", "set_flags": ["act2_done"],
+   "objective": "Visit {keeper.first} tomorrow (to be continued)"}
+ ],
+ "scenes": {
+  "first_night": {
+   "speaker": "patron",
+   "text": "{patron.first} {patron.family} slides a warm bag across the counter of {patron.place}. \"[Rent's due Monday, courier|You look like you need the work]. Orders come in every hour. Find the door, keep it hot, don't feed the gangs.\"",
+   "choices": [{"text": "\"I'll find them.\""}]
+  },
+  "keeper_door": {
+   "speaker": "keeper",
+   "text": "The door opens a crack. {keeper.first} {keeper.family}, old and sharp-eyed, counts the coins twice. \"You're new. The last one never came this deep.\" On the shelf behind them sits a dented tin, polished like a relic.",
+   "choices": [{"text": "\"What's in the tin?\"", "flags": ["asked_tin"]}, {"text": "\"Enjoy your dinner.\""}]
+  },
+  "friend_door": {
+   "speaker": "friend",
+   "text": "{friend.first} {friend.family} takes the soup with both hands. \"[Twelve hours on the ward|Another double shift] and you're the first face that didn't want something from me. Come by again, will you?\"",
+   "choices": [{"text": "\"Same time tomorrow.\"", "flags": ["friend_warm"]}, {"text": "\"Just doing the job.\""}]
+  },
+  "rival": {
+   "speaker": "rival",
+   "text": "A courier in a patched jacket cuts in front of you at the counter and grabs your next order. \"{rival.first}. Remember it — this stretch was mine before you showed up.\"",
+   "choices": [{"text": "Let it go.", "flags": ["rival_friendly"]}, {"text": "\"Then race me for it.\"", "flags": ["rival_grudge"]}]
+  },
+  "blight": {
+   "speaker": "patron",
+   "text": "{patron.first} pins a new price list over the old one. \"The blight's in the farm layers. {monopolist.name} says supply is short, so everything costs three times as much. Funny how their warehouses never run dry.\"",
+   "choices": [{"text": "\"People will go hungry.\""}]
+  },
+  "rationing": {
+   "speaker": "patron",
+   "text": "\"One ration box left tonight,\" {patron.first} says. \"{keeper.first} hasn't eaten since yesterday. {friend.first}'s ward lost its kitchen. Your call, courier.\"",
+   "choices": [{"text": "Take it to {keeper.first}.", "flags": ["fed_keeper"]}, {"text": "Take it to {friend.first}.", "flags": ["fed_friend"]}]
+  },
+  "ration_keeper": {
+   "speaker": "keeper",
+   "text": "{keeper.first} holds the box like it might vanish. \"My great-aunt used to say the city was built on a lie about how little there is.\" The tin is on the table now.",
+   "choices": [{"text": "Leave quietly."}]
+  },
+  "ration_friend": {
+   "speaker": "friend",
+   "text": "{friend.first} shares the box out among the night staff before taking a bite. \"Someone's sitting on food while people faint in the corridors. I'll remember who brought this.\"",
+   "choices": [{"text": "Leave quietly."}]
+  },
+  "hijack": {
+   "speaker": "disruptor",
+   "text": "Word runs down the corridors: {disruptor.name} hijacked two couriers on the bridges last night and sold the food at blight prices. They know your face now.",
+   "choices": [{"text": "Keep your head down."}]
+  },
+  "rally": {
+   "speaker": "idealists",
+   "text": "In the stairwell, people from {idealists.name} press leaflets into every hand: OPEN THE WAREHOUSES. \"Couriers go everywhere,\" one says. \"Carry a few for us?\"",
+   "choices": [{"text": "Take a stack.", "flags": ["carries_leaflets"]}, {"text": "\"I just carry food.\""}]
+  },
+  "keeper_call": {
+   "speaker": "keeper",
+   "text": "A message on the courier board, in shaky capitals: COME TOMORROW. THERE IS SOMETHING I MUST GIVE YOU BEFORE THEY DO. — {keeper.first} {keeper.family}",
+   "choices": [{"text": "\"Tomorrow.\""}]
+  }
+ }
+}

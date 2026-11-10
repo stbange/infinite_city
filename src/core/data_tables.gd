@@ -29,6 +29,10 @@ const TABLES := {
 	"workplaces": {"kinds": "dict", "words": "array", "skills": "array"},
 	"traits": {"axes": "array"},
 	"gossip": {"templates": "dict"},
+	"plot_hidden_abundance": {
+		"id": "string", "title": "string", "roles": "dict", "scenes": "dict",
+		"beats": [{"id": "string", "act": "int", "trigger": "string", "scene": "string", "objective": "string"}],
+	},
 }
 
 static var _cache: Dictionary = {}

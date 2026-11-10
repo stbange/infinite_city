@@ -14,6 +14,7 @@ extends CanvasLayer
 @export var jobs_path: NodePath
 @export var encounters_path: NodePath
 @export var hazards_path: NodePath
+@export var story_path: NodePath
 
 const _REFRESH_SECONDS := 0.1
 
@@ -204,6 +205,9 @@ func refresh() -> void:
 		lines = session.clock.describe() + "\n" + lines
 	lines += _courier_lines(camera, session)
 	lines += _encounter_lines(world, camera)
+	var story := get_node_or_null(story_path) as StoryRunner if not story_path.is_empty() else null
+	if story != null and not story.objective_text().is_empty():
+		lines += "\nStory · Act %d: %s" % [story.state.act, story.objective_text()]
 	var hazards := get_node_or_null(hazards_path) as HazardDirector if not hazards_path.is_empty() else null
 	if hazards != null and not hazards.last_message.is_empty():
 		lines += "\n" + hazards.last_message

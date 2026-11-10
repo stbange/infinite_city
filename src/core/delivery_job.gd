@@ -17,13 +17,15 @@ var floors: int = 0
 var base_pay: int = 0
 ## Game minute it was picked up, -1 while waiting at the counter.
 var picked_minute: int = -1
+## Beat of the story this delivery belongs to, or "" for an ordinary order.
+var story_beat: String = ""
 
 
 func to_dict() -> Dictionary:
 	return {"id": id, "pickup": pickup.key(), "patron": patron_name,
 		"dropoff": [dropoff_cell.x, dropoff_cell.y, dropoff_cell.z, dropoff_floor, dropoff_unit],
 		"customer": customer.key(), "customer_name": customer_name, "cargo": cargo,
-		"distance": distance, "floors": floors, "base_pay": base_pay, "picked": picked_minute}
+		"distance": distance, "floors": floors, "base_pay": base_pay, "picked": picked_minute, "story": story_beat}
 
 
 static func from_dict(data: Dictionary) -> DeliveryJob:
@@ -42,4 +44,5 @@ static func from_dict(data: Dictionary) -> DeliveryJob:
 	job.floors = int(data["floors"])
 	job.base_pay = int(data["base_pay"])
 	job.picked_minute = int(data["picked"])
+	job.story_beat = str(data.get("story", ""))
 	return job
