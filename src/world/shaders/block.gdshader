@@ -20,6 +20,7 @@ varying flat vec3 v_min;
 varying flat vec3 v_max;
 varying flat vec4 v_tint;
 varying flat float v_seed;
+varying flat float v_ruin;
 
 float hash21(vec2 p) {
 	p = fract(p * vec2(123.34, 456.21));
@@ -38,6 +39,7 @@ void vertex() {
 	v_normal = NORMAL;
 	v_tint = COLOR;
 	v_seed = INSTANCE_CUSTOM.x;
+	v_ruin = INSTANCE_CUSTOM.z;
 }
 
 void fragment() {
@@ -56,7 +58,8 @@ void fragment() {
 	float window = step(0.3, f.x) * step(f.x, 0.7) * step(0.3, f.y) * step(f.y, 0.72) * side;
 	float face_id = round(v_normal.x) * 13.0 + round(v_normal.z) * 29.0;
 	float face_seed = floor(v_seed * 997.0) + face_id;
-	float lit = step(1.0 - lit_share, hash21(id + face_seed));
+	float share = mix(lit_share, 0.03, step(0.5, v_ruin));
+	float lit = step(1.0 - share, hash21(id + face_seed));
 	float hue = hash21(id * 1.7 + face_seed + 5.0);
 	vec3 glow = hue < 0.62 ? vec3(1.0, 0.62, 0.3) : (hue < 0.82 ? vec3(0.4, 0.72, 1.0) : (hue < 0.93 ? vec3(1.0, 0.28, 0.7) : vec3(0.3, 1.0, 0.8)));
 	glow *= mix(0.45, 1.0, hash21(id * 3.1 + face_seed));
@@ -78,8 +81,11 @@ void fragment() {
 	vec3 shade = mix(base_color, v_tint.rgb, 0.12) * mix(1.0, 1.35, top) * (1.0 - seam * 0.35);
 	vec3 glass = vec3(0.02, 0.022, 0.03);
 	vec3 albedo = mix(mix(shade, glass, window_area * side), mix(shade, glass, window), detail);
+	// Ruins (spec faction-traces): scorched, streaked facades.
+	float scorch = step(0.5, v_ruin) * (0.55 + 0.25 * hash21(floor(v_world.xz / 3.0) + floor(v_world.y / 7.0)));
+	albedo *= 1.0 - scorch;
 	vec3 near_glow = glow * window * lit;
-	vec3 far_glow = vec3(0.9, 0.62, 0.5) * window_area * lit_share * side * 0.75;
+	vec3 far_glow = vec3(0.9, 0.62, 0.5) * window_area * share * side * 0.75;
 
 	ALBEDO = albedo;
 	ROUGHNESS = mix(0.8, 0.12, window * detail);

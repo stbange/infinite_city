@@ -100,6 +100,11 @@ func _try_sign(block: BlockInfo, rng: CellRandom) -> SignInfo:
 	return SignInfo.new(block.cell, axis, face_sign, centre, size, color, flicker, pattern)
 
 
+## True when a sign keeps clear of a doorway and of the signs already placed on its face.
+static func fits(sign: SignInfo, doorway: DoorwayInfo, placed: Array[SignInfo]) -> bool:
+	return _fits(sign, doorway, placed)
+
+
 static func _fits(sign: SignInfo, doorway: DoorwayInfo, placed: Array[SignInfo]) -> bool:
 	var lat := lateral_axis(sign.face_axis)
 	var rect := Rect2(sign.centre[lat] - sign.size.x * 0.5, sign.centre.y - sign.size.y * 0.5, sign.size.x, sign.size.y)

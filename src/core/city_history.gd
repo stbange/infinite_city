@@ -52,10 +52,14 @@ func era_of_kind(kind: String) -> EraInfo:
 	return null
 
 
+## District row that holds the roof layer (its top layer); rows above it are sky.
+static func roof_district_row(p_config: CityConfig) -> int:
+	return IntMath.floor_div(-1, p_config.district_size)
+
+
 ## District layers below the roof's district (0 at the roof's district).
 func depth_of(district: Vector3i) -> float:
-	var roof := IntMath.floor_div(config.roof_layer, config.district_size)
-	return float(roof - district.y)
+	return float(roof_district_row(config) - district.y)
 
 
 func influence(key: String, district: Vector3i) -> float:

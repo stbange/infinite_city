@@ -13,6 +13,7 @@ const _REFRESH_SECONDS := 0.1
 
 var _label: Label
 var _prompt: Label
+var _debug: Label
 var _since_refresh: float = 0.0
 
 
@@ -37,6 +38,19 @@ func _ready() -> void:
 	_prompt.add_theme_color_override("font_outline_color", Color.BLACK)
 	_prompt.add_theme_constant_override("outline_size", 6)
 	add_child(_prompt)
+	_debug = Label.new()
+	_debug.name = "DebugTimeline"
+	_debug.anchor_left = 1.0
+	_debug.anchor_right = 1.0
+	_debug.offset_left = -560
+	_debug.offset_right = -16
+	_debug.offset_top = 12
+	_debug.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_debug.add_theme_font_size_override("font_size", 12)
+	_debug.add_theme_color_override("font_outline_color", Color.BLACK)
+	_debug.add_theme_constant_override("outline_size", 4)
+	_debug.visible = false
+	add_child(_debug)
 	_build_legend()
 	_build_controls()
 
@@ -50,6 +64,19 @@ func _process(delta: float) -> void:
 
 func text() -> String:
 	return _label.text
+
+
+func debug_text() -> String:
+	return _debug.text
+
+
+func set_debug_visible(shown: bool) -> void:
+	_debug.visible = shown
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("toggle_debug"):
+		set_debug_visible(not _debug.visible)
 
 
 func prompt_text() -> String:
@@ -77,6 +104,14 @@ func refresh() -> void:
 		if AABB(block.min_local(), block.size).has_point(local):
 			kind = block.kind
 	var lines := LocationInfo.describe(world.layout, cell, kind)
+	if world.chronicle != null:
+		var district := world.layout.district_of(world.origin.absolute_cell_of(camera.global_position - Vector3(0, 0.1, 0)))
+		var reach := world.chronicle.reach(CityChronicle.reach_of(district))
+		var owner := world.chronicle.faction(world.chronicle.owner_of_district(district))
+		if owner != null:
+			lines += "\nTurf: %s · %s" % [owner.name, reach.name]
+		if _debug.visible:
+			_debug.text = _timeline(world.chronicle, reach)
 	var pockets := get_node_or_null(pocket_manager_path) as PocketManager \
 			if not pocket_manager_path.is_empty() else null
 	if pockets != null and pockets.is_inside():
@@ -93,6 +128,19 @@ func refresh() -> void:
 	var moving := "Walking" if camera.mode == Player.Mode.WALK else "Flying %d m/s" % roundi(camera.model.cruise_speed)
 	lines += "\n%s  ·  %d chunks  ·  %d fps" % [moving, world.loaded_chunks().size(), Engine.get_frames_per_second()]
 	_label.text = lines
+
+
+## The Reach's living factions and latest events (spec faction-traces / Debug timeline).
+static func _timeline(chronicle: CityChronicle, reach: ReachHistory) -> String:
+	var lines := PackedStringArray()
+	lines.append("%s %s" % [reach.name, reach.reach])
+	for faction in reach.factions:
+		if faction.exists_at(CityHistory.PRESENT_YEAR):
+			lines.append("  %s (%s, since %d)" % [faction.name, faction.type, faction.founded])
+	var first := maxi(0, reach.events.size() - 14)
+	for i in range(first, reach.events.size()):
+		lines.append("%d  %s" % [reach.events[i].year, reach.events[i].text])
+	return "\n".join(lines)
 
 
 func _build_legend() -> void:

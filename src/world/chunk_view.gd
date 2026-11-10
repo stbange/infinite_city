@@ -87,7 +87,8 @@ static func post_material() -> StandardMaterial3D:
 
 
 func build(data: ChunkData, layout: CityLayout, origin: FloatingOrigin,
-		doorways: Array[DoorwayInfo] = [], signs: Array[SignInfo] = [], lamps: Array[LampInfo] = []) -> void:
+		doorways: Array[DoorwayInfo] = [], signs: Array[SignInfo] = [], lamps: Array[LampInfo] = [],
+		ruined: Dictionary = {}) -> void:
 	chunk = data.chunk
 	name = "Chunk_%d_%d_%d" % [chunk.x, chunk.y, chunk.z]
 	position = origin.scene_position_of_chunk(chunk)
@@ -107,7 +108,7 @@ func build(data: ChunkData, layout: CityLayout, origin: FloatingOrigin,
 		_write_transform(_block_buffer, at, Transform3D(Basis.from_scale(block.size), centre))
 		_write_color(_block_buffer, at + 12, BlockTypes.color(block.kind))
 		var window_seed := DetHash.u01(DetHash.hash_cell(layout.config.world_seed, _WINDOW_SALT, block.cell))
-		_write_color(_block_buffer, at + 16, Color(window_seed, block.kind / 16.0, 0.0, 0.0))
+		_write_color(_block_buffer, at + 16, Color(window_seed, block.kind / 16.0, 1.0 if ruined.has(block.cell) else 0.0, 0.0))
 
 	_bridge_buffer.resize(data.bridges.size() * BRIDGE_STRIDE)
 	for i in data.bridges.size():
@@ -393,6 +394,12 @@ func block_transform(index: int) -> Transform3D:
 
 func block_color(index: int) -> Color:
 	var at := index * BLOCK_STRIDE + 12
+	return Color(_block_buffer[at], _block_buffer[at + 1], _block_buffer[at + 2], _block_buffer[at + 3])
+
+
+## Instance custom data of a block: (window seed, kind / 16, ruin flag, 0).
+func block_custom(index: int) -> Color:
+	var at := index * BLOCK_STRIDE + 16
 	return Color(_block_buffer[at], _block_buffer[at + 1], _block_buffer[at + 2], _block_buffer[at + 3])
 
 

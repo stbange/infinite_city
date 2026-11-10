@@ -48,7 +48,7 @@ func _init(history: CityHistory, coords: Vector3i, neighbours: Dictionary) -> vo
 ## Districts of a Reach that lie at or below the roof's district.
 static func districts_of(config: CityConfig, coords: Vector3i) -> Array[Vector3i]:
 	var result: Array[Vector3i] = []
-	var roof := IntMath.floor_div(config.roof_layer, config.district_size)
+	var roof := CityHistory.roof_district_row(config)
 	var n := CityChronicle.REACH_DISTRICTS
 	for dy in n:
 		for dz in n:

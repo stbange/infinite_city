@@ -30,6 +30,9 @@ const COLLISION_RADIUS := 1
 var layout: CityLayout
 var pocket_layout: PocketLayout
 var lighting: CityLighting
+## The generated past (spec city-history) and how it shows (spec faction-traces).
+var chronicle: CityChronicle
+var traces: TraceLayout
 var planner: StreamingPlanner
 var origin: FloatingOrigin
 ## When set, chunks stream around this node instead of the camera (e.g. the entrance doorway
@@ -47,6 +50,8 @@ func _ready() -> void:
 	layout = CityLayout.new(config)
 	pocket_layout = PocketLayout.new(layout)
 	lighting = CityLighting.new(layout)
+	chronicle = CityChronicle.new(config)
+	traces = TraceLayout.new(chronicle, layout)
 	planner = StreamingPlanner.for_config(config, radius_h, radius_v)
 	planner.budget = chunks_per_tick
 	origin = FloatingOrigin.for_config(config)
@@ -214,16 +219,21 @@ func _load(chunk: Vector3i) -> void:
 		add_child(view)
 		var doorways := pocket_layout.doorways_for_blocks(data.blocks)
 		var signs: Array[SignInfo] = []
+		var ruined := {}
 		for block in data.blocks:
 			var doorway: DoorwayInfo = null
 			for candidate in doorways:
 				if candidate.cell == block.cell:
 					doorway = candidate
-			signs.append_array(lighting.signs_of(block, doorway))
+			var block_signs := lighting.signs_of(block, doorway)
+			block_signs.append_array(traces.traces_of(block, doorway, block_signs))
+			signs.append_array(block_signs)
+			if traces.is_ruined(block.cell):
+				ruined[block.cell] = true
 		var lamps: Array[LampInfo] = []
 		for bridge in data.bridges:
 			lamps.append_array(lighting.lamps_of(bridge))
-		view.build(data, layout, origin, doorways, signs, lamps)
+		view.build(data, layout, origin, doorways, signs, lamps, ruined)
 	_loaded[chunk] = view
 	chunk_loaded.emit(chunk)
 
