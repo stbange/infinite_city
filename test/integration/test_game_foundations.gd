@@ -229,7 +229,8 @@ func test_computed_once() -> void:
 		return 42
 	for i in 3:
 		jobs.submit("answer", job)
-	for i in 200:
+	var deadline := Time.get_ticks_msec() + 20000   # other tests' worker tasks may still be running
+	while Time.get_ticks_msec() < deadline:
 		jobs.poll()
 		if jobs.is_ready("answer"):
 			break

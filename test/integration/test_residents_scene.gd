@@ -110,7 +110,8 @@ func test_door_plates_near_the_player() -> void:
 func test_prefetch_builds_the_market_in_the_background() -> void:
 	var district := world.layout.district_of(world.origin.absolute_cell_of(player.global_position))
 	world.prefetch_job_market(district)
-	for i in 600:
+	var deadline := Time.get_ticks_msec() + 30000   # other tests' worker tasks may still be running
+	while Time.get_ticks_msec() < deadline:
 		world.poll_background()
 		if world.population.has_job_market(district):
 			break
