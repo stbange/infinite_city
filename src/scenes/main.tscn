@@ -1,4 +1,4 @@
-[gd_scene load_steps=26 format=3]
+[gd_scene load_steps=27 format=3]
 
 [ext_resource type="Script" path="res://src/world/game_main.gd" id="1_main"]
 [ext_resource type="Script" path="res://src/world/city_world.gd" id="2_world"]
@@ -22,6 +22,7 @@
 [ext_resource type="Script" path="res://src/world/dialogue_panel.gd" id="20_dialogue"]
 [ext_resource type="Script" path="res://src/world/courier_shop.gd" id="21_shop"]
 [ext_resource type="Script" path="res://src/world/traversal_tools.gd" id="22_tools"]
+[ext_resource type="Script" path="res://src/world/simulation_runner.gd" id="23_sim"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_sky"]
 shader = ExtResource("5_sky")
@@ -150,6 +151,15 @@ script = ExtResource("22_tools")
 player_path = NodePath("../Player")
 jobs_path = NodePath("../JobManager")
 encounters_path = NodePath("../EncounterDirector")
+
+[node name="SimulationRunner" type="Node" parent="."]
+script = ExtResource("23_sim")
+world_path = NodePath("../CityWorld")
+session_path = NodePath("../GameSession")
+player_path = NodePath("../Player")
+jobs_path = NodePath("../JobManager")
+encounters_path = NodePath("../EncounterDirector")
+story_path = NodePath("../StoryRunner")
 
 [node name="CityFog" type="Node" parent="."]
 script = ExtResource("11_fog")

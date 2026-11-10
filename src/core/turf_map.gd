@@ -9,6 +9,8 @@ const CACHE := 2048
 
 var chronicle: CityChronicle
 var layout: CityLayout
+## Claims changed by events (spec event-log); null for the baseline only.
+var overlays: WorldOverlays
 var _claims: Dictionary = {}   # "cell|axis" -> gang key or ""
 
 
@@ -17,9 +19,13 @@ func _init(p_chronicle: CityChronicle, p_layout: CityLayout) -> void:
 	layout = p_layout
 
 
-## Key of the gang claiming a bridge, or "".
+## Key of the gang claiming a bridge, or "" (events first, then the baseline).
 func claim_of(bridge: BridgeInfo) -> String:
 	var key := "%s|%d" % [bridge.cell_a, bridge.axis]
+	if overlays != null:
+		var changed := overlays.claim_override(key)
+		if not changed.is_empty():
+			return changed
 	if _claims.has(key):
 		return _claims[key]
 	var claim := _claim(bridge)

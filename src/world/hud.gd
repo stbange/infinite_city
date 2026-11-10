@@ -190,6 +190,11 @@ func refresh() -> void:
 		var owner := world.chronicle.faction(world.chronicle.owner_of_district(district))
 		if owner != null:
 			lines += "\nTurf: %s · %s" % [owner.name, reach.name]
+		var jobs_node := get_node_or_null(jobs_path) as JobManager if not jobs_path.is_empty() else null
+		if jobs_node != null and jobs_node.overlays != null:
+			var factor := jobs_node.overlays.price_factor(district)
+			if absf(factor - 1.0) >= 0.05:
+				lines += "\nFood prices ×%.1f" % factor
 		if _debug.visible:
 			_debug.text = _timeline(world.chronicle, reach)
 	var pockets := get_node_or_null(pocket_manager_path) as PocketManager \
@@ -205,12 +210,14 @@ func refresh() -> void:
 	var session := get_node_or_null(session_path) as GameSession if not session_path.is_empty() else null
 	if session != null:
 		lines = session.clock.describe() + "\n" + lines
+		if not session.last_message.is_empty():
+			lines += "\n" + session.last_message
 	lines += _courier_lines(camera, session)
 	lines += _encounter_lines(world, camera)
 	var story := get_node_or_null(story_path) as StoryRunner if not story_path.is_empty() else null
 	if story != null and not story.objective_text().is_empty():
 		lines += "\nStory · Act %d: %s" % [story.state.act, story.objective_text()]
-	for path in [tools_path, shop_path]:
+	for path: NodePath in [tools_path, shop_path]:
 		var node := get_node_or_null(path) if not path.is_empty() else null
 		if node != null and not str(node.get("last_message")).is_empty():
 			lines += "\n" + str(node.get("last_message"))

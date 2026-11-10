@@ -7,4 +7,4 @@
 
 - [x] 2.1 Write `test/integration/test_story_runner.gd` (acts 1–2, saved story, picking a choice); verify they fail
 - [x] 2.2 Implement `StoryRunner`, `DialoguePanel`, `JobManager.delivered`, HUD objective, main scene; verify they pass
-- [ ] 2.3 Run `scripts/test.sh` and `openspec validate --all --strict`
+- [x] 2.3 Run `scripts/test.sh` and `openspec validate --all --strict`

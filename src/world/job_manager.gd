@@ -18,6 +18,8 @@ var wallet := Wallet.new()
 var reputation := Reputation.new()
 var licence: String = "bronze"
 var tools: Dictionary = {}
+## The changed world (spec live-simulation): prices and the dead; null for the baseline.
+var overlays: WorldOverlays
 var carried: Array[DeliveryJob] = []
 var completed: int = 0
 var patron: WorkplaceInfo
@@ -109,8 +111,13 @@ func open_orders() -> Array[DeliveryJob]:
 	if patron == null or board == null or session == null:
 		return result
 	for job in board.offers(patron, session.clock.day_number(), session.clock.hour(), Licence.max_tier(licence)):
-		if not _taken.has(job.id):
-			result.append(job)
+		if _taken.has(job.id):
+			continue
+		if overlays != null:
+			if overlays.is_dead(job.customer.key()) or overlays.has_moved(job.customer.key()):
+				continue
+			job.base_pay = roundi(job.base_pay * overlays.price_factor(_world().layout.district_of(job.dropoff_cell)))
+		result.append(job)
 	return result
 
 

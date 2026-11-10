@@ -3,7 +3,8 @@ extends Node
 ## The running game (specs game-time, save-games): owns the clock, pushes the Light's brightness
 ## to the world, and saves and loads the session as versioned JSON in user://saves/.
 
-const SAVE_VERSION := 1
+const SAVE_VERSION := 2
+const QUICK_SLOT := "quick"
 const SAVE_DIR := "user://saves"
 
 @export var world_path: NodePath
@@ -12,6 +13,8 @@ const SAVE_DIR := "user://saves"
 @export var running: bool = true
 
 var clock := GameClock.new_game()
+## Outcome of the last quick save or load, for the HUD.
+var last_message: String = ""
 ## Extra parts of the save: name -> [saver: Callable() -> Dictionary, loader: Callable(Dictionary)].
 var _parts: Dictionary = {}
 
@@ -24,6 +27,18 @@ func _process(delta: float) -> void:
 	if running:
 		clock.advance_real(delta)
 	refresh()
+
+
+## F5 saves and F9 loads the quick slot (spec save-games / Saves keep the changed world).
+func _unhandled_input(event: InputEvent) -> void:
+	if not (event is InputEventKey) or not event.pressed or event.echo:
+		return
+	match (event as InputEventKey).keycode:
+		KEY_F5:
+			last_message = "Saved" if save_to_slot(QUICK_SLOT).is_empty() else "Save failed"
+		KEY_F9:
+			var problem := load_from_slot(QUICK_SLOT)
+			last_message = "Loaded" if problem.is_empty() else problem
 
 
 ## Pushes the clock's Light level to the world.
