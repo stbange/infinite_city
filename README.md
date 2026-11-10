@@ -9,6 +9,12 @@ every direction, bridges join neighbouring blocks, and you can walk across them 
 along its corridors, up its stairs and into flats, shops, farms and offices. Some doors open
 into spaces far bigger than the blocks that hold them.
 
+On top of the city sits **Fogline**, a game about a courier who lives just under the fogline.
+Every seed generates centuries of history, factions and gangs, millions of residents with homes,
+jobs, routines and relationships, and a plot cast from the people and factions around the start.
+You begin with noodle deliveries to real doors and end holding a key every power in the district
+wants.
+
 | On a bridge in the fog, 21 layers down | Inside: the corridor behind the entrance |
 |---|---|
 | ![Entrance](docs/images/interior-entrance.jpg) | ![Corridor](docs/images/interior-corridor.jpg) |
@@ -26,8 +32,8 @@ into spaces far bigger than the blocks that hold them.
 | ![Deep](docs/images/deep.jpg) | |
 | **A magic doorway…** | **…opens into a hall hundreds of metres long** |
 | ![Doorway outside](docs/images/doorway-outside.jpg) | ![Doorway inside](docs/images/doorway-inside.jpg) |
-| **Looking back out at the city from inside** | |
-| ![Look back](docs/images/doorway-look-back.jpg) | |
+| **Looking back out at the city from inside** | **The first scene of the story, cast from the city** |
+| ![Look back](docs/images/doorway-look-back.jpg) | ![Story](docs/images/story-start.jpg) |
 
 All images are rendered headless by `scripts/screenshot.sh` with software OpenGL (the
 Compatibility renderer), so the real game looks crisper.
@@ -134,12 +140,30 @@ The city is not a heightmap. It is a **3D lattice of 64 m cells**, and every cel
    on Linux.
 2. Open the project folder in Godot and press **Play**, or run `godot --path .`.
 
-You start on foot on a roof at the rim of a shaft, near the top of the city. **Click** to look
-around, **WASD** to walk, **Space** to jump, **Shift** to sprint. Walk along a bridge into any
-block, follow the corridor, take the stairs. **F** switches to flying (**Space/E** up,
-**Q/Ctrl** down, **Shift** boost, **mouse wheel** changes speed) and back. **Esc** releases the
-mouse. Walk or fly through any glowing violet doorway. The read-out at the top left names the
-cell, depth, district, and inside a block the floor and the room.
+A menu asks for your courier's name and pronouns (Esc brings it back). You start on foot on a
+roof near the top of the city, near your patron's food counter. **Click** to look around,
+**WASD** to walk, **Space** to jump (hold it while falling once you own a glider), **Shift** to
+sprint. **F** switches to flying (**Space** up, **Q/Ctrl** down, **Shift** boost, **wheel**
+speed). The read-out at the top left names the time, place, turf, your wallet, the next door to
+go to and the story's current objective.
+
+### Playing Fogline
+
+- **Deliveries:** press **E** at your patron's door to take an order (up to three), find the
+  customer's door by its address and the arrow, press **E** there to deliver. Food cools, so tips
+  shrink. Rent is due every Monday.
+- **The city lives:** residents keep routines (home, commute, shifts, evenings out) and walk the
+  corridors; gangs hold bridges and ask for tolls (**1** pay, **2** talk, **3** run, then lose
+  them in the fog); flying cars fill the major lanes; a fall or a car calls the rescue drone,
+  which costs ¤25 and the cargo.
+- **The story:** a plot template (*The Hidden Abundance*, *The Election* or *The Plague*) is
+  chosen for the seed and cast from the people and factions around you. Scenes open on
+  deliveries; pick choices with **1–3**. Endings change the district for good.
+- **Growing:** standing with the Couriers' Mutual and each gang, licences that unlock better
+  cargo, and a shop (**U**): scanner (**R**), flares (**X**), glider and grapple (**G**).
+  **M** opens the address book.
+- **The world remembers:** districts you know tick daily (gangs take bridges, prices follow the
+  blight, people die and move) into an event log. **F5** saves, **F9** loads.
 
 ## How it is developed: OpenSpec + test-driven development
 
@@ -165,10 +189,21 @@ Git history follows this rhythm (*Propose → Implement → Archive*) for each c
 | `fit-interiors-inside-walls` | `block-interiors` |
 | `add-heavy-fog` | `city-fog`, `city-rendering` |
 | `add-streets-and-lanes` | `city-layout` |
+| M0 `add-game-foundations` | `game-time`, `interaction`, `save-games`, `content-data` |
+| M1 `add-city-history`, `add-faction-traces` | `city-history`, `faction-traces` |
+| M2 `add-residents`, `add-workplaces` | `residents`, `workplaces` |
+| M3 `add-relations` | `relations` |
+| M4 `add-courier-jobs` | `addresses`, `courier-jobs` |
+| M5 `add-city-navigation`, `add-routines`, `add-people-in-the-city` | `city-navigation`, `routines`, `people-in-the-city` |
+| M6 `add-gang-turf`, `add-traffic-and-hazards` | `gang-turf`, `encounters`, `flying-traffic`, `hazards` |
+| M7 `add-story-director` | `story-director`, `dialogue` |
+| M8 `add-courier-progression`, `add-traversal-tools` | `courier-progression`, `traversal-tools` |
+| M9 `add-event-log`, `add-live-simulation` | `event-log`, `save-games`, `live-simulation` |
+| M10 `add-plot-acts-3-to-5`, `add-plot-templates`, `add-game-menus` | `story-director`, `game-menus` |
 
 ```bash
 scripts/install-godot.sh              # once: Godot 4.7.2 into .tools/godot/
-scripts/test.sh                       # 280 GUT tests, headless (~90 s)
+scripts/test.sh                       # ~430 GUT tests, headless (unit and integration in two processes, ~6 min)
 scripts/test.sh -gselect=interior     # only test files matching "interior"
 scripts/screenshot.sh out.jpg --doorway --inside           # headless render (needs Xvfb)
 scripts/screenshot.sh out.jpg --interior=flat --pos=100,-1300,60
@@ -181,22 +216,17 @@ Pure logic lives in `src/core/` (no scene tree, fully unit-tested). Scene nodes 
 stairs with real physics). GitHub Actions runs the GUT suite and strict OpenSpec validation on
 every push. Static typing is enforced, so untyped declarations are parse errors.
 
-## Roadmap (next OpenSpec changes)
+## Roadmap
 
-1. **`add-teleport-network`**: transit hubs (one per district) linked to neighbouring hubs and
-   to express hubs far above and below. Instant jumps with a rebase.
-2. **`add-flying-traffic`**: lanes through gaps, canyons and shafts. Cars placed by
-   `f(lane, time)`, so traffic is deterministic and only simulated near the player. Their
-   headlights and neon underglow would light the canyons.
-3. **`add-city-connections`**: long-span bridges across canyons, lifts in the stair cores,
-   stairs between layers.
-4. **`add-city-life`**: people in corridors and flats, doors that open, interactive objects,
-   and services that work: fire stations dispatch, hospitals treat.
-5. **Atmosphere:** rain, steam vents, light cones of lamps in the fog, light shafts from the roof.
-6. **Performance:** stream and draw only what the fog lets through, chunk and interior
-   generation on worker threads, lower-resolution portal views.
-7. **Gameplay:** what the player *does* in the city. A story, jobs, exploration goals. This is
-   the big open design question.
+The Fogline plan (milestones M0–M10) is implemented. Next candidates:
+
+1. **More of the plot:** escorts (tier-4 cargo that walks with you), checkpoints at the fogline,
+   blackouts, more templates (*The Blackout*, *The Fall of a House*, *The Descent*).
+2. **Teleport network and city connections:** transit hubs, long-span bridges, lifts.
+3. **People:** walking animations, doors that open, conversations beyond gossip and scenes.
+4. **Atmosphere and sound:** rain, steam, light cones in the fog; recorded sound and music.
+5. **Performance:** stream and draw only what the fog lets through; chunk and interior generation
+   on worker threads.
 
 ## Known limitations of this prototype
 
@@ -207,4 +237,7 @@ every push. Static typing is enforced, so untyped declarations are parse errors.
   player's floor is lit.
 - Lamps and signs do not light the fog itself; their halos come from bloom.
 - One live portal at a time. Other doorways shimmer until you are within 160 m.
-- Furniture is made of boxes.
+- Furniture is made of boxes, and people are capsules that glide without walking animations.
+- A district's job market takes about a second to build on a worker thread; until then its
+  workers and routines are not shown.
+- Story scenes trigger on deliveries rather than on meeting people in the world.
