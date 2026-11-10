@@ -187,3 +187,11 @@ func test_relations_budget() -> void:
 			break
 	var per := (Time.get_ticks_usec() - start) / 1000.0 / maxi(n, 1)
 	assert_lt(per, 3.0, "%.2f ms per person (budget 2 ms, 50%% headroom)" % per)
+
+
+## GUT keeps finished test scripts alive; release the big generators.
+func after_all() -> void:
+	layout = null
+	chronicle = null
+	population = null
+	relations = null

@@ -85,3 +85,11 @@ func test_build_time() -> void:
 	fresh.job_market(Vector3i(3, -5, 3))
 	var seconds := (Time.get_ticks_usec() - start) / 1000000.0
 	assert_lt(seconds, 2.25, "job market took %.2f s (budget 1.5 s, 50%% headroom for slow machines)" % seconds)
+
+
+## GUT keeps finished test scripts alive; release the big generators.
+func after_all() -> void:
+	layout = null
+	chronicle = null
+	population = null
+	markets.clear()

@@ -145,3 +145,10 @@ func test_person_ids_round_trip() -> void:
 	assert_eq(id.unit_index(), 23)
 	assert_eq(id.slot(), 4)
 	assert_true(id.equals(PersonId.from_key(id.key())))
+
+
+## GUT keeps finished test scripts alive; release the big generators.
+func after_all() -> void:
+	layout = null
+	chronicle = null
+	population = null

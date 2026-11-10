@@ -107,3 +107,10 @@ func test_share_of_ruins() -> void:
 					assert_false(traces.is_ruined(cell))
 	assert_gte(damaged_blocks, 3000)
 	assert_between(float(ruined) / damaged_blocks, 0.18, 0.32)
+
+
+## GUT keeps finished test scripts alive; release the big generators.
+func after_all() -> void:
+	layout = null
+	chronicle = null
+	traces = null

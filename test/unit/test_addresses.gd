@@ -53,3 +53,9 @@ func test_round_trip() -> void:
 		assert_eq(resolved.get("floor"), k)
 		assert_eq(resolved.get("unit"), unit)
 		checked += 1
+
+
+## GUT keeps finished test scripts alive; release the big generators.
+func after_all() -> void:
+	layout = null
+	names = null

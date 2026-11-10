@@ -125,3 +125,8 @@ func test_time_budget() -> void:
 		CityChronicle.new(CityConfig.new()).reach(Vector3i(i * 7, -3, -i * 5))
 	var per_reach := (Time.get_ticks_usec() - start) / 10000.0
 	assert_lt(per_reach, 150.0, "a Reach history should take well under 150 ms (took %.1f ms)" % per_reach)
+
+
+## GUT keeps finished test scripts alive; release the big generators.
+func after_all() -> void:
+	chronicle = null

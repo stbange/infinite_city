@@ -75,3 +75,11 @@ func test_monday_rent() -> void:
 	assert_eq(wallet.credits, -20)
 	wallet.update(clock)
 	assert_eq(wallet.credits, -20, "rent is charged once a week")
+
+
+## GUT keeps finished test scripts alive; release the big generators.
+func after_all() -> void:
+	layout = null
+	population = null
+	board = null
+	start.clear()
