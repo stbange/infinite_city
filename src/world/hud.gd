@@ -6,10 +6,13 @@ extends CanvasLayer
 @export var camera_path: NodePath
 @export var pocket_manager_path: NodePath
 @export var interiors_path: NodePath
+@export var interaction_path: NodePath
+@export var session_path: NodePath
 
 const _REFRESH_SECONDS := 0.1
 
 var _label: Label
+var _prompt: Label
 var _since_refresh: float = 0.0
 
 
@@ -21,6 +24,19 @@ func _ready() -> void:
 	_label.add_theme_color_override("font_outline_color", Color.BLACK)
 	_label.add_theme_constant_override("outline_size", 6)
 	add_child(_label)
+	_prompt = Label.new()
+	_prompt.name = "Prompt"
+	_prompt.anchor_left = 0.5
+	_prompt.anchor_right = 0.5
+	_prompt.anchor_top = 0.62
+	_prompt.anchor_bottom = 0.62
+	_prompt.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_prompt.add_theme_font_size_override("font_size", 18)
+	_prompt.add_theme_color_override("font_color", Color(1.0, 0.75, 0.4))
+	_prompt.add_theme_color_override("font_outline_color", Color.BLACK)
+	_prompt.add_theme_constant_override("outline_size", 6)
+	add_child(_prompt)
 	_build_legend()
 	_build_controls()
 
@@ -36,7 +52,19 @@ func text() -> String:
 	return _label.text
 
 
+func prompt_text() -> String:
+	return _prompt.text
+
+
+## Shows "E · <label>" for the current interaction target (spec interaction / Prompt).
+func refresh_prompt() -> void:
+	var interaction := get_node_or_null(interaction_path) as Interaction if not interaction_path.is_empty() else null
+	var target := interaction.target() if interaction != null else {}
+	_prompt.text = "" if target.is_empty() else "E · %s" % target.get("label", "")
+
+
 func refresh() -> void:
+	refresh_prompt()
 	var world := get_node_or_null(world_path) as CityWorld
 	var camera := get_node_or_null(camera_path) as Player
 	if world == null or camera == null or world.layout == null:
@@ -59,6 +87,9 @@ func refresh() -> void:
 	if inside != null:
 		lines += "\n" + LocationInfo.describe_interior(inside.floor_index_at(camera.global_position),
 				inside.plan.floors, inside.room_at(camera.global_position))
+	var session := get_node_or_null(session_path) as GameSession if not session_path.is_empty() else null
+	if session != null:
+		lines = session.clock.describe() + "\n" + lines
 	var moving := "Walking" if camera.mode == Player.Mode.WALK else "Flying %d m/s" % roundi(camera.model.cruise_speed)
 	lines += "\n%s  ·  %d chunks  ·  %d fps" % [moving, world.loaded_chunks().size(), Engine.get_frames_per_second()]
 	_label.text = lines
@@ -91,7 +122,7 @@ func _build_legend() -> void:
 func _build_controls() -> void:
 	var hint := Label.new()
 	hint.name = "Controls"
-	hint.text = "Click: look   WASD: move   Space: jump / up   Shift: sprint / boost   F: walk ⇄ fly   Q/Ctrl: down (fly)   Wheel: fly speed   Esc: release mouse"
+	hint.text = "Click: look   WASD: move   E: interact   Space: jump / up   Shift: sprint / boost   F: walk ⇄ fly   Q/Ctrl: down (fly)   Wheel: fly speed   Esc: release mouse"
 	hint.add_theme_font_size_override("font_size", 13)
 	hint.add_theme_color_override("font_outline_color", Color.BLACK)
 	hint.add_theme_constant_override("outline_size", 4)

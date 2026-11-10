@@ -64,7 +64,7 @@ func refresh() -> void:
 	fog.set_shader_parameter("sea_band", Atmosphere.FOG_SEA_BAND)
 	fog.set_shader_parameter("color_below", Atmosphere.below_color(depth))
 	fog.set_shader_parameter("color_above", Atmosphere.ABOVE_FOG)
-	fog.set_shader_parameter("sun_haze", Atmosphere.SUN_HAZE)
+	fog.set_shader_parameter("sun_haze", Atmosphere.SUN_HAZE * world.daylight)
 	fog.set_shader_parameter("sun_fade", Atmosphere.SUN_FADE_M)
 	fog.set_shader_parameter("layer_height", cell_height)
 	var roof_bottom := world.origin.scene_position_of_cell(Vector3i(0, world.config.roof_layer, 0)).y

@@ -35,6 +35,8 @@ var origin: FloatingOrigin
 ## When set, chunks stream around this node instead of the camera (e.g. the entrance doorway
 ## while the player is inside a pocket space). Rebasing always follows the camera.
 var streaming_focus: Node3D = null
+## Brightness of the Light (0 night … 1 day), set by the GameSession from the clock.
+var daylight: float = 1.0
 
 var _loaded: Dictionary = {}   # Vector3i -> ChunkView, or null for empty chunks
 
@@ -259,8 +261,8 @@ func _apply_atmosphere() -> void:
 		env.ambient_light_energy = Atmosphere.ambient_energy(depth)
 		var sky_material := env.sky.sky_material as ShaderMaterial if env.sky != null else null
 		if sky_material != null:
-			sky_material.set_shader_parameter("haze_color", haze)
+			sky_material.set_shader_parameter("haze_color", haze * lerpf(0.35, 1.0, daylight))
 			sky_material.set_shader_parameter("inside", clampf(depth / 3.0, 0.0, 1.0))
 	var sun := get_node_or_null(sun_path) as DirectionalLight3D if not sun_path.is_empty() else null
 	if sun != null:
-		sun.light_energy = Atmosphere.light_energy(depth)
+		sun.light_energy = Atmosphere.light_energy(depth) * daylight

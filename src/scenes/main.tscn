@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3]
+[gd_scene load_steps=17 format=3]
 
 [ext_resource type="Script" path="res://src/world/game_main.gd" id="1_main"]
 [ext_resource type="Script" path="res://src/world/city_world.gd" id="2_world"]
@@ -11,6 +11,8 @@
 [ext_resource type="Script" path="res://src/world/city_lights.gd" id="9_lights"]
 [ext_resource type="Script" path="res://src/world/interior_manager.gd" id="10_interiors"]
 [ext_resource type="Script" path="res://src/world/city_fog.gd" id="11_fog"]
+[ext_resource type="Script" path="res://src/world/game_session.gd" id="12_session"]
+[ext_resource type="Script" path="res://src/world/interaction.gd" id="13_interaction"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_sky"]
 shader = ExtResource("5_sky")
@@ -73,6 +75,16 @@ script = ExtResource("10_interiors")
 world_path = NodePath("../CityWorld")
 player_path = NodePath("../Player")
 
+[node name="GameSession" type="Node" parent="."]
+script = ExtResource("12_session")
+world_path = NodePath("../CityWorld")
+player_path = NodePath("../Player")
+
+[node name="Interaction" type="Node" parent="."]
+script = ExtResource("13_interaction")
+player_path = NodePath("../Player")
+interiors_path = NodePath("../InteriorManager")
+
 [node name="CityFog" type="Node" parent="."]
 script = ExtResource("11_fog")
 world_path = NodePath("../CityWorld")
@@ -92,6 +104,8 @@ world_path = NodePath("../CityWorld")
 camera_path = NodePath("../Player")
 pocket_manager_path = NodePath("../PocketManager")
 interiors_path = NodePath("../InteriorManager")
+interaction_path = NodePath("../Interaction")
+session_path = NodePath("../GameSession")
 
 [node name="ScreenshotCapture" type="Node" parent="."]
 script = ExtResource("6_capture")

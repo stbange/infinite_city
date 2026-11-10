@@ -47,6 +47,28 @@ func view_at(scene_position: Vector3) -> InteriorView:
 	return null
 
 
+## Unit doors on the floor of a scene position in the ready interiors, as interaction targets
+## (spec interaction / Interaction targets): the door centre in the unit's front wall, 1.1 m up.
+func door_targets(near: Vector3) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for view: InteriorView in _views.values():
+		if not view.is_ready():
+			continue
+		var k := view.floor_index_at(near - Vector3(0, WalkModel.EYE_HEIGHT, 0))
+		var y := view.plan.floor_y(k) + 1.1
+		for unit in view.plan.units:
+			if unit.is_core:
+				continue
+			var local := Vector3(unit.door_x, y, unit.front_z())
+			result.append({
+				"position": view.global_position + local,
+				"label": "Door · Fl %d · Unit %d" % [k + 1, unit.index + 1],
+				"kind": "door",
+				"payload": {"cell": view.cell, "floor": k, "unit": unit.index},
+			})
+	return result
+
+
 ## Room lights around the player in the entered blocks.
 func light_anchors() -> Array[LightAnchor]:
 	var result: Array[LightAnchor] = []
