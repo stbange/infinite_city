@@ -1,4 +1,4 @@
-[gd_scene load_steps=24 format=3]
+[gd_scene load_steps=26 format=3]
 
 [ext_resource type="Script" path="res://src/world/game_main.gd" id="1_main"]
 [ext_resource type="Script" path="res://src/world/city_world.gd" id="2_world"]
@@ -20,6 +20,8 @@
 [ext_resource type="Script" path="res://src/world/hazard_director.gd" id="18_hazards"]
 [ext_resource type="Script" path="res://src/world/story_runner.gd" id="19_story"]
 [ext_resource type="Script" path="res://src/world/dialogue_panel.gd" id="20_dialogue"]
+[ext_resource type="Script" path="res://src/world/courier_shop.gd" id="21_shop"]
+[ext_resource type="Script" path="res://src/world/traversal_tools.gd" id="22_tools"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_sky"]
 shader = ExtResource("5_sky")
@@ -135,6 +137,20 @@ jobs_path = NodePath("../JobManager")
 panel_path = NodePath("../DialoguePanel")
 encounters_path = NodePath("../EncounterDirector")
 
+[node name="ShopPanel" type="CanvasLayer" parent="."]
+script = ExtResource("20_dialogue")
+
+[node name="CourierShop" type="Node" parent="."]
+script = ExtResource("21_shop")
+jobs_path = NodePath("../JobManager")
+panel_path = NodePath("../ShopPanel")
+
+[node name="TraversalTools" type="Node3D" parent="."]
+script = ExtResource("22_tools")
+player_path = NodePath("../Player")
+jobs_path = NodePath("../JobManager")
+encounters_path = NodePath("../EncounterDirector")
+
 [node name="CityFog" type="Node" parent="."]
 script = ExtResource("11_fog")
 world_path = NodePath("../CityWorld")
@@ -160,6 +176,8 @@ jobs_path = NodePath("../JobManager")
 encounters_path = NodePath("../EncounterDirector")
 hazards_path = NodePath("../HazardDirector")
 story_path = NodePath("../StoryRunner")
+tools_path = NodePath("../TraversalTools")
+shop_path = NodePath("../CourierShop")
 
 [node name="ScreenshotCapture" type="Node" parent="."]
 script = ExtResource("6_capture")

@@ -74,3 +74,16 @@ func test_air_control_is_weaker() -> void:
 	var air := _run(0.05, Vector2(0, 1), false, false)
 	assert_lt(Vector2(air.x, air.z).length(), Vector2(ground.x, ground.z).length())
 	assert_gt(Vector2(air.x, air.z).length(), 0.0)
+
+
+func test_gliding_down() -> void:
+	var model := WalkModel.new()
+	var gliding := Vector3.ZERO
+	var falling := Vector3.ZERO
+	for i in 120:
+		gliding = model.step(gliding, 0.0, Vector2.ZERO, false, false, false, 1.0 / 60.0, true)
+		falling = model.step(falling, 0.0, Vector2.ZERO, false, false, false, 1.0 / 60.0, false)
+	assert_gte(gliding.y, -model.glide_sink - 0.001)
+	assert_lt(falling.y, -model.glide_sink * 2.0)
+	# Carried forward (yaw 0 looks along -z).
+	assert_lt(gliding.z, -1.0)

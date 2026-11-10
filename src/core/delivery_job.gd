@@ -19,13 +19,15 @@ var base_pay: int = 0
 var picked_minute: int = -1
 ## Beat of the story this delivery belongs to, or "" for an ordinary order.
 var story_beat: String = ""
+## Cargo tier kind (CargoKind.TABLE).
+var cargo_kind: String = "food"
 
 
 func to_dict() -> Dictionary:
 	return {"id": id, "pickup": pickup.key(), "patron": patron_name,
 		"dropoff": [dropoff_cell.x, dropoff_cell.y, dropoff_cell.z, dropoff_floor, dropoff_unit],
 		"customer": customer.key(), "customer_name": customer_name, "cargo": cargo,
-		"distance": distance, "floors": floors, "base_pay": base_pay, "picked": picked_minute, "story": story_beat}
+		"distance": distance, "floors": floors, "base_pay": base_pay, "picked": picked_minute, "story": story_beat, "kind": cargo_kind}
 
 
 static func from_dict(data: Dictionary) -> DeliveryJob:
@@ -45,4 +47,5 @@ static func from_dict(data: Dictionary) -> DeliveryJob:
 	job.base_pay = int(data["base_pay"])
 	job.picked_minute = int(data["picked"])
 	job.story_beat = str(data.get("story", ""))
+	job.cargo_kind = str(data.get("kind", "food"))
 	return job

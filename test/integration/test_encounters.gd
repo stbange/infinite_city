@@ -141,3 +141,68 @@ func test_caught() -> void:
 	assert_eq(director.state, EncounterDirector.State.IDLE)
 	assert_eq(jobs.carried.size(), 0)
 	assert_lt(jobs.wallet.credits, 100)
+
+
+func test_gangs_remember() -> void:
+	var found := _claimed_bridge("toll")
+	var bridge: BridgeInfo = found[0]
+	session.clock.total_minutes = found[1] * 60 + 5
+	_carry_one()
+	_stand_on(bridge, 0.3)
+	director.update(0.016)
+	var gang := director.gang_key
+	jobs.wallet.credits = 100
+	director.pay()
+	var after_paying := jobs.reputation.of(gang)
+	assert_gt(after_paying, 0)
+	# The next hour with a toll on the same bridge: run this time.
+	for h in range(1, 200):
+		if EncounterRules.roll(world.config.world_seed, bridge, found[1] + h, 1, director.heat.value_at(gang, (found[1] + h) * 60 + 5)) != "pass":
+			session.clock.total_minutes = (found[1] + h) * 60 + 5
+			break
+	director.update(0.016)
+	assert_eq(director.state, EncounterDirector.State.OFFER)
+	director.run()
+	assert_lt(jobs.reputation.of(gang), after_paying)
+
+
+func _tools() -> TraversalTools:
+	var t := TraversalTools.new()
+	t.name = "TraversalTools"
+	world.add_child(t)
+	t.player_path = NodePath("../Player")
+	t.jobs_path = NodePath("../JobManager")
+	t.encounters_path = NodePath("../EncounterDirector")
+	return t
+
+
+func test_a_flare_in_a_chase() -> void:
+	var t := _tools()
+	_offer("toll")
+	director.run()
+	assert_eq(director.state, EncounterDirector.State.CHASE)
+	jobs.tools["flare"] = 2
+	assert_true(t.flare())
+	assert_eq(director.state, EncounterDirector.State.IDLE)
+	assert_eq(jobs.carried.size(), 1)
+	assert_eq(jobs.tools["flare"], 1)
+
+
+func test_scanning_for_the_door() -> void:
+	var t := _tools()
+	var market := world.population.job_market(Vector3i(0, -3, 0))
+	var patron: WorkplaceInfo = null
+	for i in market.active_indices():
+		if market.workplace(i).is_food:
+			patron = market.workplace(i)
+			break
+	jobs.set_patron(patron)
+	var absolute := PackedFloat64Array()
+	for axis in 3:
+		absolute.append((patron.cell[axis] + 0.5) * world.config.cell_size[axis])
+	world.teleport_focus(absolute)
+	assert_false(t.scan(), "no scanner yet")
+	jobs.tools["scanner"] = 1
+	assert_true(t.scan())
+	assert_true(t.beacon_visible())
+	assert_almost_eq(t.beacon_position(), jobs.waypoint()["position"], Vector3.ONE * 0.01)

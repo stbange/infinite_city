@@ -6,6 +6,7 @@ extends Node3D
 enum State { IDLE, OFFER, CHASE }
 
 const FIGURES := 3
+const FRIENDLY_DISCOUNT := 0.7
 const DECK_MARGIN := 0.6
 
 @export var world_path: NodePath
@@ -113,15 +114,18 @@ func _check_bridge(world: CityWorld, session: GameSession, player: Player) -> vo
 		return
 	_resolved[_resolved_key(b, hour)] = true
 	var minute := session.clock.total_minutes
-	var h := heat.value_at(claim, minute)
+	var h := heat.value_at(claim, minute) + jobs.cargo_heat()
+	var standing := jobs.reputation.level(claim)
 	var outcome := EncounterRules.roll(world.config.world_seed, b, hour, jobs.carried.size(), h)
-	if outcome == "pass":
+	if outcome == "pass" or standing == "trusted":
 		return
 	bridge = b
 	gang_key = claim
 	kind = outcome
 	talked = false
 	price = EncounterRules.toll(jobs.carried.size(), h) * (2 if outcome == "shakedown" else 1)
+	if standing == "friendly":
+		price = roundi(price * FRIENDLY_DISCOUNT)
 	state = State.OFFER
 	_spawn_figures(world, player)
 
@@ -140,6 +144,8 @@ func pay() -> void:
 	jobs.wallet.credits -= paid
 	if paid < price:
 		heat.add(gang_key, EncounterRules.SHORT_HEAT, _session().clock.total_minutes)
+	else:
+		jobs.reputation.add(gang_key, Reputation.TOLL_PAID)
 	last_outcome = "Paid ¤%d to %s" % [paid, gang_name()]
 	_end()
 
@@ -165,6 +171,7 @@ func run() -> void:
 	if state != State.OFFER:
 		return
 	heat.add(gang_key, EncounterRules.RUN_HEAT, _session().clock.total_minutes)
+	_jobs().reputation.add(gang_key, Reputation.RAN)
 	state = State.CHASE
 	chase_time = 0.0
 	last_outcome = "Run! %s give chase" % gang_name()
@@ -186,6 +193,7 @@ func _chase(world: CityWorld, player: Player, delta: float) -> void:
 	if nearest <= EncounterRules.CATCH_DISTANCE:
 		var jobs := _jobs()
 		var lost := jobs.lose_cargo()
+		jobs.reputation.add(gang_key, Reputation.CAUGHT)
 		var taken := mini(price, jobs.wallet.credits)
 		jobs.wallet.credits -= taken
 		last_outcome = "Caught by %s: %d orders and ¤%d gone" % [gang_name(), lost, taken]
@@ -193,6 +201,15 @@ func _chase(world: CityWorld, player: Player, delta: float) -> void:
 	elif nearest >= EncounterRules.ESCAPE_DISTANCE or chase_time >= EncounterRules.CHASE_SECONDS:
 		last_outcome = "You lost %s in the fog" % gang_name()
 		_end()
+
+
+## Ends a chase as an escape (a flare, spec traversal-tools).
+func break_chase(message: String) -> bool:
+	if state != State.CHASE:
+		return false
+	last_outcome = message
+	_end()
+	return true
 
 
 ## Distance from the player to the nearest chasing figure (INF when not chased).

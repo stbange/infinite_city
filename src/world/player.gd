@@ -18,6 +18,9 @@ var walk := WalkModel.new()
 signal rescued(reason: String)
 
 var fall_guard := FallGuard.new()
+## Glider owned (set by TraversalTools) and held open (Space while falling).
+var glider_enabled: bool = false
+var wants_glide: bool = false
 var yaw: float = 0.0
 var pitch: float = 0.0
 var camera: Camera3D
@@ -116,10 +119,12 @@ func _physics_process(delta: float) -> void:
 				Input.get_axis("move_forward", "move_back"))
 		wants_jump = Input.is_action_just_pressed("move_up")
 		wants_sprint = Input.is_action_pressed("boost")
+		wants_glide = Input.is_action_pressed("move_up")
 	if mode == Mode.FLY:
 		global_position += model.velocity(yaw, pitch, fly_input, wants_sprint) * delta
 		return
-	velocity = walk.step(velocity, yaw, move_input, wants_sprint, wants_jump, is_on_floor(), delta)
+	velocity = walk.step(velocity, yaw, move_input, wants_sprint, wants_jump, is_on_floor(), delta,
+			glider_enabled and wants_glide)
 	wants_jump = false
 	move_and_slide()
 	if fall_guard.update(is_on_floor(), global_position, delta):

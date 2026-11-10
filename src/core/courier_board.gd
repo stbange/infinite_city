@@ -3,6 +3,9 @@ extends RefCounted
 ## Food orders offered at a patron's counter (spec courier-jobs / Food orders, Pay and tips).
 
 const SALT_ORDERS := 151
+const SALT_CARGO := 152
+## Share of orders that become higher-tier cargo when the licence allows it.
+const HIGHER_TIER_SHARE := 0.35
 const PER_HOUR := 3
 const RADIUS := 2
 const BASE := 12.0
@@ -18,7 +21,7 @@ func _init(p_population: Population) -> void:
 	population = p_population
 
 
-func offers(patron: WorkplaceInfo, day: int, hour: int) -> Array[DeliveryJob]:
+func offers(patron: WorkplaceInfo, day: int, hour: int, max_tier: int = 1) -> Array[DeliveryJob]:
 	var result: Array[DeliveryJob] = []
 	var layout := population.layout
 	var seed_value := population.world_seed()
@@ -55,8 +58,26 @@ func offers(patron: WorkplaceInfo, day: int, hour: int) -> Array[DeliveryJob]:
 		job.distance = (Vector3(cell - patron.cell) * layout.config.cell_size).length()
 		job.floors = absi(roundi((cell.y - patron.cell.y) * layout.config.cell_size.y / 4.0) + flat.x - patron.floor_index)
 		job.base_pay = roundi(BASE + PER_METRE * job.distance + PER_FLOOR * job.floors)
+		if max_tier >= 2:
+			_upgrade_cargo(job, patron, day * 24 + hour, result.size(), max_tier)
 		result.append(job)
 	return result
+
+
+## Turns some orders into higher-tier cargo (spec courier-progression / Higher tiers with a better
+## licence); its own hash, so the orders themselves stay the same for every licence.
+func _upgrade_cargo(job: DeliveryJob, patron: WorkplaceInfo, hour_index: int, index: int, max_tier: int) -> void:
+	var h := DetHash.hash4(population.world_seed(), SALT_CARGO, patron.id.district.x * 7919 + patron.id.district.z,
+			patron.id.local, hour_index, index)
+	if DetHash.u01(h) >= HIGHER_TIER_SHARE:
+		return
+	var t := 2 + (h >> 20) % (max_tier - 1)
+	var kinds := CargoKind.kinds_of_tier(t)
+	var kind := kinds[(h >> 8) % kinds.size()]
+	var labels: Array = CargoKind.TABLE[kind]["labels"]
+	job.cargo_kind = kind
+	job.cargo = labels[(h >> 12) % labels.size()]
+	job.base_pay = roundi(job.base_pay * CargoKind.pay(kind))
 
 
 static func _cargo(patron: WorkplaceInfo, rng: CellRandom) -> String:

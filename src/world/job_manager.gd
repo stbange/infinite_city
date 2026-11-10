@@ -14,6 +14,10 @@ signal delivered(job: DeliveryJob)
 @export var interaction_path: NodePath
 
 var wallet := Wallet.new()
+## Progression (spec courier-progression): standing, licence and tools (tool -> count).
+var reputation := Reputation.new()
+var licence: String = "bronze"
+var tools: Dictionary = {}
 var carried: Array[DeliveryJob] = []
 var completed: int = 0
 var patron: WorkplaceInfo
@@ -104,7 +108,7 @@ func open_orders() -> Array[DeliveryJob]:
 	var session := _session()
 	if patron == null or board == null or session == null:
 		return result
-	for job in board.offers(patron, session.clock.day_number(), session.clock.hour()):
+	for job in board.offers(patron, session.clock.day_number(), session.clock.hour(), Licence.max_tier(licence)):
 		if not _taken.has(job.id):
 			result.append(job)
 	return result
@@ -156,6 +160,7 @@ func _on_interacted(target: Dictionary) -> void:
 		wallet.credits += CourierBoard.pay_for(done, session.clock.total_minutes)
 		carried.erase(done)
 		completed += 1
+		reputation.add(Reputation.MUTUAL, Reputation.DELIVERY if done.story_beat.is_empty() else Reputation.STORY_DELIVERY)
 		delivered.emit(done)
 
 
@@ -166,6 +171,36 @@ func door_position(cell: Vector3i, floor_index: int, unit_index: int) -> Vector3
 	var plan := world.population.plan_of(block)
 	var unit := plan.units[unit_index]
 	return world.origin.scene_position_of_cell_center(cell) + Vector3(unit.door_x, plan.floor_y(floor_index) + 1.1, unit.front_z())
+
+
+## Encounter heat added by what is carried (spec courier-progression / cargo tiers).
+func cargo_heat() -> float:
+	var total := 0.0
+	for job in carried:
+		total += CargoKind.heat(job.cargo_kind)
+	return total
+
+
+## Buys a tool from the shop; false when refused.
+func buy(tool: String) -> bool:
+	if not ShopCatalogue.can_buy(tool, licence, wallet.credits, tools):
+		return false
+	wallet.credits -= int(ShopCatalogue.TOOLS[tool]["price"])
+	tools[tool] = int(tools.get(tool, 0)) + 1
+	return true
+
+
+## Upgrades the licence when standing and credits allow; false when refused.
+func upgrade_licence() -> bool:
+	if not Licence.can_upgrade(licence, reputation, wallet.credits):
+		return false
+	wallet.credits -= Licence.fee(licence)
+	licence = Licence.next_level(licence)
+	return true
+
+
+func has_tool(tool: String) -> bool:
+	return int(tools.get(tool, 0)) > 0
 
 
 ## Drops all carried orders (taken by a gang or lost in a fall); returns how many were lost.
@@ -194,7 +229,8 @@ func to_dict() -> Dictionary:
 	var jobs_data: Array = []
 	for job in carried:
 		jobs_data.append(job.to_dict())
-	return {"wallet": wallet.to_dict(), "carried": jobs_data, "completed": completed}
+	return {"wallet": wallet.to_dict(), "carried": jobs_data, "completed": completed,
+		"reputation": reputation.to_dict(), "licence": licence, "tools": tools.duplicate()}
 
 
 func from_dict(data: Dictionary) -> void:
@@ -205,6 +241,12 @@ func from_dict(data: Dictionary) -> void:
 		carried.append(DeliveryJob.from_dict(item))
 		_taken[carried[-1].id] = true
 	completed = int(data.get("completed", 0))
+	reputation.from_dict(data.get("reputation", {}))
+	licence = str(data.get("licence", "bronze"))
+	tools.clear()
+	var owned: Dictionary = data.get("tools", {})
+	for tool: String in owned:
+		tools[tool] = int(owned[tool])
 
 
 func _world() -> CityWorld:

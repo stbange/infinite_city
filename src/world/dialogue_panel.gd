@@ -1,7 +1,7 @@
 class_name DialoguePanel
 extends CanvasLayer
 ## A scene of the story (spec dialogue / Scene panel): the text with the cast's names filled in and
-## numbered choices picked with the keys 1–3.
+## numbered choices picked with the number keys.
 
 signal chosen(index: int)
 
@@ -64,6 +64,11 @@ func text() -> String:
 	return _text.text + "\n" + _choices.text if _text != null else ""
 
 
+func close() -> void:
+	if _panel != null:
+		_panel.visible = false
+
+
 func choose(index: int) -> void:
 	if not is_open() or index < 0 or index >= maxi(_count, 1):
 		return
@@ -75,6 +80,6 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not is_open() or not (event is InputEventKey) or not event.pressed or event.echo:
 		return
 	var key := (event as InputEventKey).keycode
-	if key >= KEY_1 and key <= KEY_3:
+	if key >= KEY_1 and key <= KEY_9:
 		choose(key - KEY_1)
 		get_viewport().set_input_as_handled()

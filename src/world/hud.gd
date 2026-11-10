@@ -15,6 +15,8 @@ extends CanvasLayer
 @export var encounters_path: NodePath
 @export var hazards_path: NodePath
 @export var story_path: NodePath
+@export var tools_path: NodePath
+@export var shop_path: NodePath
 
 const _REFRESH_SECONDS := 0.1
 
@@ -208,6 +210,10 @@ func refresh() -> void:
 	var story := get_node_or_null(story_path) as StoryRunner if not story_path.is_empty() else null
 	if story != null and not story.objective_text().is_empty():
 		lines += "\nStory · Act %d: %s" % [story.state.act, story.objective_text()]
+	for path in [tools_path, shop_path]:
+		var node := get_node_or_null(path) if not path.is_empty() else null
+		if node != null and not str(node.get("last_message")).is_empty():
+			lines += "\n" + str(node.get("last_message"))
 	var hazards := get_node_or_null(hazards_path) as HazardDirector if not hazards_path.is_empty() else null
 	if hazards != null and not hazards.last_message.is_empty():
 		lines += "\n" + hazards.last_message
@@ -221,7 +227,7 @@ func _courier_lines(camera: Player, session: GameSession) -> String:
 	var jobs := get_node_or_null(jobs_path) as JobManager if not jobs_path.is_empty() else null
 	if jobs == null:
 		return ""
-	var text := "\n¤ %d · rent ¤%d on Mondays · %d delivered" % [jobs.wallet.credits, Wallet.RENT, jobs.completed]
+	var text := "\n¤ %d · rent ¤%d on Mondays · %d delivered · %s licence" % [jobs.wallet.credits, Wallet.RENT, jobs.completed, jobs.licence]
 	var waypoint := jobs.waypoint()
 	if waypoint.is_empty():
 		return text + "\nLooking for work…"
@@ -297,7 +303,7 @@ func _build_legend() -> void:
 func _build_controls() -> void:
 	var hint := Label.new()
 	hint.name = "Controls"
-	hint.text = "Click: look   WASD: move   E: interact   Space: jump / up   Shift: sprint / boost   F: walk ⇄ fly   Q/Ctrl: down (fly)   Wheel: fly speed   Esc: release mouse"
+	hint.text = "Click: look   WASD: move   E: interact   Space: jump / up / glide   Shift: sprint / boost   F: walk ⇄ fly   Q/Ctrl: down (fly)   Wheel: fly speed   Esc: release mouse\nU: shop   R: scan   G: grapple   X: flare   1–3: choose"
 	hint.add_theme_font_size_override("font_size", 13)
 	hint.add_theme_color_override("font_outline_color", Color.BLACK)
 	hint.add_theme_constant_override("outline_size", 4)

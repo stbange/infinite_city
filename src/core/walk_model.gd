@@ -11,16 +11,22 @@ var jump_speed: float = 4.6
 var gravity: float = 9.81
 var ground_acceleration: float = 60.0
 var air_acceleration: float = 10.0
+## Glider (spec traversal-tools / Glider): the slowest sink and the forward speed while gliding.
+var glide_sink: float = 3.0
+var glide_speed: float = 9.0
 
 
 ## New velocity. `input`: x = right, y = forward, each in [-1, 1]; `yaw` turns around +Y.
 func step(velocity: Vector3, yaw: float, input: Vector2, sprint: bool, jump: bool, on_floor: bool,
-		delta: float) -> Vector3:
+		delta: float, glide: bool = false) -> Vector3:
 	var basis := Basis(Vector3.UP, yaw)
 	var direction := basis * Vector3(input.x, 0.0, -input.y)
 	if direction.length_squared() > 1.0:
 		direction = direction.normalized()
-	var target := direction * (sprint_speed if sprint else walk_speed)
+	var gliding := glide and not on_floor
+	if gliding and direction.length_squared() < 0.01:
+		direction = basis * Vector3(0.0, 0.0, -1.0)
+	var target := direction * (glide_speed if gliding else (sprint_speed if sprint else walk_speed))
 	var horizontal := Vector3(velocity.x, 0.0, velocity.z)
 	var acceleration := ground_acceleration if on_floor else air_acceleration
 	horizontal = horizontal.move_toward(target, acceleration * delta)
@@ -29,4 +35,6 @@ func step(velocity: Vector3, yaw: float, input: Vector2, sprint: bool, jump: boo
 		vertical = jump_speed if jump else 0.0
 	else:
 		vertical -= gravity * delta
+		if gliding:
+			vertical = maxf(vertical, -glide_sink)
 	return Vector3(horizontal.x, vertical, horizontal.z)
