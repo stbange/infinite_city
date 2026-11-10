@@ -2,98 +2,686 @@
  "id": "hidden_abundance",
  "title": "The Hidden Abundance",
  "roles": {
-  "patron": {"kind": "patron"},
-  "keeper": {"kind": "person", "min_age": 66, "max_age": 120, "radius": 3},
-  "friend": {"kind": "person", "min_age": 22, "max_age": 45, "radius": 3},
-  "rival": {"kind": "person", "min_age": 18, "max_age": 30, "radius": 4},
-  "monopolist": {"kind": "faction", "types": ["company"], "good": "food"},
-  "disruptor": {"kind": "faction", "types": ["gang"]},
-  "idealists": {"kind": "faction", "types": ["party", "guild"]}
+  "patron": {
+   "kind": "patron"
+  },
+  "keeper": {
+   "kind": "person",
+   "min_age": 66,
+   "max_age": 120,
+   "radius": 3
+  },
+  "friend": {
+   "kind": "person",
+   "min_age": 22,
+   "max_age": 45,
+   "radius": 3
+  },
+  "rival": {
+   "kind": "person",
+   "min_age": 18,
+   "max_age": 30,
+   "radius": 4
+  },
+  "monopolist": {
+   "kind": "faction",
+   "types": [
+    "company"
+   ],
+   "good": "food"
+  },
+  "disruptor": {
+   "kind": "faction",
+   "types": [
+    "gang"
+   ]
+  },
+  "idealists": {
+   "kind": "faction",
+   "types": [
+    "party",
+    "guild"
+   ]
+  },
+  "lamplighter": {
+   "kind": "flat",
+   "radius": 3,
+   "name": "the Lamplighter"
+  },
+  "organizer": {
+   "kind": "person",
+   "min_age": 25,
+   "max_age": 60,
+   "radius": 4
+  },
+  "vault": {
+   "kind": "flat",
+   "radius": 4,
+   "layer": -1,
+   "name": "the sealed door"
+  }
  },
  "beats": [
-  {"id": "first_night", "act": 1, "trigger": "scene", "scene": "first_night",
-   "objective": "Take your first orders at {patron.place}"},
-  {"id": "keeper_order", "act": 1, "trigger": "job", "after": ["first_night"], "deliveries": 2,
-   "job": {"to": "keeper", "cargo": "noodles"}, "scene": "keeper_door",
-   "objective": "Bring {keeper.first} {keeper.family} the usual noodles"},
-  {"id": "friend_order", "act": 1, "trigger": "job", "after": ["first_night"], "deliveries": 3,
-   "job": {"to": "friend", "cargo": "soup"}, "scene": "friend_door",
-   "objective": "Take soup to {friend.first} before the night shift"},
-  {"id": "rival", "act": 1, "trigger": "scene", "after": ["first_night"], "deliveries": 4, "scene": "rival",
-   "objective": "Keep delivering"},
-  {"id": "blight", "act": 2, "trigger": "scene", "after": ["keeper_order", "friend_order", "rival"], "scene": "blight",
-   "objective": "Keep the district fed"},
-  {"id": "rationing", "act": 2, "trigger": "scene", "after": ["blight"], "since": ["blight", 1], "scene": "rationing",
-   "objective": "Decide whose door you reach first"},
-  {"id": "ration_keeper", "act": 2, "trigger": "job", "after": ["rationing"], "flags": ["fed_keeper"],
-   "job": {"to": "keeper", "cargo": "ration box"}, "scene": "ration_keeper",
-   "objective": "Bring the last ration box to {keeper.first}"},
-  {"id": "ration_friend", "act": 2, "trigger": "job", "after": ["rationing"], "flags": ["fed_friend"],
-   "job": {"to": "friend", "cargo": "ration box"}, "scene": "ration_friend",
-   "objective": "Bring the last ration box to {friend.first}"},
-  {"id": "hijack", "act": 2, "trigger": "scene", "after": ["blight"], "since": ["blight", 2], "scene": "hijack",
-   "heat": {"disruptor": 1.0}, "objective": "Watch the bridges"},
-  {"id": "rally", "act": 2, "trigger": "scene", "after": ["blight"], "since": ["blight", 3], "scene": "rally",
-   "objective": "Keep delivering"},
-  {"id": "keeper_call", "act": 2, "trigger": "scene", "after": ["hijack", "rally"], "any": ["ration_keeper", "ration_friend"],
-   "scene": "keeper_call", "set_flags": ["act2_done"],
-   "objective": "Visit {keeper.first} tomorrow (to be continued)"}
+  {
+   "id": "first_night",
+   "act": 1,
+   "trigger": "scene",
+   "scene": "first_night",
+   "objective": "Take your first orders at {patron.place}"
+  },
+  {
+   "id": "keeper_order",
+   "act": 1,
+   "trigger": "job",
+   "after": [
+    "first_night"
+   ],
+   "deliveries": 2,
+   "job": {
+    "to": "keeper",
+    "cargo": "noodles"
+   },
+   "scene": "keeper_door",
+   "objective": "Bring {keeper.first} {keeper.family} the usual noodles"
+  },
+  {
+   "id": "friend_order",
+   "act": 1,
+   "trigger": "job",
+   "after": [
+    "first_night"
+   ],
+   "deliveries": 3,
+   "job": {
+    "to": "friend",
+    "cargo": "soup"
+   },
+   "scene": "friend_door",
+   "objective": "Take soup to {friend.first} before the night shift"
+  },
+  {
+   "id": "rival",
+   "act": 1,
+   "trigger": "scene",
+   "after": [
+    "first_night"
+   ],
+   "deliveries": 4,
+   "scene": "rival",
+   "objective": "Keep delivering"
+  },
+  {
+   "id": "blight",
+   "act": 2,
+   "trigger": "scene",
+   "after": [
+    "keeper_order",
+    "friend_order",
+    "rival"
+   ],
+   "scene": "blight",
+   "objective": "Keep the district fed"
+  },
+  {
+   "id": "rationing",
+   "act": 2,
+   "trigger": "scene",
+   "after": [
+    "blight"
+   ],
+   "since": [
+    "blight",
+    1
+   ],
+   "scene": "rationing",
+   "objective": "Decide whose door you reach first"
+  },
+  {
+   "id": "ration_keeper",
+   "act": 2,
+   "trigger": "job",
+   "after": [
+    "rationing"
+   ],
+   "flags": [
+    "fed_keeper"
+   ],
+   "job": {
+    "to": "keeper",
+    "cargo": "ration box"
+   },
+   "scene": "ration_keeper",
+   "objective": "Bring the last ration box to {keeper.first}"
+  },
+  {
+   "id": "ration_friend",
+   "act": 2,
+   "trigger": "job",
+   "after": [
+    "rationing"
+   ],
+   "flags": [
+    "fed_friend"
+   ],
+   "job": {
+    "to": "friend",
+    "cargo": "ration box"
+   },
+   "scene": "ration_friend",
+   "objective": "Bring the last ration box to {friend.first}"
+  },
+  {
+   "id": "hijack",
+   "act": 2,
+   "trigger": "scene",
+   "after": [
+    "blight"
+   ],
+   "since": [
+    "blight",
+    2
+   ],
+   "scene": "hijack",
+   "heat": {
+    "disruptor": 1.0
+   },
+   "objective": "Watch the bridges"
+  },
+  {
+   "id": "rally",
+   "act": 2,
+   "trigger": "scene",
+   "after": [
+    "blight"
+   ],
+   "since": [
+    "blight",
+    3
+   ],
+   "scene": "rally",
+   "objective": "Keep delivering"
+  },
+  {
+   "id": "keeper_call",
+   "act": 2,
+   "trigger": "scene",
+   "after": [
+    "hijack",
+    "rally"
+   ],
+   "any": [
+    "ration_keeper",
+    "ration_friend"
+   ],
+   "scene": "keeper_call",
+   "set_flags": [
+    "act2_done"
+   ],
+   "objective": "Visit {keeper.first} tomorrow"
+  },
+  {
+   "id": "keeper_dies",
+   "act": 3,
+   "trigger": "scene",
+   "after": [
+    "keeper_call"
+   ],
+   "since": [
+    "keeper_call",
+    1
+   ],
+   "scene": "keeper_dies",
+   "kill": [
+    "keeper"
+   ],
+   "objective": "Find out what {keeper.first} left you"
+  },
+  {
+   "id": "tin_delivery",
+   "act": 3,
+   "trigger": "job",
+   "after": [
+    "keeper_dies"
+   ],
+   "job": {
+    "to": "lamplighter",
+    "cargo": "a sealed tin",
+    "kind": "parcel"
+   },
+   "scene": "lamplighter_door",
+   "heat": {
+    "disruptor": 1.0
+   },
+   "set_flags": [
+    "has_key"
+   ],
+   "objective": "Deliver the tin to the Lamplighter"
+  },
+  {
+   "id": "everyone_knows",
+   "act": 3,
+   "trigger": "scene",
+   "after": [
+    "tin_delivery"
+   ],
+   "since": [
+    "tin_delivery",
+    1
+   ],
+   "scene": "everyone_knows",
+   "objective": "Keep the key safe"
+  },
+  {
+   "id": "medicine_run",
+   "act": 4,
+   "trigger": "job",
+   "after": [
+    "everyone_knows"
+   ],
+   "job": {
+    "to": "friend",
+    "cargo": "blight tonic",
+    "kind": "medicine"
+   },
+   "scene": "medicine_door",
+   "objective": "Bring the blight tonic to {friend.first}"
+  },
+  {
+   "id": "testimony_run",
+   "act": 4,
+   "trigger": "job",
+   "after": [
+    "everyone_knows"
+   ],
+   "since": [
+    "everyone_knows",
+    2
+   ],
+   "job": {
+    "to": "organizer",
+    "cargo": "a shielded drive",
+    "kind": "data"
+   },
+   "scene": "testimony_door",
+   "objective": "Take the drive to {organizer.first} of {idealists.name}"
+  },
+  {
+   "id": "friend_hurt",
+   "act": 4,
+   "trigger": "scene",
+   "after": [
+    "medicine_run",
+    "testimony_run"
+   ],
+   "scene": "friend_hurt",
+   "heat": {
+    "disruptor": 0.5
+   },
+   "objective": "Decide what the key is for"
+  },
+  {
+   "id": "vault",
+   "act": 5,
+   "trigger": "job",
+   "after": [
+    "friend_hurt"
+   ],
+   "job": {
+    "to": "vault",
+    "cargo": "the Lamplighter's key",
+    "kind": "parcel"
+   },
+   "scene": "vault",
+   "objective": "Take the key to the sealed door"
+  },
+  {
+   "id": "epilogue_public",
+   "act": 5,
+   "trigger": "scene",
+   "after": [
+    "vault"
+   ],
+   "flags": [
+    "ending_public"
+   ],
+   "scene": "epilogue_public",
+   "set_flags": [
+    "story_done"
+   ],
+   "objective": "The seed belongs to everyone",
+   "world": [
+    "prices_fall"
+   ]
+  },
+  {
+   "id": "epilogue_monopolist",
+   "act": 5,
+   "trigger": "scene",
+   "after": [
+    "vault"
+   ],
+   "flags": [
+    "ending_monopolist"
+   ],
+   "scene": "epilogue_monopolist",
+   "set_flags": [
+    "story_done"
+   ],
+   "objective": "You sold the seed to {monopolist.name}",
+   "world": [
+    "prices_soar"
+   ],
+   "wallet": 800
+  },
+  {
+   "id": "epilogue_disruptor",
+   "act": 5,
+   "trigger": "scene",
+   "after": [
+    "vault"
+   ],
+   "flags": [
+    "ending_disruptor"
+   ],
+   "scene": "epilogue_disruptor",
+   "set_flags": [
+    "story_done"
+   ],
+   "objective": "{disruptor.name} rule the bridges",
+   "world": [
+    "gang_takes_bridges"
+   ]
+  },
+  {
+   "id": "epilogue_hidden",
+   "act": 5,
+   "trigger": "scene",
+   "after": [
+    "vault"
+   ],
+   "flags": [
+    "ending_hidden"
+   ],
+   "scene": "epilogue_hidden",
+   "set_flags": [
+    "story_done"
+   ],
+   "objective": "The vault sleeps again"
+  }
  ],
  "scenes": {
   "first_night": {
    "speaker": "patron",
    "text": "{patron.first} {patron.family} slides a warm bag across the counter of {patron.place}. \"[Rent's due Monday, courier|You look like you need the work]. Orders come in every hour. Find the door, keep it hot, don't feed the gangs.\"",
-   "choices": [{"text": "\"I'll find them.\""}]
+   "choices": [
+    {
+     "text": "\"I'll find them.\""
+    }
+   ]
   },
   "keeper_door": {
    "speaker": "keeper",
    "text": "The door opens a crack. {keeper.first} {keeper.family}, old and sharp-eyed, counts the coins twice. \"You're new. The last one never came this deep.\" On the shelf behind them sits a dented tin, polished like a relic.",
-   "choices": [{"text": "\"What's in the tin?\"", "flags": ["asked_tin"]}, {"text": "\"Enjoy your dinner.\""}]
+   "choices": [
+    {
+     "text": "\"What's in the tin?\"",
+     "flags": [
+      "asked_tin"
+     ]
+    },
+    {
+     "text": "\"Enjoy your dinner.\""
+    }
+   ]
   },
   "friend_door": {
    "speaker": "friend",
    "text": "{friend.first} {friend.family} takes the soup with both hands. \"[Twelve hours on the ward|Another double shift] and you're the first face that didn't want something from me. Come by again, will you?\"",
-   "choices": [{"text": "\"Same time tomorrow.\"", "flags": ["friend_warm"]}, {"text": "\"Just doing the job.\""}]
+   "choices": [
+    {
+     "text": "\"Same time tomorrow.\"",
+     "flags": [
+      "friend_warm"
+     ]
+    },
+    {
+     "text": "\"Just doing the job.\""
+    }
+   ]
   },
   "rival": {
    "speaker": "rival",
    "text": "A courier in a patched jacket cuts in front of you at the counter and grabs your next order. \"{rival.first}. Remember it — this stretch was mine before you showed up.\"",
-   "choices": [{"text": "Let it go.", "flags": ["rival_friendly"]}, {"text": "\"Then race me for it.\"", "flags": ["rival_grudge"]}]
+   "choices": [
+    {
+     "text": "Let it go.",
+     "flags": [
+      "rival_friendly"
+     ]
+    },
+    {
+     "text": "\"Then race me for it.\"",
+     "flags": [
+      "rival_grudge"
+     ]
+    }
+   ]
   },
   "blight": {
    "speaker": "patron",
    "text": "{patron.first} pins a new price list over the old one. \"The blight's in the farm layers. {monopolist.name} says supply is short, so everything costs three times as much. Funny how their warehouses never run dry.\"",
-   "choices": [{"text": "\"People will go hungry.\""}]
+   "choices": [
+    {
+     "text": "\"People will go hungry.\""
+    }
+   ]
   },
   "rationing": {
    "speaker": "patron",
    "text": "\"One ration box left tonight,\" {patron.first} says. \"{keeper.first} hasn't eaten since yesterday. {friend.first}'s ward lost its kitchen. Your call, courier.\"",
-   "choices": [{"text": "Take it to {keeper.first}.", "flags": ["fed_keeper"]}, {"text": "Take it to {friend.first}.", "flags": ["fed_friend"]}]
+   "choices": [
+    {
+     "text": "Take it to {keeper.first}.",
+     "flags": [
+      "fed_keeper"
+     ]
+    },
+    {
+     "text": "Take it to {friend.first}.",
+     "flags": [
+      "fed_friend"
+     ]
+    }
+   ]
   },
   "ration_keeper": {
    "speaker": "keeper",
    "text": "{keeper.first} holds the box like it might vanish. \"My great-aunt used to say the city was built on a lie about how little there is.\" The tin is on the table now.",
-   "choices": [{"text": "Leave quietly."}]
+   "choices": [
+    {
+     "text": "Leave quietly."
+    }
+   ]
   },
   "ration_friend": {
    "speaker": "friend",
    "text": "{friend.first} shares the box out among the night staff before taking a bite. \"Someone's sitting on food while people faint in the corridors. I'll remember who brought this.\"",
-   "choices": [{"text": "Leave quietly."}]
+   "choices": [
+    {
+     "text": "Leave quietly."
+    }
+   ]
   },
   "hijack": {
    "speaker": "disruptor",
    "text": "Word runs down the corridors: {disruptor.name} hijacked two couriers on the bridges last night and sold the food at blight prices. They know your face now.",
-   "choices": [{"text": "Keep your head down."}]
+   "choices": [
+    {
+     "text": "Keep your head down."
+    }
+   ]
   },
   "rally": {
    "speaker": "idealists",
    "text": "In the stairwell, people from {idealists.name} press leaflets into every hand: OPEN THE WAREHOUSES. \"Couriers go everywhere,\" one says. \"Carry a few for us?\"",
-   "choices": [{"text": "Take a stack.", "flags": ["carries_leaflets"]}, {"text": "\"I just carry food.\""}]
+   "choices": [
+    {
+     "text": "Take a stack.",
+     "flags": [
+      "carries_leaflets"
+     ]
+    },
+    {
+     "text": "\"I just carry food.\""
+    }
+   ]
   },
   "keeper_call": {
    "speaker": "keeper",
    "text": "A message on the courier board, in shaky capitals: COME TOMORROW. THERE IS SOMETHING I MUST GIVE YOU BEFORE THEY DO. — {keeper.first} {keeper.family}",
-   "choices": [{"text": "\"Tomorrow.\""}]
+   "choices": [
+    {
+     "text": "\"Tomorrow.\""
+    }
+   ]
+  },
+  "keeper_dies": {
+   "speaker": "patron",
+   "text": "{patron.first} meets you at the counter without a bag. \"{keeper.first} {keeper.family} died in the night. They left an order on the board, paid in full: a sealed tin, for 'the Lamplighter'. The address has been a burnt-out flat since the Blackout.\"",
+   "choices": [
+    {
+     "text": "\"Then I'll deliver it.\""
+    }
+   ]
+  },
+  "lamplighter_door": {
+   "speaker": "lamplighter",
+   "text": "The door of {lamplighter.name}'s flat hangs open on soot and silence. Nobody has lived here for a century. Inside the tin: an old doorway key and a journal signed by the Lamplighter herself — a map to a founders' vault of living seed. By morning, the whole corridor seems to know you have it.",
+   "choices": [
+    {
+     "text": "Pocket the key."
+    }
+   ]
+  },
+  "everyone_knows": {
+   "speaker": "monopolist",
+   "text": "A courier from {monopolist.name} leaves a card at {patron.place}: NAME YOUR PRICE. {disruptor.name} send a simpler message: a cracked bowl on your doorstep. {patron.first} watches you read both.",
+   "choices": [
+    {
+     "text": "Leave the key with {patron.first}.",
+     "flags": [
+      "key_hidden"
+     ]
+    },
+    {
+     "text": "Keep it on you.",
+     "flags": [
+      "key_carried"
+     ]
+    }
+   ]
+  },
+  "medicine_door": {
+   "speaker": "friend",
+   "text": "{friend.first} takes the tonic with shaking hands. \"Half the ward has the blight cough now. {monopolist.name} sells this at ten times cost.\" They squeeze your arm. \"Be careful. People are asking about you.\"",
+   "choices": [
+    {
+     "text": "\"I'm always careful.\""
+    }
+   ]
+  },
+  "testimony_door": {
+   "speaker": "organizer",
+   "text": "{organizer.first} {organizer.family} of {idealists.name} plugs in the drive and goes pale. \"Shipping logs. {monopolist.name} moved the blight spores into the farm layers themselves. With this and that seed vault, we could open the warehouses for good.\"",
+   "choices": [
+    {
+     "text": "\"Then we finish it.\""
+    }
+   ]
+  },
+  "friend_hurt": {
+   "speaker": "disruptor",
+   "text": "You find {friend.first} on the ward's own bed, bruised and furious. {disruptor.name} came asking where the courier keeps the key. \"I didn't tell them,\" {friend.first} says. \"Go. Before they ask someone weaker.\"",
+   "choices": [
+    {
+     "text": "Pay {disruptor.name} to leave {friend.first} alone.",
+     "flags": [
+      "paid_disruptor"
+     ]
+    },
+    {
+     "text": "\"They'll answer for this.\"",
+     "flags": [
+      "swore_revenge"
+     ]
+    }
+   ]
+  },
+  "vault": {
+   "speaker": "vault",
+   "text": "Behind {vault.name}, deep under the district, the key turns. Cold air, green light: rack after rack of living seed, enough to feed the Reach for a generation. Footsteps on the stairs behind you. Who gets it?",
+   "choices": [
+    {
+     "text": "Open it to everyone with {idealists.name}.",
+     "flags": [
+      "ending_public"
+     ]
+    },
+    {
+     "text": "Sell it to {monopolist.name}.",
+     "flags": [
+      "ending_monopolist"
+     ]
+    },
+    {
+     "text": "Give it to {disruptor.name} for their protection.",
+     "flags": [
+      "ending_disruptor"
+     ]
+    },
+    {
+     "text": "Lock it again and lose the key.",
+     "flags": [
+      "ending_hidden"
+     ]
+    }
+   ]
+  },
+  "epilogue_public": {
+   "speaker": "idealists",
+   "text": "Within a week the seed is in every farm layer. Food prices fall for the first time in living memory. {organizer.first} names the new co-op after {keeper.first} {keeper.family}.",
+   "choices": [
+    {
+     "text": "Back to work."
+    }
+   ]
+  },
+  "epilogue_monopolist": {
+   "speaker": "monopolist",
+   "text": "{monopolist.name} pays well — very well. The vault is emptied by morning, and prices stay where they were. {friend.first} stops answering your knocks.",
+   "choices": [
+    {
+     "text": "Back to work."
+    }
+   ]
+  },
+  "epilogue_disruptor": {
+   "speaker": "disruptor",
+   "text": "{disruptor.name} hand out seed like favours and take every bridge in the district as their price. Nobody hijacks your deliveries any more. Nobody crosses without paying, either.",
+   "choices": [
+    {
+     "text": "Back to work."
+    }
+   ]
+  },
+  "epilogue_hidden": {
+   "speaker": "keeper",
+   "text": "The key goes into the fog off a high bridge. Somewhere below, the founders' vault sleeps again. Maybe the next Lamplighter will choose better. Maybe there is no better choice.",
+   "choices": [
+    {
+     "text": "Back to work."
+    }
+   ]
   }
  }
 }

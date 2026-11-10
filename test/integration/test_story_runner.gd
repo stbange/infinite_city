@@ -6,6 +6,7 @@ var session: GameSession
 var jobs: JobManager
 var panel: DialoguePanel
 var runner: StoryRunner
+var simulation: SimulationRunner
 var patron: WorkplaceInfo
 
 
@@ -43,6 +44,15 @@ func before_each() -> void:
 	runner.session_path = NodePath("../GameSession")
 	runner.jobs_path = NodePath("../JobManager")
 	runner.panel_path = NodePath("../DialoguePanel")
+	runner.simulation_path = NodePath("../SimulationRunner")
+	simulation = SimulationRunner.new()
+	simulation.name = "SimulationRunner"
+	simulation.auto_update = false
+	world.add_child(simulation)
+	simulation.world_path = NodePath("..")
+	simulation.session_path = NodePath("../GameSession")
+	simulation.jobs_path = NodePath("../JobManager")
+	simulation.story_path = NodePath("../StoryRunner")
 	add_child_autofree(world)
 	var market := world.population.job_market(Vector3i(0, -3, 0))
 	for i in market.active_indices():
@@ -132,3 +142,31 @@ func test_picking_a_choice() -> void:
 	assert_false(panel.is_open())
 	assert_true(runner.state.flags.has("rival_grudge"))
 	assert_false(runner.state.flags.has("rival_friendly"))
+
+
+func test_endings_change_the_district() -> void:
+	var endings := {0: "price", 2: "bridge_taken"}
+	for ending: int in endings:
+		var pick := func(scene: String) -> int: return ending if scene == "vault" else 0
+		runner.state = StoryState.new()
+		runner.cast_now(world, patron)
+		jobs.carried.clear()
+		jobs.completed = 0
+		simulation.log = EventLog.new()
+		simulation.overlays = WorldOverlays.new()
+		_play_until("story_done", pick, 400)
+		assert_true(runner.state.flags.has("story_done"), "ending %d reached" % ending)
+		var keeper_died := false
+		var changed := false
+		for event in simulation.log.events:
+			if event["kind"] == "death" and event["person"] == runner.state.cast["keeper"]["key"]:
+				keeper_died = true
+			if event["kind"] == endings[ending]:
+				changed = true
+				if ending == 0:
+					assert_almost_eq(float(event["factor"]), 0.7, 0.001)
+				else:
+					assert_eq(event["gang"], runner.state.cast["disruptor"]["key"])
+		assert_true(keeper_died, "the keeper dies by a plot beat")
+		assert_true(changed, "ending %d changes the district" % ending)
+		assert_eq(runner.state.act, 5)

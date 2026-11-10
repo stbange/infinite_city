@@ -10,6 +10,7 @@ const STORY_PAY := 15
 @export var jobs_path: NodePath
 @export var panel_path: NodePath
 @export var encounters_path: NodePath
+@export var simulation_path: NodePath
 ## When false, update() must be called manually (used by tests).
 @export var auto_update: bool = true
 
@@ -83,8 +84,9 @@ func _ensure_story_job(world: CityWorld, jobs: JobManager) -> void:
 	job.dropoff_floor = int(entry["floor"])
 	job.dropoff_unit = int(entry["unit"])
 	job.customer = PersonId.from_key(entry["key"])
-	job.customer_name = "%s %s" % [entry["first"], entry["family"]]
+	job.customer_name = ("%s %s" % [entry["first"], entry["family"]]).strip_edges()
 	job.cargo = str(spec.get("cargo", "parcel"))
+	job.cargo_kind = str(spec.get("kind", "food"))
 	job.base_pay = STORY_PAY
 	var session := _session()
 	job.picked_minute = session.clock.total_minutes if session != null else 0
@@ -115,9 +117,18 @@ func choose(index: int) -> void:
 	var effects := StoryDirector.choose(plot, state, index, jobs.completed if jobs != null else 0)
 	var encounters := get_node_or_null(encounters_path) as EncounterDirector if not encounters_path.is_empty() else null
 	var session := _session()
+	var heat: Dictionary = effects["heat"]
 	if encounters != null and session != null:
-		for gang: String in effects:
-			encounters.heat.add(gang, effects[gang], session.clock.total_minutes)
+		for gang: String in heat:
+			encounters.heat.add(gang, heat[gang], session.clock.total_minutes)
+	if jobs != null:
+		jobs.wallet.credits += int(effects["wallet"])
+	var simulation := get_node_or_null(simulation_path) as SimulationRunner if not simulation_path.is_empty() else null
+	if simulation != null and session != null:
+		for key: String in effects["kill"]:
+			simulation.record({"kind": "death", "person": key}, session.clock.total_minutes)
+		for effect: String in effects["world"]:
+			simulation.story_effect(effect, state.cast, session.clock.total_minutes)
 	if jobs != null:
 		StoryDirector.begin(plot, state, jobs.completed)
 

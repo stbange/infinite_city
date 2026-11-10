@@ -64,6 +64,49 @@ func run_day(world: CityWorld, day: int) -> void:
 		overlays.apply(event)
 
 
+## Appends an event (from the story) and applies it.
+func record(event: Dictionary, minute: int) -> void:
+	var stored := event.duplicate(true)
+	stored["minute"] = minute
+	log.events.append(stored)
+	overlays.apply(stored)
+
+
+## How an ending rewrites the live area (spec plot-acts-3-to-5 / Endings change the district).
+func story_effect(effect: String, cast: Dictionary, minute: int) -> void:
+	var world := _world()
+	if world == null:
+		return
+	if _turf == null:
+		_turf = TurfMap.new(world.chronicle, world.layout)
+		_turf.overlays = overlays
+	var districts: Array[Vector3i] = []
+	for d: Vector3i in visited:
+		districts.append(d)
+	var patron: Dictionary = cast.get("patron", {})
+	var centre := Vector3i.ZERO
+	if patron.has("cell"):
+		var c: Array = patron["cell"]
+		centre = Vector3i(int(c[0]), int(c[1]), int(c[2]))
+		if not districts.has(world.layout.district_of(centre)):
+			districts.append(world.layout.district_of(centre))
+	match effect:
+		"prices_fall", "prices_soar":
+			for d in districts:
+				record({"kind": "price", "district": WorldOverlays.district_key(d),
+					"factor": 0.7 if effect == "prices_fall" else 2.5}, minute)
+		"gang_takes_bridges":
+			var gang: Dictionary = cast.get("disruptor", {})
+			if not gang.has("key"):
+				return
+			for dx in range(-2, 3):
+				for dz in range(-2, 3):
+					for bridge in world.layout.bridges_of(centre + Vector3i(dx, 0, dz)):
+						if _turf.claim_of(bridge) != gang["key"]:
+							record({"kind": "bridge_taken", "bridge": WorldOverlays.bridge_key(bridge),
+								"gang": gang["key"], "from": _turf.claim_of(bridge)}, minute)
+
+
 func _setup(world: CityWorld, session: GameSession) -> void:
 	if _turf == null:
 		_turf = TurfMap.new(world.chronicle, world.layout)

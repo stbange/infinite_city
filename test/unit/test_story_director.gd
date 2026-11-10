@@ -68,10 +68,10 @@ func test_no_dead_ends() -> void:
 				queue.append(next)
 	for b: Dictionary in plot["beats"]:
 		assert_true(reached.has(b["id"]), "beat %s reachable" % b["id"])
-	# From every state, a state with act2_done is reachable.
+	# From every state, the end of the story is reachable.
 	var good := {}
 	for k: String in states:
-		if k.contains("act2_done"):
+		if k.contains("story_done"):
 			good[k] = true
 	var changed := true
 	while changed:

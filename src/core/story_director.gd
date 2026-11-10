@@ -35,6 +35,8 @@ static func cast(population: Population, chronicle: CityChronicle, start: Vector
 				result[role] = _cast_person(population, start, spec, used, role)
 			"faction":
 				result[role] = _cast_faction(chronicle, population.layout, start, spec, used)
+			"flat":
+				result[role] = _cast_flat(population, start, spec, used)
 	return result
 
 
@@ -95,6 +97,31 @@ static func _cast_person(population: Population, start: Vector3i, spec: Dictiona
 		if best != null:
 			used[best.id.key()] = true
 			return _person_entry(best, layout)
+	return {}
+
+
+## A vacant flat near the start (on the layer `layer` below it), standing in for a place.
+static func _cast_flat(population: Population, start: Vector3i, spec: Dictionary, used: Dictionary) -> Dictionary:
+	var layout := population.layout
+	var radius := int(spec.get("radius", 3))
+	var centre := start + Vector3i(0, int(spec.get("layer", 0)), 0)
+	for r in radius + 3:
+		for dx in range(-r, r + 1):
+			for dz in range(-r, r + 1):
+				if maxi(absi(dx), absi(dz)) != r:
+					continue
+				var cell := centre + Vector3i(dx, 0, dz)
+				var block := layout.block_at(cell)
+				if block == null or block.kind != BlockTypes.Kind.HOUSING:
+					continue
+				for flat in population.flats_of(block):
+					var key := PersonId.of(layout, cell, flat.x, flat.y, 0).key()
+					if used.has(key) or not population.household(cell, flat.x, flat.y).is_vacant():
+						continue
+					used[key] = true
+					var name := str(spec.get("name", "the door"))
+					return {"kind": "flat", "key": key, "first": name, "family": "", "name": name,
+						"cell": [cell.x, cell.y, cell.z], "floor": flat.x, "unit": flat.y}
 	return {}
 
 
@@ -192,10 +219,10 @@ static func choices(plot: Dictionary, state: StoryState) -> Array:
 	return (plot["scenes"][state.scene] as Dictionary).get("choices", [])
 
 
-## Picks a choice of the open scene and finishes the active beat; returns its heat effects as
-## {gang key: amount}.
+## Picks a choice of the open scene and finishes the active beat; returns its effects:
+## {heat: {gang key: amount}, wallet: credits, world: [effect names], kill: [person keys]}.
 static func choose(plot: Dictionary, state: StoryState, index: int, deliveries: int) -> Dictionary:
-	var effects := {}
+	var effects := {"heat": {}, "wallet": 0, "world": [], "kill": []}
 	if state.scene.is_empty():
 		return effects
 	var options := choices(plot, state)
@@ -210,7 +237,13 @@ static func choose(plot: Dictionary, state: StoryState, index: int, deliveries: 
 	for role: String in heat:
 		var entry: Dictionary = state.cast.get(role, {})
 		if entry.has("key"):
-			effects[entry["key"]] = float(heat[role])
+			effects["heat"][entry["key"]] = float(heat[role])
+	effects["wallet"] = int(b.get("wallet", 0))
+	effects["world"] = (b.get("world", []) as Array).duplicate()
+	for role: String in b.get("kill", []):
+		var entry: Dictionary = state.cast.get(role, {})
+		if entry.get("kind") == "person":
+			effects["kill"].append(entry["key"])
 	state.done[state.active] = deliveries
 	state.active = ""
 	state.scene = ""

@@ -137,6 +137,7 @@ session_path = NodePath("../GameSession")
 jobs_path = NodePath("../JobManager")
 panel_path = NodePath("../DialoguePanel")
 encounters_path = NodePath("../EncounterDirector")
+simulation_path = NodePath("../SimulationRunner")
 
 [node name="ShopPanel" type="CanvasLayer" parent="."]
 script = ExtResource("20_dialogue")
