@@ -25,7 +25,8 @@ and the order of queries does not matter.
 
 ### Requirement: Names
 Members of a couple or family household SHALL share a family name; flatmates have their own. The
-naming culture depends on the location.
+naming culture depends on the location. Households of a block that share a family line share
+their family name.
 
 #### Scenario: Shared and varied names
 - **WHEN** 1,000 occupied flats are examined
