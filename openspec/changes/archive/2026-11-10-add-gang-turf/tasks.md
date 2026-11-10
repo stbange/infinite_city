@@ -7,4 +7,4 @@
 
 - [x] 2.1 Write `test/integration/test_encounters.gd` (toll and pay, no cargo, escape, caught); verify they fail
 - [x] 2.2 Implement `EncounterDirector`, `JobManager.lose_cargo`, HUD lines, main scene; verify they pass
-- [ ] 2.3 Run `scripts/test.sh` and `openspec validate --all --strict`
+- [x] 2.3 Run `scripts/test.sh` and `openspec validate --all --strict`
