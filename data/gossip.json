@@ -1,0 +1,9 @@
+{
+ "templates": {
+  "lover": "[{friend} has been seeing {other} on the quiet.|Don't tell anyone, but {friend} and {other} \u2014 you know.|{friend} sneaks off to see {other} when nobody's looking.]",
+  "member": "[People say {other} runs with {faction}.|{other} is in with {faction}, I'd bet on it.|Watch what you say around {other}. {faction}.]",
+  "work": "[{other} works at {workplace} these days.|{other} got a job at {workplace}.|You'll find {other} at {workplace} most days.]",
+  "history": "[{faction} took {place} in {year}.|Before {year}, {owner} ran {place}. Then {faction} came.|My family remembers when {faction} took {place}.]",
+  "event": "[In {year}: {text}|They still talk about {year}. {text}]"
+ }
+}

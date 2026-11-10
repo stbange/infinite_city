@@ -35,6 +35,8 @@ var chronicle: CityChronicle
 var traces: TraceLayout
 ## Residents and workplaces (specs residents, workplaces).
 var population: Population
+var relations: Relations
+var gossip: Gossip
 var background: BackgroundJobs
 var _prefetched: Dictionary = {}
 var _last_district := Vector3i(0, 1 << 20, 0)
@@ -58,6 +60,8 @@ func _ready() -> void:
 	chronicle = CityChronicle.new(config)
 	traces = TraceLayout.new(chronicle, layout)
 	population = Population.new(layout, chronicle)
+	relations = Relations.new(population)
+	gossip = Gossip.new(population, relations)
 	background = BackgroundJobs.new()
 	background.name = "BackgroundJobs"
 	add_child(background)

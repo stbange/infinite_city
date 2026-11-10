@@ -8,6 +8,8 @@ const SALT_PERSON := 131
 const SALT_SKILL := 132
 const SALT_CULTURE := 133
 const SALT_WORKPLACE := 134
+const SALT_LINE := 136
+const BLOCK_CACHE := 64
 const VACANCY := 0.08
 const MEMBERSHIP_CHANCE := 0.22
 const PLAN_CACHE := 4096
@@ -26,6 +28,8 @@ var _axes: Array = []
 var _work_kinds: Dictionary = {}
 var _words: Array = []
 var _mutex := Mutex.new()
+var _block_people: Dictionary = {}
+var _block_order: Array[Vector3i] = []
 
 
 func _init(p_layout: CityLayout, p_chronicle: CityChronicle) -> void:
@@ -161,8 +165,54 @@ func skill_of(id: PersonId) -> int:
 	return work_hash(id) % skills.size()
 
 
+## Seed of a flat's family name: its family line, so relatives in a block share the name.
 func family_seed_of(cell: Vector3i, floor_index: int, unit_index: int) -> int:
-	return DetHash.hash4(world_seed(), SALT_HOUSEHOLD + 100, cell.x, cell.y, cell.z, floor_index * 128 + unit_index)
+	var block := layout.block_at(cell)
+	var line := line_of(block, plan_of(block), floor_index, unit_index) if block != null else 0
+	return DetHash.hash4(world_seed(), SALT_HOUSEHOLD + 100, cell.x, cell.y, cell.z, line)
+
+
+## Family line of a flat within its block (about five households share one).
+func line_of(block: BlockInfo, plan: InteriorPlan, floor_index: int, unit_index: int) -> int:
+	var flats := 0
+	for unit in plan.units:
+		if not unit.is_core:
+			flats += 1
+	var lines := maxi(1, flats * plan.floors / 5)
+	return DetHash.hash4(world_seed(), SALT_LINE, block.cell.x, block.cell.y, block.cell.z, floor_index * 128 + unit_index) % lines
+
+
+## Everyone living in a housing block, cached (spec relations / Fast relations).
+func block_people(block: BlockInfo) -> BlockPeople:
+	_mutex.lock()
+	var cached: BlockPeople = _block_people.get(block.cell)
+	_mutex.unlock()
+	if cached != null:
+		return cached
+	var people := BlockPeople.new()
+	if block.kind == BlockTypes.Kind.HOUSING:
+		var plan := plan_of(block)
+		var culture := culture_of(layout.district_of(block.cell))
+		var district := layout.district_of(block.cell)
+		var local_cell := layout.local_in_district(block.cell)
+		for k in plan.floors:
+			for unit in plan.units:
+				if unit.is_core:
+					continue
+				var house := household_in(block, plan, k, unit.index, culture)
+				var line := line_of(block, plan, k, unit.index) if house.type != "flatmates" else -1
+				for slot in house.ages.size():
+					var id := PersonId.new(district, PersonId.pack(local_cell, k, unit.index, slot))
+					var faction := membership_of(id, house.ages[slot])
+					people.add(id, house.ages[slot], k, unit.index, slot, line, house.type,
+							faction.key if faction != null else "")
+	_mutex.lock()
+	if _block_people.size() >= BLOCK_CACHE:
+		_block_people.erase(_block_order.pop_front())
+	_block_people[block.cell] = people
+	_block_order.append(block.cell)
+	_mutex.unlock()
+	return people
 
 
 func _person(id: PersonId, house: Household) -> PersonInfo:
@@ -192,12 +242,21 @@ func _person(id: PersonId, house: Household) -> PersonInfo:
 	var depth := float(-id.district.y)
 	p.wealth = clampf(0.65 - depth / 300.0 + rng.range_float(-0.3, 0.3), 0.0, 1.0)
 	p.health = clampf(1.0 - maxf(0.0, p.age - 40) / 80.0 + rng.range_float(-0.2, 0.1), 0.0, 1.0)
-	if p.age >= 18 and rng.next_float() < MEMBERSHIP_CHANCE and chronicle != null:
-		var faction := _pick_membership(id.district, rng)
-		if faction != null:
-			p.membership = faction.key
-			p.membership_secret = faction.type == "gang" or faction.type == "society"
+	var faction := membership_of(id, p.age)
+	if faction != null:
+		p.membership = faction.key
+		p.membership_secret = faction.type == "gang" or faction.type == "society"
 	return p
+
+
+## The faction a person belongs to, or null (its own hash, so it can be found without the rest).
+func membership_of(id: PersonId, age: int) -> FactionInfo:
+	if age < 18 or chronicle == null:
+		return null
+	var rng := CellRandom.new(DetHash.hash4(world_seed(), SALT_PERSON + 50, id.district.x, id.district.y, id.district.z, id.local))
+	if rng.next_float() >= MEMBERSHIP_CHANCE:
+		return null
+	return _pick_membership(id.district, rng)
 
 
 func _pick_membership(district: Vector3i, rng: CellRandom) -> FactionInfo:

@@ -117,3 +117,12 @@ func test_prefetch_builds_the_market_in_the_background() -> void:
 			break
 		await wait_process_frames(1)
 	assert_true(world.population.has_job_market(district))
+
+
+func test_card_tells_gossip() -> void:
+	var found := _face_door(BlockTypes.Kind.HOUSING, true)
+	var block: BlockInfo = found["block"]
+	world.population.job_market(world.layout.district_of(block.cell))
+	interaction.interact()
+	var first := world.population.residents(block.cell, 1, found["unit"])[0]
+	assert_string_contains(hud.card_text(), world.gossip.about(first.id)[0])

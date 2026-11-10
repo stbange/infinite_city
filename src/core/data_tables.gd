@@ -28,6 +28,7 @@ const TABLES := {
 	"events": {"templates": "dict"},
 	"workplaces": {"kinds": "dict", "words": "array", "skills": "array"},
 	"traits": {"axes": "array"},
+	"gossip": {"templates": "dict"},
 }
 
 static var _cache: Dictionary = {}

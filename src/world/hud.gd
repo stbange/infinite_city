@@ -127,6 +127,9 @@ func show_card(target: Dictionary) -> void:
 				var w := population.workplace_of(p.id)
 				job = " · works at %s" % w.name if w != null else (" · out of work" if p.age >= 18 and p.age <= 67 else "")
 			lines.append("%s, %d%s" % [p.full_name(), p.age, job])
+		if not people.is_empty() and population.has_job_market(people[0].id.district) and world.gossip != null:
+			var heard := world.gossip.about(people[0].id)
+			lines.append("\"%s\"" % heard[0])
 	else:
 		var w := population.workplace(cell, k, unit)
 		if w != null:
