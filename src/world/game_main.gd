@@ -15,3 +15,6 @@ func _ready() -> void:
 		world.teleport_focus(absolute)
 		player.set_view(spawn.yaw, spawn.pitch)
 	world.prime_focus()
+	var jobs := get_node_or_null("JobManager") as JobManager
+	if jobs != null and spawn != null:
+		jobs.start_at(spawn.cell)

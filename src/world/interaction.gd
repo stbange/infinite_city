@@ -14,6 +14,7 @@ const MAX_ANGLE := deg_to_rad(45.0)
 
 var _target: Dictionary = {}
 var _providers: Array[Callable] = []
+var _label_hooks: Array[Callable] = []
 
 
 func _process(_delta: float) -> void:
@@ -26,6 +27,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed("interact"):
 		interact()
+
+
+## Adds a label hook: Callable(target: Dictionary) -> String; a non-empty result replaces the label.
+func add_label_hook(hook: Callable) -> void:
+	_label_hooks.append(hook)
 
 
 ## Adds a provider: Callable(near: Vector3) -> Array[Dictionary].
@@ -59,6 +65,11 @@ func refresh() -> void:
 			continue
 		best = distance
 		_target = candidate
+	if not _target.is_empty():
+		for hook in _label_hooks:
+			var label: String = hook.call(_target)
+			if not label.is_empty():
+				_target["label"] = label
 
 
 func _candidates(near: Vector3) -> Array[Dictionary]:

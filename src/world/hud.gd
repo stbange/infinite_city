@@ -11,6 +11,7 @@ extends CanvasLayer
 		interaction_path = value
 		_connect_interaction()
 @export var session_path: NodePath
+@export var jobs_path: NodePath
 
 const _REFRESH_SECONDS := 0.1
 
@@ -199,9 +200,34 @@ func refresh() -> void:
 	var session := get_node_or_null(session_path) as GameSession if not session_path.is_empty() else null
 	if session != null:
 		lines = session.clock.describe() + "\n" + lines
+	lines += _courier_lines(camera, session)
 	var moving := "Walking" if camera.mode == Player.Mode.WALK else "Flying %d m/s" % roundi(camera.model.cruise_speed)
 	lines += "\n%s  ·  %d chunks  ·  %d fps" % [moving, world.loaded_chunks().size(), Engine.get_frames_per_second()]
 	_label.text = lines
+
+
+## Wallet, rent and the waypoint to the next door (spec courier-jobs / Waypoint).
+func _courier_lines(camera: Player, session: GameSession) -> String:
+	var jobs := get_node_or_null(jobs_path) as JobManager if not jobs_path.is_empty() else null
+	if jobs == null:
+		return ""
+	var text := "\n¤ %d · rent ¤%d on Mondays · %d delivered" % [jobs.wallet.credits, Wallet.RENT, jobs.completed]
+	var waypoint := jobs.waypoint()
+	if waypoint.is_empty():
+		return text + "\nLooking for work…"
+	var offset: Vector3 = waypoint["position"] - camera.eye_position()
+	var flat := Vector2(offset.x, offset.z)
+	var bearing := atan2(-offset.x, -offset.z) - camera.yaw
+	var arrows := ["↑", "↖", "←", "↙", "↓", "↘", "→", "↗"]
+	var arrow: String = arrows[posmod(roundi(bearing / (PI / 4.0)), 8)]
+	var floors := roundi(offset.y / 4.0)
+	var vertical := "same floor" if floors == 0 else ("%d floors up" % floors if floors > 0 else "%d floors down" % -floors)
+	text += "\n%s %s · %d m · %s" % [arrow, waypoint["label"], roundi(flat.length()), vertical]
+	text += "\n  %s" % waypoint["address"]
+	if not jobs.carried.is_empty() and session != null:
+		var heat := CourierBoard.heat_of(jobs.carried[0], session.clock.total_minutes)
+		text += " · %s" % ("hot" if heat > 0.66 else ("warm" if heat > 0.0 else "cold"))
+	return text
 
 
 ## The Reach's living factions and latest events (spec faction-traces / Debug timeline).

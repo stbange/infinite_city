@@ -12,6 +12,12 @@ const SAVE_DIR := "user://saves"
 @export var running: bool = true
 
 var clock := GameClock.new_game()
+## Extra parts of the save: name -> [saver: Callable() -> Dictionary, loader: Callable(Dictionary)].
+var _parts: Dictionary = {}
+
+
+func register_part(part_name: String, saver: Callable, loader: Callable) -> void:
+	_parts[part_name] = [saver, loader]
 
 
 func _process(delta: float) -> void:
@@ -34,7 +40,7 @@ func to_dict() -> Dictionary:
 	if world != null and player != null and world.origin != null:
 		var absolute := world.origin.absolute_metres(player.global_position)
 		position = [absolute[0], absolute[1], absolute[2]]
-	return {
+	var data := {
 		"version": SAVE_VERSION,
 		"seed": world.config.world_seed if world != null else 0,
 		"minutes": clock.total_minutes,
@@ -45,6 +51,9 @@ func to_dict() -> Dictionary:
 			"mode": player.mode if player != null else Player.Mode.WALK,
 		},
 	}
+	for part_name: String in _parts:
+		data[part_name] = (_parts[part_name][0] as Callable).call()
+	return data
 
 
 ## Restores a saved session; returns "" on success or a message (and changes nothing).
@@ -67,6 +76,9 @@ func from_dict(data: Dictionary) -> String:
 	player.set_view(float(state.get("yaw", 0.0)), float(state.get("pitch", 0.0)))
 	world.prime_focus()
 	refresh()
+	for part_name: String in _parts:
+		if data.has(part_name):
+			(_parts[part_name][1] as Callable).call(data[part_name])
 	return ""
 
 

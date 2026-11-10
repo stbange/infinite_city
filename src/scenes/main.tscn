@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3]
+[gd_scene load_steps=18 format=3]
 
 [ext_resource type="Script" path="res://src/world/game_main.gd" id="1_main"]
 [ext_resource type="Script" path="res://src/world/city_world.gd" id="2_world"]
@@ -13,6 +13,7 @@
 [ext_resource type="Script" path="res://src/world/city_fog.gd" id="11_fog"]
 [ext_resource type="Script" path="res://src/world/game_session.gd" id="12_session"]
 [ext_resource type="Script" path="res://src/world/interaction.gd" id="13_interaction"]
+[ext_resource type="Script" path="res://src/world/job_manager.gd" id="14_jobs"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_sky"]
 shader = ExtResource("5_sky")
@@ -85,6 +86,12 @@ script = ExtResource("13_interaction")
 player_path = NodePath("../Player")
 interiors_path = NodePath("../InteriorManager")
 
+[node name="JobManager" type="Node" parent="."]
+script = ExtResource("14_jobs")
+world_path = NodePath("../CityWorld")
+session_path = NodePath("../GameSession")
+interaction_path = NodePath("../Interaction")
+
 [node name="CityFog" type="Node" parent="."]
 script = ExtResource("11_fog")
 world_path = NodePath("../CityWorld")
@@ -106,6 +113,7 @@ pocket_manager_path = NodePath("../PocketManager")
 interiors_path = NodePath("../InteriorManager")
 interaction_path = NodePath("../Interaction")
 session_path = NodePath("../GameSession")
+jobs_path = NodePath("../JobManager")
 
 [node name="ScreenshotCapture" type="Node" parent="."]
 script = ExtResource("6_capture")

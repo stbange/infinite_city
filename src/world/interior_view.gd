@@ -183,7 +183,7 @@ func set_collision_floors(center: int) -> void:
 
 ## Door plates on the floors centre - 1 .. centre + 1 (spec residents / Door plates).
 func set_plate_floors(center: int) -> void:
-	if not _ready_flag or center == _plate_centre or not plate_namer.is_valid():
+	if not _ready_flag or center == _plate_centre:
 		return
 	_plate_centre = center
 	if _plates != null:
@@ -192,6 +192,19 @@ func set_plate_floors(center: int) -> void:
 	_plates.name = "Plates"
 	add_child(_plates)
 	for k in range(maxi(0, center - 1), mini(plan.floors, center + 2)):
+		# Floor number at the stair core (spec addresses / Floor signs).
+		var sign := Label3D.new()
+		sign.text = "Fl %d" % (k + 1)
+		sign.font_size = 96
+		sign.pixel_size = 0.004
+		sign.outline_size = 12
+		sign.modulate = Color(0.55, 0.9, 1.0)
+		sign.layers = RenderLayers.INTERIOR
+		sign.position = Vector3(plan.core.get_center().x, plan.floor_y(k) + 3.0, plan.core.position.y + 0.3)
+		sign.rotation = Vector3(0.0, PI, 0.0)
+		_plates.add_child(sign)
+		if not plate_namer.is_valid():
+			continue
 		for unit in plan.units:
 			if unit.is_core:
 				continue

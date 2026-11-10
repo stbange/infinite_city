@@ -33,8 +33,7 @@ func _init(history: CityHistory, coords: Vector3i, neighbours: Dictionary) -> vo
 	reach = coords
 	_neighbours = neighbours
 	_districts = districts_of(history.config, coords)
-	var words: Array = history.tables()["reach_words"]
-	name = "%s Reach" % words[DetHash.hash3(history.config.world_seed, SALT_REACH_NAME, coords.x, coords.y, coords.z) % words.size()]
+	name = name_of(history.config, coords)
 	if _districts.is_empty():
 		return
 	_templates = DataTables.load_table("events").data["templates"]
@@ -43,6 +42,15 @@ func _init(history: CityHistory, coords: Vector3i, neighbours: Dictionary) -> vo
 		_add(faction)
 	_simulate()
 	events.sort_custom(func(a: HistoryEvent, b: HistoryEvent) -> bool: return a.year < b.year)
+
+
+## Name of a Reach ("Juniper Reach"), from the seed and its coordinates alone.
+static func name_of(config: CityConfig, coords: Vector3i) -> String:
+	var words: Array = DataTables.load_table("factions").data["reach_words"]
+	# 37·x + 11·z differs for any two Reaches of a 5 × 5 square (mod 100), so addresses resolve
+	# without ambiguity among neighbours; the seed and the layer row shift the sequence.
+	var offset := DetHash.hash2(config.world_seed, SALT_REACH_NAME, coords.y, 0)
+	return "%s Reach" % words[posmod(37 * coords.x + 11 * coords.z + offset, words.size())]
 
 
 ## Districts of a Reach that lie at or below the roof's district.
