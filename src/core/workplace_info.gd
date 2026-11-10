@@ -14,14 +14,7 @@ var slots: int = 0
 ## Opening hours in minutes of the day (closes may exceed 24:00 for overnight hours).
 var opens: int = 0
 var closes: int = 0
-var name: String:
-	get:
-		if _name.is_empty() and _namer.is_valid():
-			_name = _namer.call(self)
-		return _name
-
-var _name: String = ""
-var _namer: Callable
+var name: String = ""
 
 
 func key() -> String:

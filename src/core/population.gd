@@ -325,7 +325,7 @@ func make_workplace(block: BlockInfo, _plan: InteriorPlan, floor_index: int, uni
 	w.is_food = trade["food"]
 	w.opens = int(spec.get("opens", 8 * 60))
 	w.closes = int(spec.get("closes", 18 * 60))
-	w._namer = _name_workplace.bind(String(trade["pattern"]), h)
+	w.name = _name_workplace(w, String(trade["pattern"]), h)
 	return w
 
 
@@ -360,6 +360,7 @@ func job_market(district: Vector3i) -> JobMarket:
 
 ## Takes a job market built elsewhere (for example on a worker thread with its own layout).
 func adopt_market(market: JobMarket) -> void:
+	market.attach(self)
 	_mutex.lock()
 	if not _markets.has(market.district):
 		_markets[market.district] = market

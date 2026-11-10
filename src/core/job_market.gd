@@ -17,7 +17,8 @@ var working_age: int = 0
 var employed: int = 0
 var total_slots: int = 0
 
-var _population: Population
+## Weak, so a population caching this market does not form a reference cycle with it.
+var _population_ref: WeakRef
 var _origin: Vector3i
 var _w_local := PackedInt32Array()     # packed unit id (slot 0)
 var _w_kind := PackedInt32Array()
@@ -29,7 +30,7 @@ var _records: Dictionary = {}          # workplace index -> WorkplaceInfo
 
 
 func _init(population: Population, p_district: Vector3i) -> void:
-	_population = population
+	_population_ref = weakref(population)
 	district = p_district
 	var layout := population.layout
 	_origin = layout.district_origin_cell(district)
@@ -113,7 +114,7 @@ func _assign_jobs(adults: PackedInt32Array, adult_hashes: PackedInt64Array, want
 	if active.is_empty():
 		return
 	var count := active.size()
-	var skill_count := _population.skills.size()
+	var skill_count := _pop().skills.size()
 	var cursor := 0   # first workplace that may still have a free slot (only moves forward)
 	for a in adults.size():
 		var h := adult_hashes[a]
@@ -146,6 +147,14 @@ func _assign_jobs(adults: PackedInt32Array, adult_hashes: PackedInt64Array, want
 		employed += 1
 
 
+func attach(population: Population) -> void:
+	_population_ref = weakref(population)
+
+
+func _pop() -> Population:
+	return _population_ref.get_ref() as Population
+
+
 func workplace_count() -> int:
 	return _w_local.size()
 
@@ -159,9 +168,10 @@ func workplace(index: int) -> WorkplaceInfo:
 	if _records.has(index):
 		return _records[index]
 	var id := PersonId.new(district, _w_local[index])
-	var layout := _population.layout
+	var population := _pop()
+	var layout := population.layout
 	var block := layout.block_at(id.cell(layout))
-	var w := _population.make_workplace(block, _population.plan_of(block), id.floor_index(), id.unit_index())
+	var w := population.make_workplace(block, population.plan_of(block), id.floor_index(), id.unit_index())
 	w.slots = _w_slots[index]
 	_records[index] = w
 	return w
