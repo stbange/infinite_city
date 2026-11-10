@@ -55,15 +55,18 @@ func _poll_cast(world: CityWorld, patron: WorkplaceInfo) -> void:
 		_cast_key = ["story-cast", patron.cell, patron.floor_index, patron.unit]
 		var config := world.config
 		var where := [patron.cell, patron.floor_index, patron.unit]
-		var plot_data := plot
 		world.background.submit(_cast_key, func() -> Variant:
-			var population := Population.new(CityLayout.new(config), null)
+			var layout := CityLayout.new(config)
+			var population := Population.new(layout, null)
 			var chronicle := CityChronicle.new(config)
 			var w := population.workplace(where[0], where[1], where[2])
-			return StoryDirector.cast(population, chronicle, where[0], w, plot_data))
+			var id := StoryDirector.pick_template(chronicle, layout, where[0])
+			return {"template": id, "cast": StoryDirector.cast(population, chronicle, where[0], w, StoryDirector.template(id))})
 	if world.background.is_ready(_cast_key):
-		state.template_id = plot["id"]
-		state.cast = world.background.result(_cast_key)
+		var found: Dictionary = world.background.result(_cast_key)
+		plot = StoryDirector.template(found["template"])
+		state.template_id = found["template"]
+		state.cast = found["cast"]
 
 
 func _ensure_story_job(world: CityWorld, jobs: JobManager) -> void:
@@ -145,6 +148,8 @@ func to_dict() -> Dictionary:
 
 func from_dict(data: Dictionary) -> void:
 	state.from_dict(data)
+	if not state.template_id.is_empty():
+		plot = StoryDirector.template(state.template_id)
 
 
 func _world() -> CityWorld:

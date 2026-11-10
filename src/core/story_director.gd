@@ -5,11 +5,42 @@ extends RefCounted
 ## preconditions hold, wait for a scene choice or a story delivery, and change the story state.
 
 const DEFAULT_TEMPLATE := "hidden_abundance"
+const TEMPLATES: Array[String] = ["hidden_abundance", "election", "plague"]
 const SALT_CAST := 190
+const SALT_TEMPLATE := 191
 
 
 static func template(id: String = DEFAULT_TEMPLATE) -> Dictionary:
 	return DataTables.load_table("plot_" + id).data
+
+
+## The template that fits the start best (spec plot-templates / Choosing a template): a base fit
+## from the start's Reach plus a per-seed jitter, so seeds differ.
+static func pick_template(chronicle: CityChronicle, layout: CityLayout, start: Vector3i) -> String:
+	var reach := chronicle.reach(CityChronicle.reach_of(layout.district_of(start)))
+	var year := CityHistory.PRESENT_YEAR
+	var parties := 0
+	var food := false
+	var medicine := false
+	for f in reach.factions + chronicle.history.powers:
+		if not f.exists_at(year):
+			continue
+		parties += 1 if f.type == "party" else 0
+		food = food or (f.type == "company" and f.good == "food")
+		medicine = medicine or (f.type == "company" and f.good == "medicine")
+	var scores := {
+		"hidden_abundance": 1.0 + (0.6 if food else 0.0),
+		"election": 0.4 + 0.3 * mini(parties, 3),
+		"plague": 0.8 + (0.6 if medicine else 0.0),
+	}
+	var best := DEFAULT_TEMPLATE
+	var best_score := -1.0
+	for id in TEMPLATES:
+		var score: float = scores[id] + DetHash.u01(DetHash.hash2(layout.config.world_seed, SALT_TEMPLATE, id.hash(), 0)) * 0.8
+		if score > best_score:
+			best = id
+			best_score = score
+	return best
 
 
 # --- Casting -------------------------------------------------------------------------------

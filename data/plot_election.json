@@ -1,0 +1,301 @@
+{
+ "id": "election",
+ "title": "The Election",
+ "roles": {
+  "patron": {
+   "kind": "patron"
+  },
+  "fixer": {
+   "kind": "person",
+   "min_age": 35,
+   "max_age": 70,
+   "radius": 3
+  },
+  "voter": {
+   "kind": "person",
+   "min_age": 60,
+   "max_age": 120,
+   "radius": 3
+  },
+  "whistleblower": {
+   "kind": "person",
+   "min_age": 22,
+   "max_age": 50,
+   "radius": 4
+  },
+  "incumbent": {
+   "kind": "faction",
+   "types": [
+    "party"
+   ]
+  },
+  "challenger": {
+   "kind": "faction",
+   "types": [
+    "party",
+    "guild"
+   ]
+  },
+  "disruptor": {
+   "kind": "faction",
+   "types": [
+    "gang"
+   ]
+  }
+ },
+ "beats": [
+  {
+   "id": "first_night",
+   "act": 1,
+   "trigger": "scene",
+   "scene": "first_night",
+   "objective": "Take your first orders at {patron.place}"
+  },
+  {
+   "id": "fixer_offer",
+   "act": 1,
+   "trigger": "scene",
+   "after": [
+    "first_night"
+   ],
+   "deliveries": 2,
+   "scene": "fixer_offer",
+   "objective": "Keep delivering"
+  },
+  {
+   "id": "envelope_run",
+   "act": 2,
+   "trigger": "job",
+   "after": [
+    "fixer_offer"
+   ],
+   "flags": [
+    "works_for_fixer"
+   ],
+   "job": {
+    "to": "voter",
+    "cargo": "a sealed envelope",
+    "kind": "data"
+   },
+   "scene": "voter_envelope",
+   "objective": "Deliver {fixer.first}'s envelope to {voter.first} {voter.family}"
+  },
+  {
+   "id": "canvass_run",
+   "act": 2,
+   "trigger": "job",
+   "after": [
+    "fixer_offer"
+   ],
+   "flags": [
+    "refused_fixer"
+   ],
+   "job": {
+    "to": "voter",
+    "cargo": "a bundle of leaflets",
+    "kind": "parcel"
+   },
+   "scene": "voter_canvass",
+   "objective": "Bring {challenger.name}'s leaflets to {voter.first} {voter.family}"
+  },
+  {
+   "id": "threat",
+   "act": 2,
+   "trigger": "scene",
+   "after": [
+    "fixer_offer"
+   ],
+   "any": [
+    "envelope_run",
+    "canvass_run"
+   ],
+   "since": [
+    "fixer_offer",
+    3
+   ],
+   "scene": "threat",
+   "heat": {
+    "disruptor": 0.8
+   },
+   "objective": "Watch the bridges"
+  },
+  {
+   "id": "whistle",
+   "act": 3,
+   "trigger": "job",
+   "after": [
+    "threat"
+   ],
+   "since": [
+    "threat",
+    1
+   ],
+   "job": {
+    "to": "whistleblower",
+    "cargo": "a hot noodle box",
+    "kind": "food"
+   },
+   "scene": "whistleblower_door",
+   "objective": "Bring dinner to {whistleblower.first}, who asked for you by name"
+  },
+  {
+   "id": "epilogue_expose",
+   "act": 3,
+   "trigger": "scene",
+   "after": [
+    "whistle"
+   ],
+   "flags": [
+    "ending_expose"
+   ],
+   "scene": "epilogue_expose",
+   "set_flags": [
+    "story_done"
+   ],
+   "objective": "The council falls",
+   "world": [
+    "prices_fall"
+   ]
+  },
+  {
+   "id": "epilogue_sold",
+   "act": 3,
+   "trigger": "scene",
+   "after": [
+    "whistle"
+   ],
+   "flags": [
+    "ending_sold"
+   ],
+   "scene": "epilogue_sold",
+   "set_flags": [
+    "story_done"
+   ],
+   "objective": "You sold the ledger",
+   "wallet": 500
+  },
+  {
+   "id": "epilogue_quiet",
+   "act": 3,
+   "trigger": "scene",
+   "after": [
+    "whistle"
+   ],
+   "flags": [
+    "ending_quiet"
+   ],
+   "scene": "epilogue_quiet",
+   "set_flags": [
+    "story_done"
+   ],
+   "objective": "Nothing changes"
+  }
+ ],
+ "scenes": {
+  "first_night": {
+   "speaker": "patron",
+   "text": "Election posters cover every wall of {patron.place}: {incumbent.name} on the left, {challenger.name} on the right. {patron.first} {patron.family} hands you a bag. \"Vote's in a week. Until then, everyone's hungry and everyone's lying.\"",
+   "choices": [
+    {
+     "text": "\"I'll stick to noodles.\""
+    }
+   ]
+  },
+  "fixer_offer": {
+   "speaker": "fixer",
+   "text": "{fixer.first} {fixer.family} catches you on the stairs. \"Couriers go everywhere and nobody looks at them. A few sealed envelopes for {incumbent.name}, a little extra each time. Interested?\"",
+   "choices": [
+    {
+     "text": "\"Sure. Money is money.\"",
+     "flags": [
+      "works_for_fixer"
+     ]
+    },
+    {
+     "text": "\"I'll pass.\"",
+     "flags": [
+      "refused_fixer"
+     ]
+    }
+   ]
+  },
+  "voter_envelope": {
+   "speaker": "voter",
+   "text": "{voter.first} {voter.family} opens the envelope at the door and counts the notes inside. \"Tell {fixer.first} my whole floor votes the right way.\" The door shuts.",
+   "choices": [
+    {
+     "text": "Walk away."
+    }
+   ]
+  },
+  "voter_canvass": {
+   "speaker": "voter",
+   "text": "{voter.first} {voter.family} reads the leaflet twice. \"{challenger.name}, eh? My floor was paid to forget them. Maybe someone should remember.\"",
+   "choices": [
+    {
+     "text": "Walk away."
+    }
+   ]
+  },
+  "threat": {
+   "speaker": "disruptor",
+   "text": "{disruptor.name} have been hired to keep the streets 'calm' until the vote. Calm means couriers who carry the wrong things end up in the fog.",
+   "choices": [
+    {
+     "text": "Keep your head down."
+    }
+   ]
+  },
+  "whistleblower_door": {
+   "speaker": "whistleblower",
+   "text": "{whistleblower.first} {whistleblower.family} pulls you inside. \"I keep {incumbent.name}'s books. Here's the ledger: every bribe, every floor they bought. I can't carry it out. You can.\"",
+   "choices": [
+    {
+     "text": "Take it to {challenger.name}.",
+     "flags": [
+      "ending_expose"
+     ]
+    },
+    {
+     "text": "Sell it to {fixer.first}.",
+     "flags": [
+      "ending_sold"
+     ]
+    },
+    {
+     "text": "Burn it. Nobody wins this one.",
+     "flags": [
+      "ending_quiet"
+     ]
+    }
+   ]
+  },
+  "epilogue_expose": {
+   "speaker": "challenger",
+   "text": "The ledger is read aloud in every stairwell. {incumbent.name} loses the council, and the new councillors open the district's food stores.",
+   "choices": [
+    {
+     "text": "Back to work."
+    }
+   ]
+  },
+  "epilogue_sold": {
+   "speaker": "fixer",
+   "text": "{fixer.first} pays in clean notes and never mentions it again. {incumbent.name} wins by a landslide. {whistleblower.first}'s flat is empty by Monday.",
+   "choices": [
+    {
+     "text": "Back to work."
+    }
+   ]
+  },
+  "epilogue_quiet": {
+   "speaker": "whistleblower",
+   "text": "The ledger curls in the flame. {incumbent.name} wins, as they always do. {whistleblower.first} thanks you for not making them a martyr.",
+   "choices": [
+    {
+     "text": "Back to work."
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,324 @@
+{
+ "id": "plague",
+ "title": "The Plague",
+ "roles": {
+  "patron": {
+   "kind": "patron"
+  },
+  "healer": {
+   "kind": "person",
+   "min_age": 28,
+   "max_age": 65,
+   "radius": 3
+  },
+  "patient": {
+   "kind": "person",
+   "min_age": 18,
+   "max_age": 90,
+   "radius": 3
+  },
+  "friend": {
+   "kind": "person",
+   "min_age": 20,
+   "max_age": 45,
+   "radius": 4
+  },
+  "profiteer": {
+   "kind": "faction",
+   "types": [
+    "company"
+   ],
+   "good": "medicine"
+  },
+  "enforcer": {
+   "kind": "faction",
+   "types": [
+    "authority",
+    "company"
+   ]
+  },
+  "disruptor": {
+   "kind": "faction",
+   "types": [
+    "gang"
+   ]
+  }
+ },
+ "beats": [
+  {
+   "id": "first_night",
+   "act": 1,
+   "trigger": "scene",
+   "scene": "first_night",
+   "objective": "Take your first orders at {patron.place}"
+  },
+  {
+   "id": "cough",
+   "act": 1,
+   "trigger": "scene",
+   "after": [
+    "first_night"
+   ],
+   "deliveries": 2,
+   "scene": "cough",
+   "objective": "Keep delivering"
+  },
+  {
+   "id": "patient_soup",
+   "act": 1,
+   "trigger": "job",
+   "after": [
+    "cough"
+   ],
+   "job": {
+    "to": "patient",
+    "cargo": "ginger soup",
+    "kind": "food"
+   },
+   "scene": "patient_door",
+   "objective": "Take soup to {patient.first} {patient.family}"
+  },
+  {
+   "id": "healer_ask",
+   "act": 2,
+   "trigger": "scene",
+   "after": [
+    "patient_soup"
+   ],
+   "since": [
+    "patient_soup",
+    1
+   ],
+   "scene": "healer_ask",
+   "objective": "Keep delivering"
+  },
+  {
+   "id": "samples_run",
+   "act": 2,
+   "trigger": "job",
+   "after": [
+    "healer_ask"
+   ],
+   "flags": [
+    "carries_samples"
+   ],
+   "job": {
+    "to": "healer",
+    "cargo": "blood samples",
+    "kind": "medicine"
+   },
+   "scene": "healer_lab",
+   "objective": "Get the samples to {healer.first}'s lab"
+  },
+  {
+   "id": "friend_sick",
+   "act": 2,
+   "trigger": "job",
+   "after": [
+    "healer_ask"
+   ],
+   "flags": [
+    "declined_samples"
+   ],
+   "job": {
+    "to": "friend",
+    "cargo": "a fever kit",
+    "kind": "medicine"
+   },
+   "scene": "friend_sick",
+   "objective": "Bring a fever kit to {friend.first}"
+  },
+  {
+   "id": "quarantine",
+   "act": 3,
+   "trigger": "scene",
+   "after": [
+    "healer_ask"
+   ],
+   "any": [
+    "samples_run",
+    "friend_sick"
+   ],
+   "since": [
+    "healer_ask",
+    3
+   ],
+   "scene": "quarantine",
+   "objective": "Decide what crosses the quarantine line"
+  },
+  {
+   "id": "epilogue_smuggle",
+   "act": 3,
+   "trigger": "scene",
+   "after": [
+    "quarantine"
+   ],
+   "flags": [
+    "ending_smuggle"
+   ],
+   "scene": "epilogue_smuggle",
+   "set_flags": [
+    "story_done"
+   ],
+   "objective": "The cure crossed the line",
+   "world": [
+    "prices_fall"
+   ],
+   "heat": {
+    "disruptor": 1.0
+   }
+  },
+  {
+   "id": "epilogue_obey",
+   "act": 3,
+   "trigger": "scene",
+   "after": [
+    "quarantine"
+   ],
+   "flags": [
+    "ending_obey"
+   ],
+   "scene": "epilogue_obey",
+   "set_flags": [
+    "story_done"
+   ],
+   "objective": "You kept the quarantine"
+  },
+  {
+   "id": "epilogue_profit",
+   "act": 3,
+   "trigger": "scene",
+   "after": [
+    "quarantine"
+   ],
+   "flags": [
+    "ending_profit"
+   ],
+   "scene": "epilogue_profit",
+   "set_flags": [
+    "story_done"
+   ],
+   "objective": "You sold the cure",
+   "wallet": 600,
+   "world": [
+    "prices_soar"
+   ]
+  }
+ ],
+ "scenes": {
+  "first_night": {
+   "speaker": "patron",
+   "text": "{patron.first} {patron.family} wipes the counter of {patron.place} twice. \"Wash your hands before you touch the bags. Something's going round the lower floors.\"",
+   "choices": [
+    {
+     "text": "\"Noted.\""
+    }
+   ]
+  },
+  "cough": {
+   "speaker": "patron",
+   "text": "Half the orders tonight come with a request to leave the bag at the door. Behind every door, someone is coughing.",
+   "choices": [
+    {
+     "text": "Keep going."
+    }
+   ]
+  },
+  "patient_door": {
+   "speaker": "patient",
+   "text": "{patient.first} {patient.family} opens the door a crack, grey and sweating. \"{profiteer.name} wants three weeks' wages for the medicine. Who has that?\"",
+   "choices": [
+    {
+     "text": "\"Hold on. Someone will help.\""
+    }
+   ]
+  },
+  "healer_ask": {
+   "speaker": "healer",
+   "text": "{healer.first} {healer.family}, a ward doctor, stops you in the corridor. \"I'm close to a cheap cure, but I need samples from the sick floors, fast. Couriers are the only ones still moving.\"",
+   "choices": [
+    {
+     "text": "\"Give me the box.\"",
+     "flags": [
+      "carries_samples"
+     ]
+    },
+    {
+     "text": "\"Too risky.\"",
+     "flags": [
+      "declined_samples"
+     ]
+    }
+   ]
+  },
+  "healer_lab": {
+   "speaker": "healer",
+   "text": "{healer.first} works through the night. By morning there is a cure in a jar — and {enforcer.name} are sealing the block, on orders paid for by {profiteer.name}.",
+   "choices": [
+    {
+     "text": "\"What now?\""
+    }
+   ]
+  },
+  "friend_sick": {
+   "speaker": "friend",
+   "text": "{friend.first} burns with fever but manages a smile. \"Heard {healer.first} has something that works. Heard {enforcer.name} won't let it out of the block.\"",
+   "choices": [
+    {
+     "text": "\"We'll see about that.\""
+    }
+   ]
+  },
+  "quarantine": {
+   "speaker": "enforcer",
+   "text": "{enforcer.name} hold the stairwells: nothing in, nothing out. {healer.first}'s cure sits on the wrong side of the line. {disruptor.name} offer a smuggling route. {profiteer.name} offer to buy the formula.",
+   "choices": [
+    {
+     "text": "Smuggle the cure out with {disruptor.name}.",
+     "flags": [
+      "ending_smuggle"
+     ]
+    },
+    {
+     "text": "Respect the quarantine.",
+     "flags": [
+      "ending_obey"
+     ]
+    },
+    {
+     "text": "Sell the formula to {profiteer.name}.",
+     "flags": [
+      "ending_profit"
+     ]
+    }
+   ]
+  },
+  "epilogue_smuggle": {
+   "speaker": "healer",
+   "text": "The cure moves floor by floor in noodle boxes. The cough fades within a week. {disruptor.name} let everyone know who owes them.",
+   "choices": [
+    {
+     "text": "Back to work."
+    }
+   ]
+  },
+  "epilogue_obey": {
+   "speaker": "enforcer",
+   "text": "The quarantine holds for a month. Many recover; some don't. {healer.first}'s cure leaves the block only when {enforcer.name} say so.",
+   "choices": [
+    {
+     "text": "Back to work."
+    }
+   ]
+  },
+  "epilogue_profit": {
+   "speaker": "profiteer",
+   "text": "{profiteer.name} patent the formula and sell it dear. Your account looks healthier than the district.",
+   "choices": [
+    {
+     "text": "Back to work."
+    }
+   ]
+  }
+ }
+}

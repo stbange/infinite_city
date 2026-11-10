@@ -29,10 +29,15 @@ const TABLES := {
 	"workplaces": {"kinds": "dict", "words": "array", "skills": "array"},
 	"traits": {"axes": "array"},
 	"gossip": {"templates": "dict"},
-	"plot_hidden_abundance": {
-		"id": "string", "title": "string", "roles": "dict", "scenes": "dict",
-		"beats": [{"id": "string", "act": "int", "trigger": "string", "scene": "string", "objective": "string"}],
-	},
+	"plot_hidden_abundance": PLOT_SCHEMA,
+	"plot_election": PLOT_SCHEMA,
+	"plot_plague": PLOT_SCHEMA,
+}
+
+## Schema shared by every plot template (spec story-director).
+const PLOT_SCHEMA := {
+	"id": "string", "title": "string", "roles": "dict", "scenes": "dict",
+	"beats": [{"id": "string", "act": "int", "trigger": "string", "scene": "string", "objective": "string"}],
 }
 
 static var _cache: Dictionary = {}

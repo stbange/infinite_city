@@ -8,6 +8,35 @@ func before_all() -> void:
 	plot = StoryDirector.template()
 
 
+func _each_template(check: Callable) -> void:
+	for id in StoryDirector.TEMPLATES:
+		plot = StoryDirector.template(id)
+		check.call(id)
+	plot = StoryDirector.template()
+
+
+func test_every_template_is_complete() -> void:
+	_each_template(func(id: String) -> void:
+		var cast := _cast_for(2024)
+		for role: String in plot["roles"]:
+			assert_false((cast.get(role, {}) as Dictionary).is_empty(), "%s: role %s" % [id, role])
+		_check_no_dead_ends(id)
+		_check_slots(id, cast))
+
+
+func test_choosing_a_template() -> void:
+	var picked := {}
+	for i in 12:
+		var config := CityConfig.new()
+		config.world_seed = 500 + i * 104729
+		var layout := CityLayout.new(config)
+		var id := StoryDirector.pick_template(CityChronicle.new(config), layout, SpawnFinder.find_on_foot(layout).cell)
+		assert_has(StoryDirector.TEMPLATES, id)
+		assert_eq(StoryDirector.pick_template(CityChronicle.new(config), CityLayout.new(config), SpawnFinder.find_on_foot(layout).cell), id)
+		picked[id] = true
+	assert_gt(picked.size(), 1, "different seeds tell different stories")
+
+
 func _cast_for(seed_value: int) -> Dictionary:
 	var config := CityConfig.new()
 	config.world_seed = seed_value
@@ -40,6 +69,10 @@ func test_deterministic_cast() -> void:
 
 ## Explores every sequence of deliveries (up to a bound) and choices.
 func test_no_dead_ends() -> void:
+	_check_no_dead_ends("hidden_abundance")
+
+
+func _check_no_dead_ends(id: String) -> void:
 	var start := StoryState.new()
 	var states := {}
 	var queue: Array = []
@@ -67,7 +100,7 @@ func test_no_dead_ends() -> void:
 				states[k] = true
 				queue.append(next)
 	for b: Dictionary in plot["beats"]:
-		assert_true(reached.has(b["id"]), "beat %s reachable" % b["id"])
+		assert_true(reached.has(b["id"]), "%s: beat %s reachable" % [id, b["id"]])
 	# From every state, the end of the story is reachable.
 	var good := {}
 	for k: String in states:
@@ -87,7 +120,7 @@ func test_no_dead_ends() -> void:
 	for k: String in states:
 		# States near the delivery bound may lack room to finish; judge the rest.
 		if not good.has(k) and int(k.get_slice("|", 0)) <= 25:
-			fail_test("dead end: %s" % k)
+			fail_test("%s dead end: %s" % [id, k])
 			return
 	assert_gt(states.size(), 10)
 
@@ -127,7 +160,10 @@ func _snapshot(state: StoryState, deliveries: int) -> String:
 
 
 func test_scenes_name_the_cast() -> void:
-	var cast := _cast_for(1337)
+	_check_slots("hidden_abundance", _cast_for(1337))
+
+
+func _check_slots(id: String, cast: Dictionary) -> void:
 	var state := StoryState.new()
 	state.cast = cast
 	for scene_id: String in plot["scenes"]:
@@ -143,4 +179,4 @@ func test_scenes_name_the_cast() -> void:
 			assert_eq(texts[i].count("?"), str(options[i]["text"]).count("?"), texts[i])
 	for b: Dictionary in plot["beats"]:
 		state.active = b["id"]
-		assert_false(StoryDirector.objective(plot, state).contains("?"), b["id"])
+		assert_false(StoryDirector.objective(plot, state).contains("?"), "%s: %s" % [id, b["id"]])
