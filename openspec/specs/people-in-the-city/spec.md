@@ -37,3 +37,11 @@ in reach SHALL be an interaction target naming the person and what they are doin
 #### Scenario: Looking at a person
 - **WHEN** the player faces a figure within reach
 - **THEN** the interaction prompt names the person, their age and their activity
+
+### Requirement: Walking figures and gossip
+Figures SHALL swing their legs while they move; pressing E on a figure SHALL show a piece of gossip
+they know.
+
+#### Scenario: A walker swings their legs
+- **WHEN** a commuter's figure moves along its route
+- **THEN** its walking animation advances

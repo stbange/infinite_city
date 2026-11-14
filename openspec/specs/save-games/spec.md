@@ -32,3 +32,11 @@ encounter state; version 1 saves SHALL still load; F5 SHALL save and F9 load the
 #### Scenario: Older saves still load
 - **WHEN** a version 1 save without events is loaded
 - **THEN** it loads and the world has no events
+
+### Requirement: Version 3 saves
+Saves SHALL be version 3 with the courier state as its own part; version 2 saves, which kept it in
+the courier part, SHALL still load.
+
+#### Scenario: Version 2 courier parts still load
+- **WHEN** a courier part in the version 2 layout is loaded
+- **THEN** deliveries, credits, standing, licence and tools come back
