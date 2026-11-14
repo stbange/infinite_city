@@ -48,7 +48,8 @@
   "scanner": 120,
   "flare": 30,
   "glider": 450,
-  "grapple": 600
+  "grapple": 600,
+  "transit_pass": 250
  },
  "licences": {
   "silver_fee": 400,
@@ -67,5 +68,11 @@
  "escorts": {
   "speed": 3.6,
   "with_you": 6.0
+ },
+ "transit": {
+  "fare": 8,
+  "express_factor": 2.5,
+  "pass": 250,
+  "ride_minutes": 4
  }
 }

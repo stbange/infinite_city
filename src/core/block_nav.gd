@@ -5,6 +5,10 @@ extends RefCounted
 
 ## Two 3 m flights rising 2 m each and the turn between them.
 const STAIR_COST := 2.0 * 3.6056 + 1.2
+## Blocks this tall have a lift in the stair core (spec transit / Lifts): waiting and riding cost.
+const LIFT_MIN_FLOORS := 10
+const LIFT_BASE := 12.0
+const LIFT_PER_FLOOR := 1.0
 ## How far behind its door the node inside a unit lies.
 const INSIDE := 1.0
 
@@ -81,6 +85,14 @@ func neighbours(id: int, into: Array) -> void:
 			into.append([id - size, STAIR_COST])
 		if f < plan.floors - 1:
 			into.append([id + size, STAIR_COST])
+		if has_lift():
+			for other in plan.floors:
+				if absi(other - f) > 1:
+					into.append([other * size + t, LIFT_BASE + LIFT_PER_FLOOR * absi(other - f)])
+
+
+func has_lift() -> bool:
+	return plan.floors >= LIFT_MIN_FLOORS
 
 
 ## Whether a bridge entrance (not a magic doorway) opens on this floor and face.

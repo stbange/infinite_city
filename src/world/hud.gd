@@ -22,6 +22,7 @@ extends CanvasLayer
 @export var people_path: NodePath
 @export var hints_path: NodePath
 @export var lamp_path: NodePath
+@export var transit_path: NodePath
 @export var simulation_path: NodePath
 
 const _REFRESH_SECONDS := 0.1
@@ -285,7 +286,8 @@ func _courier_panel(world: CityWorld, camera: Player, session: GameSession) -> S
 func _message_panel() -> PackedStringArray:
 	var now := Time.get_ticks_msec() / 1000.0
 	var sources := {"session": session_path, "tools": tools_path, "shop": shop_path, "hazards": hazards_path,
-		"doorstep": doorstep_path, "people": people_path, "hints": hints_path, "lamp": lamp_path, "jobs": jobs_path}
+		"doorstep": doorstep_path, "people": people_path, "hints": hints_path, "lamp": lamp_path, "jobs": jobs_path,
+		"transit": transit_path}
 	for source: String in sources:
 		var path: NodePath = sources[source]
 		var node := get_node_or_null(path) if not path.is_empty() else null

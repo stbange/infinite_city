@@ -7,8 +7,9 @@ const TOOLS := {
 	"flare": {"licence": "bronze", "consumable": true, "label": "Flare (X: end a chase)"},
 	"glider": {"licence": "silver", "consumable": false, "label": "Glider (hold Space while falling)"},
 	"grapple": {"licence": "silver", "consumable": false, "label": "Grapple (G: pull up to 20 m)"},
+	"transit_pass": {"licence": "bronze", "consumable": false, "label": "Transit pass (ride the hubs for free)"},
 }
-const ORDER: Array[String] = ["scanner", "flare", "glider", "grapple"]
+const ORDER: Array[String] = ["scanner", "flare", "glider", "grapple", "transit_pass"]
 
 
 static func can_buy(tool: String, licence: String, credits: int, owned: Dictionary) -> bool:
