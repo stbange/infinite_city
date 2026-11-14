@@ -1,0 +1,57 @@
+{
+ "orders": {
+  "per_hour": 3,
+  "radius": 2,
+  "higher_tier_share": 0.35
+ },
+ "pay": {
+  "base": 8.0,
+  "per_metre": 0.03,
+  "per_floor": 0.2,
+  "tip": 0.5,
+  "cooling_minutes": 90.0
+ },
+ "rent": {
+  "amount": 900,
+  "minute": 360,
+  "start_credits": 150
+ },
+ "encounters": {
+  "toll_chance": 0.55,
+  "shakedown_chance": 0.15,
+  "heat_shakedown": 0.25,
+  "talk_chance": 0.5,
+  "heat_talk": 0.3,
+  "toll_base": 10.0,
+  "toll_per_order": 5.0,
+  "gang_speed": 6.0,
+  "catch_distance": 1.5,
+  "escape_distance": 40.0,
+  "chase_seconds": 30.0,
+  "run_heat": 0.5,
+  "short_heat": 0.2
+ },
+ "hazards": {
+  "rescue_fee": 60
+ },
+ "live": {
+  "takeover_chance": 0.35,
+  "life_chance": 0.3,
+  "drift": 0.1,
+  "price_min": 0.8,
+  "price_max": 1.5,
+  "shortage_price": 3.0
+ },
+ "shop": {
+  "scanner": 120,
+  "flare": 30,
+  "glider": 450,
+  "grapple": 600
+ },
+ "licences": {
+  "silver_fee": 400,
+  "silver_mutual": 30,
+  "gold_fee": 1000,
+  "gold_mutual": 80
+ }
+}

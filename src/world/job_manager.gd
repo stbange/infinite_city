@@ -192,7 +192,7 @@ func cargo_heat() -> float:
 func buy(tool: String) -> bool:
 	if not ShopCatalogue.can_buy(tool, licence, wallet.credits, tools):
 		return false
-	wallet.credits -= int(ShopCatalogue.TOOLS[tool]["price"])
+	wallet.credits -= ShopCatalogue.price(tool)
 	tools[tool] = int(tools.get(tool, 0)) + 1
 	return true
 

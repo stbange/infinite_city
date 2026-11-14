@@ -17,6 +17,7 @@ extends CanvasLayer
 @export var story_path: NodePath
 @export var tools_path: NodePath
 @export var shop_path: NodePath
+@export var coach_path: NodePath
 
 const _REFRESH_SECONDS := 0.1
 
@@ -217,6 +218,10 @@ func refresh() -> void:
 	var story := get_node_or_null(story_path) as StoryRunner if not story_path.is_empty() else null
 	if story != null and not story.objective_text().is_empty():
 		lines += "\nStory · Act %d: %s" % [story.state.act, story.objective_text()]
+	var coach := get_node_or_null(coach_path) as SessionCoach if not coach_path.is_empty() else null
+	if coach != null:
+		for line in coach.hud_lines():
+			lines += "\n" + line
 	for path: NodePath in [tools_path, shop_path]:
 		var node := get_node_or_null(path) if not path.is_empty() else null
 		if node != null and not str(node.get("last_message")).is_empty():
@@ -310,7 +315,7 @@ func _build_legend() -> void:
 func _build_controls() -> void:
 	var hint := Label.new()
 	hint.name = "Controls"
-	hint.text = "Click: look   WASD: move   E: interact   Space: jump / up / glide   Shift: sprint / boost   F: walk ⇄ fly   Q/Ctrl: down (fly)   Wheel: fly speed   Esc: release mouse\nU: shop   M: address book   R: scan   G: grapple   X: flare   1–3: choose   F5/F9: save/load   Esc: menu"
+	hint.text = "Click: look   WASD: move   E: interact   Space: jump / up / glide   Shift: sprint / boost   F: walk ⇄ fly   Q/Ctrl: down (fly)   Wheel: fly speed   Esc: release mouse\nU: shop   M: address book   R: scan   G: grapple   X: flare   1–3: choose   F4: stats   F5/F9: save/load   Esc: menu"
 	hint.add_theme_font_size_override("font_size", 13)
 	hint.add_theme_color_override("font_outline_color", Color.BLACK)
 	hint.add_theme_constant_override("outline_size", 4)

@@ -3,7 +3,13 @@ extends RefCounted
 ## Couriers' Mutual licences (spec courier-progression / Licences and cargo tiers).
 
 const LEVELS: Array[String] = ["bronze", "silver", "gold"]
-const REQUIREMENTS := {"silver": {"mutual": 30, "fee": 150}, "gold": {"mutual": 80, "fee": 400}}
+## Standing and fee each level needs, from the economy table.
+static var REQUIREMENTS: Dictionary:
+	get:
+		return {
+			"silver": {"mutual": Economy.whole("licences", "silver_mutual"), "fee": Economy.whole("licences", "silver_fee")},
+			"gold": {"mutual": Economy.whole("licences", "gold_mutual"), "fee": Economy.whole("licences", "gold_fee")},
+		}
 
 
 static func max_tier(level: String) -> int:

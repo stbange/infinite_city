@@ -4,13 +4,25 @@ extends RefCounted
 ## climb with the shortage, residents die or move. Deterministic per seed, day and the log so far.
 
 const SALT_LIVE := 200
-const TAKEOVER_CHANCE := 0.35
+static var TAKEOVER_CHANCE: float:
+	get:
+		return Economy.num("live", "takeover_chance")
 const TAKEOVER_TRIES := 4
-const LIFE_CHANCE := 0.3
-const DRIFT := 0.1
-const PRICE_MIN := 0.8
-const PRICE_MAX := 1.5
-const SHORTAGE_PRICE := 3.0
+static var LIFE_CHANCE: float:
+	get:
+		return Economy.num("live", "life_chance")
+static var DRIFT: float:
+	get:
+		return Economy.num("live", "drift")
+static var PRICE_MIN: float:
+	get:
+		return Economy.num("live", "price_min")
+static var PRICE_MAX: float:
+	get:
+		return Economy.num("live", "price_max")
+static var SHORTAGE_PRICE: float:
+	get:
+		return Economy.num("live", "shortage_price")
 const MIN_PRICE_CHANGE := 0.01
 
 

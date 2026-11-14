@@ -3,12 +3,17 @@ extends Node
 ## The rescue drone (spec hazards / Rescue drone): after a fall or a car hit the courier is put back
 ## on safe ground, pays the fee and loses the cargo.
 
-const FEE := 25
+static var FEE: int:
+	get:
+		return Economy.whole("hazards", "rescue_fee")
 const MESSAGE_SECONDS := 8.0
 
 @export var player_path: NodePath
 @export var jobs_path: NodePath
 @export var traffic_path: NodePath
+
+## Emitted after each rescue.
+signal rescued()
 
 var last_message: String = ""
 var rescues: int = 0
@@ -62,6 +67,7 @@ func rescue(reason: String) -> void:
 	var why := "hit by a car" if reason == "car" else "after your fall"
 	last_message = "Rescue drone %s: ¤%d%s" % [why, paid, (", %d orders lost" % lost) if lost > 0 else ""]
 	_message_time = MESSAGE_SECONDS
+	rescued.emit()
 
 
 func _player() -> Player:

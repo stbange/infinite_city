@@ -23,13 +23,15 @@ func before_each() -> void:
 
 
 func test_buying_through_the_shop() -> void:
-	jobs.wallet.credits = 100
+	var start := ShopCatalogue.price("scanner") + 40
+	jobs.wallet.credits = start
 	shop.open()
 	assert_true(panel.is_open())
 	assert_string_contains(panel.text(), "Scanner")
 	panel.choose(ShopCatalogue.ORDER.find("scanner"))
 	assert_true(jobs.has_tool("scanner"))
 	assert_eq(jobs.wallet.credits, 40)
+	assert_lt(jobs.wallet.credits, ShopCatalogue.price("glider"))
 	shop.open()
 	panel.choose(ShopCatalogue.ORDER.find("glider"))
 	assert_false(jobs.has_tool("glider"))
@@ -37,11 +39,11 @@ func test_buying_through_the_shop() -> void:
 
 
 func test_licence_upgrade_through_the_shop() -> void:
-	jobs.wallet.credits = 200
+	jobs.wallet.credits = Licence.fee("bronze") + 50
 	shop.open()
 	panel.choose(ShopCatalogue.ORDER.size())
 	assert_eq(jobs.licence, "bronze")
-	jobs.reputation.add(Reputation.MUTUAL, 30)
+	jobs.reputation.add(Reputation.MUTUAL, Licence.REQUIREMENTS["silver"]["mutual"])
 	shop.open()
 	panel.choose(ShopCatalogue.ORDER.size())
 	assert_eq(jobs.licence, "silver")

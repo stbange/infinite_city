@@ -3,6 +3,9 @@ extends Node3D
 ## Gangs on their bridges (specs gang-turf, encounters): a courier with cargo on a claimed bridge
 ## is stopped once per bridge and game hour; pay, talk or run; a chase ends in escape or capture.
 
+## Emitted with the amount when the courier pays a gang.
+signal paid(amount: int)
+
 enum State { IDLE, OFFER, CHASE }
 
 const FIGURES := 3
@@ -140,13 +143,14 @@ func pay() -> void:
 	if state != State.OFFER:
 		return
 	var jobs := _jobs()
-	var paid := mini(price, jobs.wallet.credits)
-	jobs.wallet.credits -= paid
-	if paid < price:
+	var amount := mini(price, jobs.wallet.credits)
+	jobs.wallet.credits -= amount
+	if amount < price:
 		heat.add(gang_key, EncounterRules.SHORT_HEAT, _session().clock.total_minutes)
 	else:
 		jobs.reputation.add(gang_key, Reputation.TOLL_PAID)
-	last_outcome = "Paid ¤%d to %s" % [paid, gang_name()]
+	last_outcome = "Paid ¤%d to %s" % [amount, gang_name()]
+	paid.emit(amount)
 	_end()
 
 

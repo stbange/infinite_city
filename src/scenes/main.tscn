@@ -1,4 +1,4 @@
-[gd_scene load_steps=30 format=3]
+[gd_scene load_steps=31 format=3]
 
 [ext_resource type="Script" path="res://src/world/game_main.gd" id="1_main"]
 [ext_resource type="Script" path="res://src/world/city_world.gd" id="2_world"]
@@ -26,6 +26,7 @@
 [ext_resource type="Script" path="res://src/world/game_menu.gd" id="24_menu"]
 [ext_resource type="Script" path="res://src/world/address_book.gd" id="25_book"]
 [ext_resource type="Script" path="res://src/world/ambience.gd" id="26_ambience"]
+[ext_resource type="Script" path="res://src/world/session_coach.gd" id="27_coach"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_sky"]
 shader = ExtResource("5_sky")
@@ -183,6 +184,16 @@ panel_path = NodePath("../BookPanel")
 [node name="Ambience" type="Node" parent="."]
 script = ExtResource("26_ambience")
 world_path = NodePath("../CityWorld")
+
+[node name="SessionCoach" type="Node" parent="."]
+script = ExtResource("27_coach")
+session_path = NodePath("../GameSession")
+jobs_path = NodePath("../JobManager")
+panel_path = NodePath("../DialoguePanel")
+shop_path = NodePath("../CourierShop")
+coach_path = NodePath("../SessionCoach")
+encounters_path = NodePath("../EncounterDirector")
+hazards_path = NodePath("../HazardDirector")
 
 [node name="CityFog" type="Node" parent="."]
 script = ExtResource("11_fog")

@@ -4,23 +4,45 @@ extends RefCounted
 
 const SALT_ENCOUNTER := 171
 const SALT_TALK := 172
-const TOLL_CHANCE := 0.55
-const SHAKEDOWN_CHANCE := 0.15
-const HEAT_SHAKEDOWN := 0.25
-const TALK_CHANCE := 0.5
-const HEAT_TALK := 0.3
+static var TOLL_CHANCE: float:
+	get:
+		return Economy.num("encounters", "toll_chance")
+static var SHAKEDOWN_CHANCE: float:
+	get:
+		return Economy.num("encounters", "shakedown_chance")
+static var HEAT_SHAKEDOWN: float:
+	get:
+		return Economy.num("encounters", "heat_shakedown")
+static var TALK_CHANCE: float:
+	get:
+		return Economy.num("encounters", "talk_chance")
+static var HEAT_TALK: float:
+	get:
+		return Economy.num("encounters", "heat_talk")
 ## Chase: gang pace (m/s), catch and escape distances, how long they keep at it (s).
-const GANG_SPEED := 6.0
-const CATCH_DISTANCE := 1.5
-const ESCAPE_DISTANCE := 40.0
-const CHASE_SECONDS := 30.0
+static var GANG_SPEED: float:
+	get:
+		return Economy.num("encounters", "gang_speed")
+static var CATCH_DISTANCE: float:
+	get:
+		return Economy.num("encounters", "catch_distance")
+static var ESCAPE_DISTANCE: float:
+	get:
+		return Economy.num("encounters", "escape_distance")
+static var CHASE_SECONDS: float:
+	get:
+		return Economy.num("encounters", "chase_seconds")
 ## Heat added for running and for not paying in full.
-const RUN_HEAT := 0.5
-const SHORT_HEAT := 0.2
+static var RUN_HEAT: float:
+	get:
+		return Economy.num("encounters", "run_heat")
+static var SHORT_HEAT: float:
+	get:
+		return Economy.num("encounters", "short_heat")
 
 
 static func toll(cargo: int, heat: float) -> int:
-	return roundi((8.0 + 4.0 * cargo) * (1.0 + heat))
+	return roundi((Economy.num("encounters", "toll_base") + Economy.num("encounters", "toll_per_order") * cargo) * (1.0 + heat))
 
 
 ## "pass", "toll" or "shakedown" for a bridge in a game hour (hours since year 0).

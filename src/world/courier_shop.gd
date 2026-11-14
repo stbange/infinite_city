@@ -7,6 +7,8 @@ extends Node
 @export var panel_path: NodePath
 
 var last_message: String = ""
+## True once the shop has been opened (the first-night guide).
+var was_opened: bool = false
 var _connected: bool = false
 
 
@@ -33,6 +35,7 @@ func open() -> void:
 	if not _connected:
 		panel.chosen.connect(_on_chosen)
 		_connected = true
+	was_opened = true
 	panel.open(heading(), entries())
 
 
@@ -51,7 +54,7 @@ func entries() -> PackedStringArray:
 		var state := ""
 		if owned > 0:
 			state = " · owned" if not spec["consumable"] else " · %d held" % owned
-		lines.append("%s · ¤%d · %s licence%s" % [spec["label"], spec["price"], spec["licence"], state])
+		lines.append("%s · ¤%d · %s licence%s" % [spec["label"], ShopCatalogue.price(tool), spec["licence"], state])
 	var next := Licence.next_level(jobs.licence)
 	if next.is_empty():
 		lines.append("Licence: gold, the highest")

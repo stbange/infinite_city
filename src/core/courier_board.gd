@@ -5,14 +5,30 @@ extends RefCounted
 const SALT_ORDERS := 151
 const SALT_CARGO := 152
 ## Share of orders that become higher-tier cargo when the licence allows it.
-const HIGHER_TIER_SHARE := 0.35
-const PER_HOUR := 3
-const RADIUS := 2
-const BASE := 12.0
-const PER_METRE := 0.15
-const PER_FLOOR := 3.0
-const TIP := 0.4
-const COOLING_MINUTES := 30.0
+static var HIGHER_TIER_SHARE: float:
+	get:
+		return Economy.num("orders", "higher_tier_share")
+static var PER_HOUR: int:
+	get:
+		return Economy.whole("orders", "per_hour")
+static var RADIUS: int:
+	get:
+		return Economy.whole("orders", "radius")
+static var BASE: float:
+	get:
+		return Economy.num("pay", "base")
+static var PER_METRE: float:
+	get:
+		return Economy.num("pay", "per_metre")
+static var PER_FLOOR: float:
+	get:
+		return Economy.num("pay", "per_floor")
+static var TIP: float:
+	get:
+		return Economy.num("pay", "tip")
+static var COOLING_MINUTES: float:
+	get:
+		return Economy.num("pay", "cooling_minutes")
 
 var population: Population
 

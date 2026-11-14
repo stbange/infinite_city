@@ -13,12 +13,13 @@ func test_levels_by_points() -> void:
 
 func test_upgrading_the_licence() -> void:
 	var rep := Reputation.new()
-	assert_false(Licence.can_upgrade("bronze", rep, 200))
-	rep.add(Reputation.MUTUAL, 30)
-	assert_true(Licence.can_upgrade("bronze", rep, 200))
+	var fee := Licence.fee("bronze")
+	assert_false(Licence.can_upgrade("bronze", rep, fee + 50))
+	rep.add(Reputation.MUTUAL, Licence.REQUIREMENTS["silver"]["mutual"])
+	assert_true(Licence.can_upgrade("bronze", rep, fee + 50))
+	assert_false(Licence.can_upgrade("bronze", rep, fee - 1))
 	assert_eq(Licence.next_level("bronze"), "silver")
-	assert_eq(200 - Licence.fee("bronze"), 50)
-	assert_false(Licence.can_upgrade("silver", rep, 1000))
+	assert_false(Licence.can_upgrade("silver", rep, 100000))
 	assert_eq(Licence.max_tier("bronze"), 1)
 	assert_eq(Licence.max_tier("gold"), 3)
 
@@ -54,11 +55,13 @@ func test_higher_tiers_with_a_better_licence() -> void:
 
 func test_buying_a_tool() -> void:
 	var owned := {}
-	assert_true(ShopCatalogue.can_buy("scanner", "bronze", 100, owned))
+	var plenty := 100000
+	assert_true(ShopCatalogue.can_buy("scanner", "bronze", ShopCatalogue.price("scanner"), owned))
+	assert_false(ShopCatalogue.can_buy("scanner", "bronze", ShopCatalogue.price("scanner") - 1, {}))
 	owned["scanner"] = 1
-	assert_false(ShopCatalogue.can_buy("scanner", "bronze", 100, owned))
-	assert_false(ShopCatalogue.can_buy("glider", "bronze", 1000, owned))
-	assert_true(ShopCatalogue.can_buy("glider", "silver", 1000, owned))
-	assert_false(ShopCatalogue.can_buy("grapple", "silver", 100, owned))
+	assert_false(ShopCatalogue.can_buy("scanner", "bronze", plenty, owned))
+	assert_false(ShopCatalogue.can_buy("glider", "bronze", plenty, owned))
+	assert_true(ShopCatalogue.can_buy("glider", "silver", plenty, owned))
+	assert_false(ShopCatalogue.can_buy("grapple", "silver", ShopCatalogue.price("grapple") - 1, owned))
 	owned["flare"] = 2
-	assert_true(ShopCatalogue.can_buy("flare", "bronze", 20, owned))
+	assert_true(ShopCatalogue.can_buy("flare", "bronze", ShopCatalogue.price("flare"), owned))

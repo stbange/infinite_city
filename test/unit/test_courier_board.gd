@@ -54,10 +54,10 @@ func test_hot_food_pays_better() -> void:
 	var job := board.offers(start["patron"], 517 * 365, 12)[0]
 	job.picked_minute = 1000
 	var hot := CourierBoard.pay_for(job, 1005)
-	var cold := CourierBoard.pay_for(job, 1040)
+	var cold := CourierBoard.pay_for(job, 1000 + roundi(CourierBoard.COOLING_MINUTES) + 10)
 	assert_gt(hot, cold)
 	assert_eq(cold, job.base_pay)
-	var expected := 12.0 + 0.15 * job.distance + 3.0 * job.floors
+	var expected := CourierBoard.BASE + CourierBoard.PER_METRE * job.distance + CourierBoard.PER_FLOOR * job.floors
 	assert_eq(job.base_pay, roundi(expected))
 
 
@@ -72,9 +72,9 @@ func test_monday_rent() -> void:
 	assert_eq(wallet.credits, 100)
 	clock.add_minutes(90)   # Monday 06:30
 	wallet.update(clock)
-	assert_eq(wallet.credits, -20)
+	assert_eq(wallet.credits, 100 - Wallet.RENT)
 	wallet.update(clock)
-	assert_eq(wallet.credits, -20, "rent is charged once a week")
+	assert_eq(wallet.credits, 100 - Wallet.RENT, "rent is charged once a week")
 
 
 ## GUT keeps finished test scripts alive; release the big generators.

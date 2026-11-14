@@ -32,6 +32,20 @@ const TABLES := {
 	"plot_hidden_abundance": PLOT_SCHEMA,
 	"plot_election": PLOT_SCHEMA,
 	"plot_plague": PLOT_SCHEMA,
+	"economy": {
+		"orders": {"per_hour": "number", "radius": "number", "higher_tier_share": "number"},
+		"pay": {"base": "number", "per_metre": "number", "per_floor": "number", "tip": "number", "cooling_minutes": "number"},
+		"rent": {"amount": "number", "minute": "number", "start_credits": "number"},
+		"encounters": {"toll_chance": "number", "shakedown_chance": "number", "heat_shakedown": "number",
+			"talk_chance": "number", "heat_talk": "number", "toll_base": "number", "toll_per_order": "number",
+			"gang_speed": "number", "catch_distance": "number", "escape_distance": "number", "chase_seconds": "number",
+			"run_heat": "number", "short_heat": "number"},
+		"hazards": {"rescue_fee": "number"},
+		"shop": {"scanner": "number", "flare": "number", "glider": "number", "grapple": "number"},
+		"licences": {"silver_fee": "number", "silver_mutual": "number", "gold_fee": "number", "gold_mutual": "number"},
+		"live": {"takeover_chance": "number", "life_chance": "number", "drift": "number", "price_min": "number",
+			"price_max": "number", "shortage_price": "number"},
+	},
 }
 
 ## Schema shared by every plot template (spec story-director).
