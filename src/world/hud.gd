@@ -22,6 +22,9 @@ extends CanvasLayer
 const _REFRESH_SECONDS := 0.1
 
 var _label: Label
+var _courier: Label
+var _messages: Label
+var messages := MessageQueue.new()
 var _prompt: Label
 var _debug: Label
 var _card: Label
@@ -38,6 +41,30 @@ func _ready() -> void:
 	_label.add_theme_color_override("font_outline_color", Color.BLACK)
 	_label.add_theme_constant_override("outline_size", 6)
 	add_child(_label)
+	_courier = Label.new()
+	_courier.name = "Courier"
+	_courier.anchor_left = 1.0
+	_courier.anchor_right = 1.0
+	_courier.offset_left = -620
+	_courier.offset_right = -16
+	_courier.offset_top = 12
+	_courier.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_courier.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_courier.add_theme_color_override("font_outline_color", Color.BLACK)
+	_courier.add_theme_constant_override("outline_size", 6)
+	add_child(_courier)
+	_messages = Label.new()
+	_messages.name = "Messages"
+	_messages.anchor_left = 0.5
+	_messages.anchor_right = 0.5
+	_messages.anchor_top = 0.78
+	_messages.anchor_bottom = 0.78
+	_messages.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_messages.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_messages.add_theme_color_override("font_color", Color(0.75, 0.95, 0.9))
+	_messages.add_theme_color_override("font_outline_color", Color.BLACK)
+	_messages.add_theme_constant_override("outline_size", 6)
+	add_child(_messages)
 	_prompt = Label.new()
 	_prompt.name = "Prompt"
 	_prompt.anchor_left = 0.5
@@ -91,8 +118,17 @@ func _process(delta: float) -> void:
 		refresh()
 
 
+## Everything the read-out shows: place, courier and messages panels.
 func text() -> String:
-	return _label.text
+	return "\n".join(PackedStringArray([_label.text, _courier.text, _messages.text]))
+
+
+func courier_text() -> String:
+	return _courier.text
+
+
+func messages_text() -> String:
+	return _messages.text
 
 
 func debug_text() -> String:
@@ -211,27 +247,39 @@ func refresh() -> void:
 	var session := get_node_or_null(session_path) as GameSession if not session_path.is_empty() else null
 	if session != null:
 		lines = session.clock.describe() + "\n" + lines
-		if not session.last_message.is_empty():
-			lines += "\n" + session.last_message
-	lines += _courier_lines(camera, session)
-	lines += _encounter_lines(world, camera)
-	var story := get_node_or_null(story_path) as StoryRunner if not story_path.is_empty() else null
-	if story != null and not story.objective_text().is_empty():
-		lines += "\nStory · Act %d: %s" % [story.state.act, story.objective_text()]
-	var coach := get_node_or_null(coach_path) as SessionCoach if not coach_path.is_empty() else null
-	if coach != null:
-		for line in coach.hud_lines():
-			lines += "\n" + line
-	for path: NodePath in [tools_path, shop_path]:
-		var node := get_node_or_null(path) if not path.is_empty() else null
-		if node != null and not str(node.get("last_message")).is_empty():
-			lines += "\n" + str(node.get("last_message"))
-	var hazards := get_node_or_null(hazards_path) as HazardDirector if not hazards_path.is_empty() else null
-	if hazards != null and not hazards.last_message.is_empty():
-		lines += "\n" + hazards.last_message
 	var moving := "Walking" if camera.mode == Player.Mode.WALK else "Flying %d m/s" % roundi(camera.model.cruise_speed)
 	lines += "\n%s  ·  %d chunks  ·  %d fps" % [moving, world.loaded_chunks().size(), Engine.get_frames_per_second()]
 	_label.text = lines
+	_courier.text = _courier_panel(world, camera, session)
+	_messages.text = "\n".join(_message_panel())
+
+
+## Wallet, waypoint, gangs, story, guide and stats (spec hud-panels / Panels).
+func _courier_panel(world: CityWorld, camera: Player, session: GameSession) -> String:
+	var text := _courier_lines(camera, session) + _encounter_lines(world, camera)
+	var story := get_node_or_null(story_path) as StoryRunner if not story_path.is_empty() else null
+	if story != null and not story.objective_text().is_empty():
+		text += "\nStory · Act %d: %s" % [story.state.act, story.objective_text()]
+	var coach := get_node_or_null(coach_path) as SessionCoach if not coach_path.is_empty() else null
+	if coach != null:
+		for line in coach.hud_lines():
+			text += "\n" + line
+	return text.strip_edges()
+
+
+## Short messages from saves, tools, the shop, rescues and gangs (spec hud-panels / Messages).
+func _message_panel() -> PackedStringArray:
+	var now := Time.get_ticks_msec() / 1000.0
+	var sources := {"session": session_path, "tools": tools_path, "shop": shop_path, "hazards": hazards_path}
+	for source: String in sources:
+		var path: NodePath = sources[source]
+		var node := get_node_or_null(path) if not path.is_empty() else null
+		if node != null:
+			messages.push(source, str(node.get("last_message")), now)
+	var director := get_node_or_null(encounters_path) as EncounterDirector if not encounters_path.is_empty() else null
+	if director != null:
+		messages.push("encounters", director.last_outcome, now)
+	return messages.lines(now)
 
 
 ## Wallet, rent and the waypoint to the next door (spec courier-jobs / Waypoint).
@@ -239,7 +287,7 @@ func _courier_lines(camera: Player, session: GameSession) -> String:
 	var jobs := get_node_or_null(jobs_path) as JobManager if not jobs_path.is_empty() else null
 	if jobs == null:
 		return ""
-	var text := "\n¤ %d · rent ¤%d on Mondays · %d delivered · %s licence" % [jobs.wallet.credits, Wallet.RENT, jobs.completed, jobs.licence]
+	var text := "\n¤ %d · rent ¤%d on Mondays · %d delivered · %s licence" % [jobs.courier.wallet.credits, Wallet.RENT, jobs.completed, jobs.courier.licence]
 	var waypoint := jobs.waypoint()
 	if waypoint.is_empty():
 		return text + "\nLooking for work…"
@@ -269,9 +317,8 @@ func _encounter_lines(world: CityWorld, camera: Player) -> String:
 		var gang := director.turf.gang(director.turf.claim_of(bridge))
 		if gang != null:
 			text += "\nBridge held by %s" % gang.name
-	var line := director.hud_line()
-	if not line.is_empty():
-		text += "\n" + line
+	if director.state != EncounterDirector.State.IDLE:
+		text += "\n" + director.hud_line()
 	return text
 
 

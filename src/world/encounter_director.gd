@@ -117,8 +117,8 @@ func _check_bridge(world: CityWorld, session: GameSession, player: Player) -> vo
 		return
 	_resolved[_resolved_key(b, hour)] = true
 	var minute := session.clock.total_minutes
-	var h := heat.value_at(claim, minute) + jobs.cargo_heat()
-	var standing := jobs.reputation.level(claim)
+	var h := heat.value_at(claim, minute) + CargoKind.total_heat(jobs.carried)
+	var standing := jobs.courier.reputation.level(claim)
 	var outcome := EncounterRules.roll(world.config.world_seed, b, hour, jobs.carried.size(), h)
 	if outcome == "pass" or standing == "trusted":
 		return
@@ -143,12 +143,12 @@ func pay() -> void:
 	if state != State.OFFER:
 		return
 	var jobs := _jobs()
-	var amount := mini(price, jobs.wallet.credits)
-	jobs.wallet.credits -= amount
+	var amount := mini(price, jobs.courier.wallet.credits)
+	jobs.courier.wallet.credits -= amount
 	if amount < price:
 		heat.add(gang_key, EncounterRules.SHORT_HEAT, _session().clock.total_minutes)
 	else:
-		jobs.reputation.add(gang_key, Reputation.TOLL_PAID)
+		jobs.courier.reputation.add(gang_key, Reputation.TOLL_PAID)
 	last_outcome = "Paid ¤%d to %s" % [amount, gang_name()]
 	paid.emit(amount)
 	_end()
@@ -175,7 +175,7 @@ func run() -> void:
 	if state != State.OFFER:
 		return
 	heat.add(gang_key, EncounterRules.RUN_HEAT, _session().clock.total_minutes)
-	_jobs().reputation.add(gang_key, Reputation.RAN)
+	_jobs().courier.reputation.add(gang_key, Reputation.RAN)
 	state = State.CHASE
 	chase_time = 0.0
 	last_outcome = "Run! %s give chase" % gang_name()
@@ -197,9 +197,9 @@ func _chase(world: CityWorld, player: Player, delta: float) -> void:
 	if nearest <= EncounterRules.CATCH_DISTANCE:
 		var jobs := _jobs()
 		var lost := jobs.lose_cargo()
-		jobs.reputation.add(gang_key, Reputation.CAUGHT)
-		var taken := mini(price, jobs.wallet.credits)
-		jobs.wallet.credits -= taken
+		jobs.courier.reputation.add(gang_key, Reputation.CAUGHT)
+		var taken := mini(price, jobs.courier.wallet.credits)
+		jobs.courier.wallet.credits -= taken
 		last_outcome = "Caught by %s: %d orders and ¤%d gone" % [gang_name(), lost, taken]
 		_end()
 	elif nearest >= EncounterRules.ESCAPE_DISTANCE or chase_time >= EncounterRules.CHASE_SECONDS:

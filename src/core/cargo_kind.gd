@@ -31,3 +31,11 @@ static func kinds_of_tier(t: int) -> Array[String]:
 		if tier(kind) == t:
 			result.append(kind)
 	return result
+
+
+## Encounter heat added by everything carried.
+static func total_heat(jobs: Array[DeliveryJob]) -> float:
+	var total := 0.0
+	for job in jobs:
+		total += heat(job.cargo_kind)
+	return total

@@ -24,41 +24,50 @@ func before_each() -> void:
 
 func test_buying_through_the_shop() -> void:
 	var start := ShopCatalogue.price("scanner") + 40
-	jobs.wallet.credits = start
+	jobs.courier.wallet.credits = start
 	shop.open()
 	assert_true(panel.is_open())
 	assert_string_contains(panel.text(), "Scanner")
 	panel.choose(ShopCatalogue.ORDER.find("scanner"))
-	assert_true(jobs.has_tool("scanner"))
-	assert_eq(jobs.wallet.credits, 40)
-	assert_lt(jobs.wallet.credits, ShopCatalogue.price("glider"))
+	assert_true(jobs.courier.has_tool("scanner"))
+	assert_eq(jobs.courier.wallet.credits, 40)
+	assert_lt(jobs.courier.wallet.credits, ShopCatalogue.price("glider"))
 	shop.open()
 	panel.choose(ShopCatalogue.ORDER.find("glider"))
-	assert_false(jobs.has_tool("glider"))
+	assert_false(jobs.courier.has_tool("glider"))
 	assert_string_contains(shop.last_message, "glider")
 
 
 func test_licence_upgrade_through_the_shop() -> void:
-	jobs.wallet.credits = Licence.fee("bronze") + 50
+	jobs.courier.wallet.credits = Licence.fee("bronze") + 50
 	shop.open()
 	panel.choose(ShopCatalogue.ORDER.size())
-	assert_eq(jobs.licence, "bronze")
-	jobs.reputation.add(Reputation.MUTUAL, Licence.REQUIREMENTS["silver"]["mutual"])
+	assert_eq(jobs.courier.licence, "bronze")
+	jobs.courier.reputation.add(Reputation.MUTUAL, Licence.REQUIREMENTS["silver"]["mutual"])
 	shop.open()
 	panel.choose(ShopCatalogue.ORDER.size())
-	assert_eq(jobs.licence, "silver")
-	assert_eq(jobs.wallet.credits, 50)
+	assert_eq(jobs.courier.licence, "silver")
+	assert_eq(jobs.courier.wallet.credits, 50)
 
 
 func test_progress_is_saved() -> void:
-	jobs.reputation.add(Reputation.MUTUAL, 12)
-	jobs.licence = "silver"
-	jobs.tools["flare"] = 3
-	var data := JSON.parse_string(JSON.stringify(jobs.to_dict())) as Dictionary
-	jobs.reputation = Reputation.new()
-	jobs.licence = "bronze"
-	jobs.tools.clear()
-	jobs.from_dict(data)
-	assert_eq(jobs.reputation.of(Reputation.MUTUAL), 12)
-	assert_eq(jobs.licence, "silver")
-	assert_eq(jobs.tools["flare"], 3)
+	jobs.courier.reputation.add(Reputation.MUTUAL, 12)
+	jobs.courier.licence = "silver"
+	jobs.courier.tools["flare"] = 3
+	var data := JSON.parse_string(JSON.stringify(jobs.courier.to_dict())) as Dictionary
+	jobs.courier = CourierState.new()
+	jobs.courier.from_dict(data)
+	assert_eq(jobs.courier.reputation.of(Reputation.MUTUAL), 12)
+	assert_eq(jobs.courier.licence, "silver")
+	assert_eq(jobs.courier.tools["flare"], 3)
+
+
+func test_version_2_courier_parts_still_load() -> void:
+	var old := {"wallet": {"credits": 321}, "carried": [], "completed": 4,
+		"reputation": {"mutual": 9}, "licence": "silver", "tools": {"scanner": 1}}
+	jobs.from_dict(old)
+	assert_eq(jobs.completed, 4)
+	assert_eq(jobs.courier.wallet.credits, 321)
+	assert_eq(jobs.courier.reputation.of(Reputation.MUTUAL), 9)
+	assert_eq(jobs.courier.licence, "silver")
+	assert_true(jobs.courier.has_tool("scanner"))

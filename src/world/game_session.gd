@@ -3,7 +3,7 @@ extends Node
 ## The running game (specs game-time, save-games): owns the clock, pushes the Light's brightness
 ## to the world, and saves and loads the session as versioned JSON in user://saves/.
 
-const SAVE_VERSION := 2
+const SAVE_VERSION := 3
 const QUICK_SLOT := "quick"
 const SAVE_DIR := "user://saves"
 

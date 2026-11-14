@@ -8,10 +8,9 @@ var cells: Array[Vector3i] = []
 
 
 func before_all() -> void:
-	var config := CityConfig.new()
-	layout = CityLayout.new(config)
-	population = Population.new(layout, null)
-	chronicle = CityChronicle.new(config)
+	layout = SharedCity.layout()
+	population = SharedCity.population()
+	chronicle = SharedCity.chronicle()
 	var spawn := SpawnFinder.find_on_foot(layout)
 	for dx in range(-2, 3):
 		for dz in range(-2, 3):

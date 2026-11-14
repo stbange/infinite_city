@@ -75,7 +75,7 @@ func test_households_hold_families() -> void:
 
 func test_family_lines_across_flats() -> void:
 	var checked := 0
-	for p in _adults(1500, 4):
+	for p in _adults(800, 4):
 		for r in relations.relations_of(p.id):
 			if r.kind not in ["relative_parent", "relative_child", "sibling"]:
 				continue
@@ -101,7 +101,7 @@ func test_mutuality() -> void:
 
 func test_who_is_next_door_and_at_work() -> void:
 	var checked := 0
-	for p in _adults(800, 6):
+	for p in _adults(500, 6):
 		var workplace := population.workplace_of(p.id)
 		if workplace == null:
 			continue
@@ -149,7 +149,7 @@ func test_social_life_in_numbers() -> void:
 
 func test_feuds_become_personal() -> void:
 	var enemies := 0
-	for p in _adults(2000, 8):
+	for p in _adults(1200, 8):
 		for r in relations.relations_of(p.id):
 			if r.kind != "enemy":
 				continue

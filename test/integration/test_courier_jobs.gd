@@ -86,7 +86,7 @@ func test_a_delivery_from_counter_to_door() -> void:
 	jobs.set_patron(patron)
 	_face(patron.cell, patron.floor_index, patron.unit)
 	assert_string_contains(str(interaction.target().get("label")), "Jobs at " + patron.name)
-	var before := jobs.wallet.credits
+	var before := jobs.courier.wallet.credits
 	interaction.interact()
 	assert_eq(jobs.carried.size(), 1)
 	var job := jobs.carried[0]
@@ -96,7 +96,7 @@ func test_a_delivery_from_counter_to_door() -> void:
 	interaction.interact()
 	assert_eq(jobs.carried.size(), 0)
 	assert_eq(jobs.completed, 1)
-	assert_eq(jobs.wallet.credits, before + pay)
+	assert_eq(jobs.courier.wallet.credits, before + pay)
 
 
 func test_waypoint_read_out() -> void:
@@ -129,11 +129,11 @@ func test_courier_state_survives_a_reload() -> void:
 	jobs.set_patron(patron)
 	_face(patron.cell, patron.floor_index, patron.unit)
 	interaction.interact()
-	jobs.wallet.credits = 333
+	jobs.courier.wallet.credits = 333
 	var saved := JSON.parse_string(JSON.stringify(session.to_dict())) as Dictionary
-	jobs.wallet.credits = 0
+	jobs.courier.wallet.credits = 0
 	jobs.carried.clear()
 	assert_eq(session.from_dict(saved), "")
-	assert_eq(jobs.wallet.credits, 333)
+	assert_eq(jobs.courier.wallet.credits, 333)
 	assert_eq(jobs.carried.size(), 1)
 	assert_eq(jobs.carried[0].customer_name, (saved["courier"]["carried"] as Array)[0]["customer_name"])

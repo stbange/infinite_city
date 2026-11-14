@@ -39,7 +39,7 @@ func _wall(distance: float) -> void:
 
 func test_within_and_beyond_reach() -> void:
 	_bare_scene()
-	jobs.tools["grapple"] = 1
+	jobs.courier.tools["grapple"] = 1
 	player.set_view(0.0, 0.0)
 	_wall(22.0)
 	await wait_physics_frames(3)

@@ -9,10 +9,9 @@ var first_day: int
 
 
 func before_all() -> void:
-	var config := CityConfig.new()
-	layout = CityLayout.new(config)
-	population = Population.new(layout, null)
-	chronicle = CityChronicle.new(config)
+	layout = SharedCity.layout()
+	population = SharedCity.population()
+	chronicle = SharedCity.chronicle()
 	district = layout.district_of(SpawnFinder.find_on_foot(layout).cell)
 	first_day = GameClock.new_game().day_number()
 

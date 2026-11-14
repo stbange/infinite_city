@@ -13,11 +13,8 @@ signal delivered(job: DeliveryJob)
 @export var session_path: NodePath
 @export var interaction_path: NodePath
 
-var wallet := Wallet.new()
-## Progression (spec courier-progression): standing, licence and tools (tool -> count).
-var reputation := Reputation.new()
-var licence: String = "bronze"
-var tools: Dictionary = {}
+## Wallet, standing, licence and tools (spec courier-state).
+var courier := CourierState.new()
 ## The changed world (spec live-simulation): prices and the dead; null for the baseline.
 var overlays: WorldOverlays
 var carried: Array[DeliveryJob] = []
@@ -39,9 +36,9 @@ func _process(_delta: float) -> void:
 	var session := _session()
 	if session != null:
 		if not _wallet_started:
-			wallet.start(session.clock)
+			courier.wallet.start(session.clock)
 			_wallet_started = true
-		wallet.update(session.clock)
+		courier.wallet.update(session.clock)
 	if _start_pending:
 		_poll_start()
 
@@ -62,6 +59,7 @@ func _ensure_setup() -> void:
 		var session := _session()
 		if session != null:
 			session.register_part("courier", to_dict, from_dict)
+			session.register_part("courier_state", courier.to_dict, _load_state)
 
 
 func set_patron(workplace: WorkplaceInfo) -> void:
@@ -69,39 +67,24 @@ func set_patron(workplace: WorkplaceInfo) -> void:
 	patron = workplace
 
 
-## Finds the start scenario around a cell on a worker thread (its own layout and population).
+## Finds the start scenario around a cell on a worker thread.
 func start_at(cell: Vector3i) -> void:
 	_ensure_setup()
-	var world := _world()
 	_start_cell = cell
 	_start_pending = true
-	var config := world.config
-	world.background.submit(["start", cell], func() -> Variant:
-		var population := Population.new(CityLayout.new(config), null)
-		var found := StartScenario.find(population, cell)
-		if found.is_empty():
-			return {}
-		var w: WorkplaceInfo = found["patron"]
-		return {"patron": [w.cell, w.floor_index, w.unit], "home": [found["home_cell"], found["home_floor"], found["home_unit"]]})
+	CourierStart.submit(_world(), cell)
 
 
 func _poll_start() -> void:
-	var world := _world()
-	var key := ["start", _start_cell]
-	world.background.poll()
-	if not world.background.is_ready(key):
+	var found: Variant = CourierStart.poll(_world(), _start_cell)
+	if found == null:
 		return
 	_start_pending = false
-	var found: Dictionary = world.background.result(key)
-	if found.is_empty():
+	if (found as Dictionary).is_empty():
 		return
-	var p: Array = found["patron"]
-	var market := world.population.job_market(world.layout.district_of(p[0]))
-	var w := market.workplace_at(PersonId.of(world.layout, p[0], p[1], p[2], 0))
 	if patron == null:
-		patron = w
-	var h: Array = found["home"]
-	home = {"cell": h[0], "floor": h[1], "unit": h[2]}
+		patron = found["patron"]
+	home = found["home"]
 
 
 ## Open orders at the patron's counter this hour.
@@ -110,7 +93,7 @@ func open_orders() -> Array[DeliveryJob]:
 	var session := _session()
 	if patron == null or board == null or session == null:
 		return result
-	for job in board.offers(patron, session.clock.day_number(), session.clock.hour(), Licence.max_tier(licence)):
+	for job in board.offers(patron, session.clock.day_number(), session.clock.hour(), Licence.max_tier(courier.licence)):
 		if _taken.has(job.id):
 			continue
 		if overlays != null:
@@ -164,50 +147,11 @@ func _on_interacted(target: Dictionary) -> void:
 		return
 	var done := _job_at(payload)
 	if done != null:
-		wallet.credits += CourierBoard.pay_for(done, session.clock.total_minutes)
+		courier.wallet.credits += CourierBoard.pay_for(done, session.clock.total_minutes)
 		carried.erase(done)
 		completed += 1
-		reputation.add(Reputation.MUTUAL, Reputation.DELIVERY if done.story_beat.is_empty() else Reputation.STORY_DELIVERY)
+		courier.reputation.add(Reputation.MUTUAL, Reputation.DELIVERY if done.story_beat.is_empty() else Reputation.STORY_DELIVERY)
 		delivered.emit(done)
-
-
-## Scene position of a unit's door, 1.1 m above its floor.
-func door_position(cell: Vector3i, floor_index: int, unit_index: int) -> Vector3:
-	var world := _world()
-	var block := world.layout.block_at(cell)
-	var plan := world.population.plan_of(block)
-	var unit := plan.units[unit_index]
-	return world.origin.scene_position_of_cell_center(cell) + Vector3(unit.door_x, plan.floor_y(floor_index) + 1.1, unit.front_z())
-
-
-## Encounter heat added by what is carried (spec courier-progression / cargo tiers).
-func cargo_heat() -> float:
-	var total := 0.0
-	for job in carried:
-		total += CargoKind.heat(job.cargo_kind)
-	return total
-
-
-## Buys a tool from the shop; false when refused.
-func buy(tool: String) -> bool:
-	if not ShopCatalogue.can_buy(tool, licence, wallet.credits, tools):
-		return false
-	wallet.credits -= ShopCatalogue.price(tool)
-	tools[tool] = int(tools.get(tool, 0)) + 1
-	return true
-
-
-## Upgrades the licence when standing and credits allow; false when refused.
-func upgrade_licence() -> bool:
-	if not Licence.can_upgrade(licence, reputation, wallet.credits):
-		return false
-	wallet.credits -= Licence.fee(licence)
-	licence = Licence.next_level(licence)
-	return true
-
-
-func has_tool(tool: String) -> bool:
-	return int(tools.get(tool, 0)) > 0
 
 
 ## Drops all carried orders (taken by a gang or lost in a fall); returns how many were lost.
@@ -217,43 +161,31 @@ func lose_cargo() -> int:
 	return lost
 
 
-## {position, label, floor} of the next door to go to: the first carried order's drop-off, or
-## the patron's counter.
+## The next door to go to (see CourierWaypoint).
 func waypoint() -> Dictionary:
-	if not carried.is_empty():
-		var job := carried[0]
-		return {"position": door_position(job.dropoff_cell, job.dropoff_floor, job.dropoff_unit),
-			"label": "%s: %s" % [job.customer_name, job.cargo], "floor": job.dropoff_floor,
-			"address": Address.format(names, job.dropoff_cell, job.dropoff_floor, job.dropoff_unit)}
-	if patron != null:
-		return {"position": door_position(patron.cell, patron.floor_index, patron.unit),
-			"label": "Jobs at %s" % patron.name, "floor": patron.floor_index,
-			"address": Address.format(names, patron.cell, patron.floor_index, patron.unit)}
-	return {}
+	return CourierWaypoint.of(self, _world())
 
 
 func to_dict() -> Dictionary:
 	var jobs_data: Array = []
 	for job in carried:
 		jobs_data.append(job.to_dict())
-	return {"wallet": wallet.to_dict(), "carried": jobs_data, "completed": completed,
-		"reputation": reputation.to_dict(), "licence": licence, "tools": tools.duplicate()}
+	return {"carried": jobs_data, "completed": completed}
 
 
 func from_dict(data: Dictionary) -> void:
-	wallet.from_dict(data.get("wallet", {}))
-	_wallet_started = true
+	if data.has("wallet"):
+		_load_state(data)   # version 2 kept the courier's state in this part
 	carried.clear()
 	for item: Dictionary in data.get("carried", []):
 		carried.append(DeliveryJob.from_dict(item))
 		_taken[carried[-1].id] = true
 	completed = int(data.get("completed", 0))
-	reputation.from_dict(data.get("reputation", {}))
-	licence = str(data.get("licence", "bronze"))
-	tools.clear()
-	var owned: Dictionary = data.get("tools", {})
-	for tool: String in owned:
-		tools[tool] = int(owned[tool])
+
+
+func _load_state(data: Dictionary) -> void:
+	courier.from_dict(data)
+	_wallet_started = true
 
 
 func _world() -> CityWorld:

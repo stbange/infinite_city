@@ -7,9 +7,8 @@ var nav: CityNav
 
 
 func before_all() -> void:
-	var config := CityConfig.new()
-	layout = CityLayout.new(config)
-	population = Population.new(layout, null)
+	layout = SharedCity.layout()
+	population = SharedCity.population()
 	nav = CityNav.new(population)
 
 

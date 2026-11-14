@@ -128,7 +128,7 @@ func choose(index: int) -> void:
 		for gang: String in heat:
 			encounters.heat.add(gang, heat[gang], session.clock.total_minutes)
 	if jobs != null:
-		jobs.wallet.credits += int(effects["wallet"])
+		jobs.courier.wallet.credits += int(effects["wallet"])
 	var simulation := get_node_or_null(simulation_path) as SimulationRunner if not simulation_path.is_empty() else null
 	if simulation != null and session != null:
 		for key: String in effects["kill"]:

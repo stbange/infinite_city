@@ -41,8 +41,8 @@ func open() -> void:
 
 func heading() -> String:
 	var jobs := _jobs()
-	return "Couriers' Mutual · %s licence · standing %d (%s) · ¤%d%s" % [jobs.licence, jobs.reputation.of(Reputation.MUTUAL),
-			jobs.reputation.level(Reputation.MUTUAL), jobs.wallet.credits, ("\n" + last_message) if not last_message.is_empty() else ""]
+	return "Couriers' Mutual · %s licence · standing %d (%s) · ¤%d%s" % [jobs.courier.licence, jobs.courier.reputation.of(Reputation.MUTUAL),
+			jobs.courier.reputation.level(Reputation.MUTUAL), jobs.courier.wallet.credits, ("\n" + last_message) if not last_message.is_empty() else ""]
 
 
 func entries() -> PackedStringArray:
@@ -50,12 +50,12 @@ func entries() -> PackedStringArray:
 	var lines := PackedStringArray()
 	for tool in ShopCatalogue.ORDER:
 		var spec: Dictionary = ShopCatalogue.TOOLS[tool]
-		var owned := int(jobs.tools.get(tool, 0))
+		var owned := int(jobs.courier.tools.get(tool, 0))
 		var state := ""
 		if owned > 0:
 			state = " · owned" if not spec["consumable"] else " · %d held" % owned
 		lines.append("%s · ¤%d · %s licence%s" % [spec["label"], ShopCatalogue.price(tool), spec["licence"], state])
-	var next := Licence.next_level(jobs.licence)
+	var next := Licence.next_level(jobs.courier.licence)
 	if next.is_empty():
 		lines.append("Licence: gold, the highest")
 	else:
@@ -68,9 +68,9 @@ func _on_chosen(index: int) -> void:
 	var jobs := _jobs()
 	if index < ShopCatalogue.ORDER.size():
 		var tool := ShopCatalogue.ORDER[index]
-		last_message = ("Bought: %s" % tool) if jobs.buy(tool) else ("Can't buy the %s yet" % tool)
-	elif jobs.upgrade_licence():
-		last_message = "Licence upgraded to %s" % jobs.licence
+		last_message = ("Bought: %s" % tool) if jobs.courier.buy(tool) else ("Can't buy the %s yet" % tool)
+	elif jobs.courier.upgrade_licence():
+		last_message = "Licence upgraded to %s" % jobs.courier.licence
 	else:
 		last_message = "The Mutual says: not yet"
 

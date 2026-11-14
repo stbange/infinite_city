@@ -20,7 +20,7 @@ func _process(delta: float) -> void:
 	var player := _player()
 	var jobs := _jobs()
 	if player != null and jobs != null:
-		player.glider_enabled = jobs.has_tool("glider")
+		player.glider_enabled = jobs.courier.has_tool("glider")
 	if _beacon_time > 0.0:
 		_beacon_time -= delta
 		if _beacon_time <= 0.0 and _beacon != null:
@@ -44,7 +44,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func grapple() -> bool:
 	var player := _player()
 	var jobs := _jobs()
-	if player == null or jobs == null or not jobs.has_tool("grapple") or player.camera == null:
+	if player == null or jobs == null or not jobs.courier.has_tool("grapple") or player.camera == null:
 		return false
 	var eye := player.eye_position()
 	var forward := -player.camera.global_transform.basis.z
@@ -64,7 +64,7 @@ func grapple() -> bool:
 func scan() -> bool:
 	var player := _player()
 	var jobs := _jobs()
-	if player == null or jobs == null or not jobs.has_tool("scanner"):
+	if player == null or jobs == null or not jobs.courier.has_tool("scanner"):
 		return false
 	var waypoint := jobs.waypoint()
 	if waypoint.is_empty():
@@ -105,13 +105,11 @@ func beacon_position() -> Vector3:
 func flare() -> bool:
 	var jobs := _jobs()
 	var encounters := get_node_or_null(encounters_path) as EncounterDirector if not encounters_path.is_empty() else null
-	if jobs == null or encounters == null or not jobs.has_tool("flare"):
+	if jobs == null or encounters == null or not jobs.courier.has_tool("flare"):
 		return false
 	if not encounters.break_chase("Your flare blinds them — you slip away"):
 		return false
-	jobs.tools["flare"] = int(jobs.tools["flare"]) - 1
-	if int(jobs.tools["flare"]) <= 0:
-		jobs.tools.erase("flare")
+	jobs.courier.use_tool("flare")
 	return true
 
 

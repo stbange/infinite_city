@@ -57,17 +57,17 @@ func _carry_one() -> void:
 
 func test_rescued_after_a_fall() -> void:
 	_carry_one()
-	jobs.wallet.credits = 100
+	jobs.courier.wallet.credits = 100
 	player.rescued.emit("fall")
-	assert_eq(jobs.wallet.credits, 100 - HazardDirector.FEE)
+	assert_eq(jobs.courier.wallet.credits, 100 - HazardDirector.FEE)
 	assert_eq(jobs.carried.size(), 0)
 	assert_string_contains(hazards.last_message, "Rescue drone")
 
 
 func test_fee_when_broke() -> void:
-	jobs.wallet.credits = 10
+	jobs.courier.wallet.credits = 10
 	player.rescued.emit("fall")
-	assert_eq(jobs.wallet.credits, 0)
+	assert_eq(jobs.courier.wallet.credits, 0)
 
 
 func test_hit_by_a_car() -> void:
@@ -79,7 +79,7 @@ func test_hit_by_a_car() -> void:
 	var safe := player.global_position + Vector3(1, 0, 0)
 	player.fall_guard.update(true, safe, 1.0)
 	_carry_one()
-	jobs.wallet.credits = 100
+	jobs.courier.wallet.credits = 100
 	# Stand where a car is right now.
 	traffic.update()
 	var cell := world.origin.absolute_cell_of(player.global_position)

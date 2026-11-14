@@ -8,9 +8,8 @@ var start: Dictionary
 
 
 func before_all() -> void:
-	var config := CityConfig.new()
-	layout = CityLayout.new(config)
-	population = Population.new(layout, CityChronicle.new(config))
+	layout = SharedCity.layout()
+	population = SharedCity.population()
 	board = CourierBoard.new(population)
 	var spawn := SpawnFinder.find_on_foot(layout)
 	start = StartScenario.find(population, spawn.cell)

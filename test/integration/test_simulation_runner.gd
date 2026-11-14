@@ -94,7 +94,7 @@ func test_version_2_with_events() -> void:
 	var a := _scene()
 	_live_days(a, 3)
 	var saved := JSON.parse_string(JSON.stringify(a.session.to_dict())) as Dictionary
-	assert_eq(int(saved["version"]), 2)
+	assert_eq(int(saved["version"]), GameSession.SAVE_VERSION)
 	assert_eq((saved["events"]["log"]["events"] as Array).size(), a.runner.log.size())
 
 

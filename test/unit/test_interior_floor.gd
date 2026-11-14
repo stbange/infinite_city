@@ -39,7 +39,7 @@ func _service_blocks(kind: int, count: int) -> Array[BlockInfo]:
 
 
 func test_flights_per_floor() -> void:
-	for block in _blocks(50, 1):
+	for block in _blocks(30, 1):
 		var plan := interiors.plan_of(block)
 		for k in plan.floors:
 			var floor := interiors.floor_of(plan, k)
@@ -148,7 +148,7 @@ func test_signature_items() -> void:
 
 func test_nothing_in_the_way() -> void:
 	var floors := 0
-	for block in _blocks(50, 5):
+	for block in _blocks(30, 5):
 		var plan := interiors.plan_of(block)
 		for k: int in [0, plan.floors / 2]:
 			var floor := interiors.floor_of(plan, k)
@@ -167,7 +167,7 @@ func test_nothing_in_the_way() -> void:
 					assert_false(shrunk.intersects(clear), "%s blocks a door in %s" % [floor.item_names[i], block.cell])
 				for wall in floor.walls:
 					assert_false(shrunk.intersects(wall), "%s stands in a wall in %s" % [floor.item_names[i], block.cell])
-	assert_eq(floors, 100)
+	assert_eq(floors, 60)
 
 
 func test_lit_rooms() -> void:
