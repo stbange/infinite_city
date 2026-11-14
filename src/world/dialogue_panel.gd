@@ -60,6 +60,10 @@ func open(text: String, choices: PackedStringArray) -> void:
 	_panel.visible = true
 
 
+func choice_count() -> int:
+	return _count
+
+
 func text() -> String:
 	return _text.text + "\n" + _choices.text if _text != null else ""
 

@@ -5,7 +5,10 @@ extends RefCounted
 ## preconditions hold, wait for a scene choice or a story delivery, and change the story state.
 
 const DEFAULT_TEMPLATE := "hidden_abundance"
-const TEMPLATES: Array[String] = ["hidden_abundance", "election", "plague"]
+const TEMPLATES: Array[String] = ["hidden_abundance", "election", "plague", "blackout", "fall_of_a_house", "descent"]
+## Short arcs for regulars that run beside the main arc (spec story-director / Side arcs).
+const SIDE_TEMPLATES: Array[String] = ["side_debt", "side_affair", "side_child"]
+const SALT_SIDE := 192
 const SALT_CAST := 190
 const SALT_TEMPLATE := 191
 
@@ -22,16 +25,23 @@ static func pick_template(chronicle: CityChronicle, layout: CityLayout, start: V
 	var parties := 0
 	var food := false
 	var medicine := false
+	var power := false
+	var faith := false
 	for f in reach.factions + chronicle.history.powers:
 		if not f.exists_at(year):
 			continue
 		parties += 1 if f.type == "party" else 0
 		food = food or (f.type == "company" and f.good == "food")
 		medicine = medicine or (f.type == "company" and f.good == "medicine")
+		power = power or (f.type == "company" and f.good == "power")
+		faith = faith or f.type == "faith"
 	var scores := {
 		"hidden_abundance": 1.0 + (0.6 if food else 0.0),
 		"election": 0.4 + 0.3 * mini(parties, 3),
 		"plague": 0.8 + (0.6 if medicine else 0.0),
+		"blackout": 0.7 + (0.6 if power else 0.0),
+		"fall_of_a_house": 0.9,
+		"descent": 0.6 + (0.6 if faith else 0.0),
 	}
 	var best := DEFAULT_TEMPLATE
 	var best_score := -1.0
@@ -43,18 +53,23 @@ static func pick_template(chronicle: CityChronicle, layout: CityLayout, start: V
 	return best
 
 
+## The side arc for a seed (one of SIDE_TEMPLATES, by hash).
+static func pick_side(seed_value: int) -> String:
+	return SIDE_TEMPLATES[DetHash.hash1(seed_value, SALT_SIDE, 0) % SIDE_TEMPLATES.size()]
+
+
 # --- Casting -------------------------------------------------------------------------------
 
 ## Role -> entry for every role of the template. Person entries: kind, key, first, family, age,
 ## cell [x, y, z], floor, unit; the patron adds place (the workplace name); faction entries: kind,
 ## key, name. `patron` may be null (a resident then takes the role).
 static func cast(population: Population, chronicle: CityChronicle, start: Vector3i, patron: WorkplaceInfo,
-		plot: Dictionary = {}) -> Dictionary:
+		plot: Dictionary = {}, exclude: Dictionary = {}) -> Dictionary:
 	if plot.is_empty():
 		plot = template()
 	var roles: Dictionary = plot["roles"]
 	var result := {}
-	var used := {}
+	var used := exclude.duplicate()
 	var role_names: Array = roles.keys()
 	role_names.sort()
 	if roles.has("patron"):

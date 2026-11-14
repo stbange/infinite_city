@@ -76,7 +76,7 @@ func _deliver(job: DeliveryJob) -> void:
 func _step(pick: Callable) -> void:
 	runner.update()
 	if panel.is_open():
-		var count := StoryDirector.choices(runner.plot, runner.state).size()
+		var count := panel.choice_count()
 		panel.choose(mini(pick.call(runner.state.scene), count - 1))
 		return
 	for job in jobs.carried:
@@ -191,3 +191,32 @@ func test_meeting_where_they_are() -> void:
 	runner._on_interacted(_door(place["cell"], place["floor"], place["unit"]))
 	assert_eq(runner.state.meet_role, "")
 	assert_eq(runner.state.scene, "friend_hurt")
+
+
+func test_a_side_arc_beside_the_main_story() -> void:
+	var side := StoryRunner.new()
+	side.name = "SideRunner"
+	side.auto_update = false
+	side.side = true
+	world.add_child(side)
+	side.world_path = NodePath("..")
+	side.session_path = NodePath("../GameSession")
+	side.jobs_path = NodePath("../JobManager")
+	side.panel_path = NodePath("../DialoguePanel")
+	side.main_path = NodePath("../StoryRunner")
+	side.cast_now(world, patron)
+	assert_has(StoryDirector.SIDE_TEMPLATES, side.state.template_id)
+	for role: String in side.state.cast:
+		for main_role: String in runner.state.cast:
+			assert_ne(side.state.cast[role]["key"], runner.state.cast[main_role]["key"])
+	var pick := func(_scene: String) -> int: return 0
+	for i in 200:
+		if side.state.flags.has("side_done"):
+			break
+		side.update()
+		if not side.state.meet_role.is_empty() and not panel.is_open():
+			var place := side.meet_place()
+			side._on_interacted(_door(place["cell"], place["floor"], place["unit"]))
+		_step(pick)
+	assert_true(side.state.flags.has("side_done"), "the side arc ends")
+	assert_gt(runner.state.done.size(), 2, "the main story moved on as well")

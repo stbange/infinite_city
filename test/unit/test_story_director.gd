@@ -24,6 +24,30 @@ func test_every_template_is_complete() -> void:
 		_check_slots(id, cast))
 
 
+func test_side_arcs() -> void:
+	var main := _cast_for(2024)
+	var exclude := {}
+	for role: String in main:
+		exclude[main[role]["key"]] = true
+	for id in StoryDirector.SIDE_TEMPLATES:
+		plot = StoryDirector.template(id)
+		var config := CityConfig.new()
+		config.world_seed = 2024
+		var layout := CityLayout.new(config)
+		var population := Population.new(layout, null)
+		var cast := StoryDirector.cast(population, CityChronicle.new(config), SpawnFinder.find_on_foot(layout).cell, null, plot, exclude)
+		for role: String in plot["roles"]:
+			assert_false((cast.get(role, {}) as Dictionary).is_empty(), "%s: role %s" % [id, role])
+			assert_false(exclude.has(cast[role]["key"]), "%s: %s is already in the main story" % [id, role])
+		_check_no_dead_ends(id, "side_done")
+		_check_slots(id, cast)
+	plot = StoryDirector.template()
+	var picked := {}
+	for seed_value in 30:
+		picked[StoryDirector.pick_side(seed_value)] = true
+	assert_eq(picked.size(), StoryDirector.SIDE_TEMPLATES.size())
+
+
 func test_choosing_a_template() -> void:
 	var picked := {}
 	for i in 12:
@@ -72,7 +96,7 @@ func test_no_dead_ends() -> void:
 	_check_no_dead_ends("hidden_abundance")
 
 
-func _check_no_dead_ends(id: String) -> void:
+func _check_no_dead_ends(id: String, target: String = "story_done") -> void:
 	var start := StoryState.new()
 	var states := {}
 	var queue: Array = []
@@ -104,7 +128,7 @@ func _check_no_dead_ends(id: String) -> void:
 	# From every state, the end of the story is reachable.
 	var good := {}
 	for k: String in states:
-		if k.contains("story_done"):
+		if k.contains(target):
 			good[k] = true
 	var changed := true
 	while changed:

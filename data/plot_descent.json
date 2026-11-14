@@ -1,0 +1,280 @@
+{
+ "id": "descent",
+ "title": "The Descent",
+ "roles": {
+  "patron": {
+   "kind": "patron"
+  },
+  "prophet": {
+   "kind": "person",
+   "min_age": 50,
+   "max_age": 100,
+   "radius": 3
+  },
+  "pilgrim": {
+   "kind": "person",
+   "min_age": 18,
+   "max_age": 35,
+   "radius": 3
+  },
+  "skeptic": {
+   "kind": "person",
+   "min_age": 25,
+   "max_age": 70,
+   "radius": 4
+  },
+  "faith": {
+   "kind": "faction",
+   "types": [
+    "faith"
+   ]
+  },
+  "enforcer": {
+   "kind": "faction",
+   "types": [
+    "authority",
+    "company"
+   ]
+  },
+  "below": {
+   "kind": "flat",
+   "radius": 4,
+   "layer": -1,
+   "name": "the door below"
+  }
+ },
+ "beats": [
+  {
+   "id": "first_night",
+   "act": 1,
+   "trigger": "scene",
+   "scene": "first_night",
+   "objective": "Take your first orders at {patron.place}"
+  },
+  {
+   "id": "pilgrims",
+   "act": 1,
+   "trigger": "scene",
+   "after": [
+    "first_night"
+   ],
+   "deliveries": 2,
+   "scene": "pilgrims",
+   "objective": "Keep delivering"
+  },
+  {
+   "id": "pilgrim_order",
+   "act": 1,
+   "trigger": "job",
+   "after": [
+    "pilgrims"
+   ],
+   "job": {
+    "to": "pilgrim",
+    "cargo": "travelling rations",
+    "kind": "food"
+   },
+   "scene": "pilgrim_door",
+   "objective": "Bring rations to {pilgrim.first} {pilgrim.family}"
+  },
+  {
+   "id": "prophet_meet",
+   "act": 2,
+   "trigger": "meet",
+   "meet": "prophet",
+   "after": [
+    "pilgrim_order"
+   ],
+   "since": [
+    "pilgrim_order",
+    1
+   ],
+   "scene": "prophet_meet",
+   "objective": "Find {prophet.first}, who speaks for {faith.name}"
+  },
+  {
+   "id": "skeptic_order",
+   "act": 2,
+   "trigger": "job",
+   "after": [
+    "prophet_meet"
+   ],
+   "job": {
+    "to": "skeptic",
+    "cargo": "a survey map",
+    "kind": "data"
+   },
+   "scene": "skeptic_door",
+   "objective": "Take the survey map to {skeptic.first} {skeptic.family}"
+  },
+  {
+   "id": "below_run",
+   "act": 3,
+   "trigger": "job",
+   "after": [
+    "skeptic_order"
+   ],
+   "since": [
+    "skeptic_order",
+    1
+   ],
+   "job": {
+    "to": "below",
+    "cargo": "a pilgrim's lamp",
+    "kind": "parcel"
+   },
+   "scene": "below_door",
+   "objective": "Carry the lamp to the door below"
+  },
+  {
+   "id": "epilogue_open",
+   "act": 3,
+   "trigger": "scene",
+   "after": [
+    "below_run"
+   ],
+   "flags": [
+    "ending_open"
+   ],
+   "scene": "epilogue_open",
+   "set_flags": [
+    "story_done"
+   ],
+   "objective": "The way down is open"
+  },
+  {
+   "id": "epilogue_seal",
+   "act": 3,
+   "trigger": "scene",
+   "after": [
+    "below_run"
+   ],
+   "flags": [
+    "ending_seal"
+   ],
+   "scene": "epilogue_seal",
+   "set_flags": [
+    "story_done"
+   ],
+   "objective": "The way down is sealed",
+   "world": [
+    "prices_fall"
+   ]
+  },
+  {
+   "id": "epilogue_sell",
+   "act": 3,
+   "trigger": "scene",
+   "after": [
+    "below_run"
+   ],
+   "flags": [
+    "ending_sell"
+   ],
+   "scene": "epilogue_sell",
+   "set_flags": [
+    "story_done"
+   ],
+   "objective": "{enforcer.name} hold the way down",
+   "wallet": 450
+  }
+ ],
+ "scenes": {
+  "first_night": {
+   "speaker": "patron",
+   "text": "{patron.first} {patron.family} nods at the robed figures passing {patron.place}. \"{faith.name}. They say the city has a bottom, {courier.first}, and something waits there.\"",
+   "choices": [
+    {
+     "text": "\"Does it?\""
+    }
+   ]
+  },
+  "pilgrims": {
+   "speaker": "patron",
+   "text": "More pilgrims every night, heading down through the stair cores with lamps and bundles. {enforcer.name} start counting them.",
+   "choices": [
+    {
+     "text": "Keep going."
+    }
+   ]
+  },
+  "pilgrim_door": {
+   "speaker": "pilgrim",
+   "text": "{pilgrim.first} {pilgrim.family} packs the rations with shaking hands. \"{prophet.first} says the door below opens this week. Will you come and see?\"",
+   "choices": [
+    {
+     "text": "\"Maybe.\""
+    }
+   ]
+  },
+  "prophet_meet": {
+   "speaker": "prophet",
+   "text": "{prophet.first} {prophet.family} smiles as if expecting you. \"Couriers know every door. Take our lamp to the one below and you'll see I'm not mad.\"",
+   "choices": [
+    {
+     "text": "\"Show me the way.\""
+    }
+   ]
+  },
+  "skeptic_door": {
+   "speaker": "skeptic",
+   "text": "{skeptic.first} {skeptic.family}, a surveyor, spreads the map. \"There's no bottom — just old pump halls, flooded. People will drown chasing a sermon.\"",
+   "choices": [
+    {
+     "text": "\"Then why is it locked?\""
+    }
+   ]
+  },
+  "below_door": {
+   "speaker": "below",
+   "text": "Behind {below.name} a stair goes down into cold air and the sound of water. Pilgrims crowd behind you; {enforcer.name} wardens come up the stairs.",
+   "choices": [
+    {
+     "text": "Open it for the pilgrims.",
+     "flags": [
+      "ending_open"
+     ]
+    },
+    {
+     "text": "Seal it for good.",
+     "flags": [
+      "ending_seal"
+     ]
+    },
+    {
+     "text": "Give the key to {enforcer.name}.",
+     "flags": [
+      "ending_sell"
+     ]
+    }
+   ]
+  },
+  "epilogue_open": {
+   "speaker": "prophet",
+   "text": "The pilgrims go down singing. Some come back with stories; some don't come back. {faith.name} grows by the week.",
+   "choices": [
+    {
+     "text": "Back to work."
+    }
+   ]
+  },
+  "epilogue_seal": {
+   "speaker": "skeptic",
+   "text": "{skeptic.first} welds the door shut with you watching. The pilgrims curse you, then drift home to their families.",
+   "choices": [
+    {
+     "text": "Back to work."
+    }
+   ]
+  },
+  "epilogue_sell": {
+   "speaker": "enforcer",
+   "text": "{enforcer.name} post a guard and a fee at the door below. Faith, it turns out, is good business.",
+   "choices": [
+    {
+     "text": "Back to work."
+    }
+   ]
+  }
+ }
+}

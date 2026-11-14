@@ -1,0 +1,67 @@
+{
+ "id": "side_child",
+ "title": "A Missing Child",
+ "side": true,
+ "roles": {
+  "parent": {
+   "kind": "person",
+   "min_age": 28,
+   "max_age": 55,
+   "radius": 3
+  },
+  "child_place": {
+   "kind": "flat",
+   "radius": 3,
+   "name": "the empty flat"
+  }
+ },
+ "beats": [
+  {
+   "id": "parent_meet",
+   "act": 1,
+   "trigger": "meet",
+   "meet": "parent",
+   "deliveries": 5,
+   "scene": "parent_meet",
+   "objective": "{parent.first} {parent.family} is asking every courier for help"
+  },
+  {
+   "id": "search",
+   "act": 1,
+   "trigger": "job",
+   "after": [
+    "parent_meet"
+   ],
+   "job": {
+    "to": "child_place",
+    "cargo": "a torch and a blanket",
+    "kind": "parcel"
+   },
+   "scene": "found",
+   "set_flags": [
+    "side_done"
+   ],
+   "objective": "Search the empty flat for {parent.first}'s child"
+  }
+ ],
+ "scenes": {
+  "parent_meet": {
+   "speaker": "parent",
+   "text": "{parent.first} {parent.family} hasn't slept. \"My kid's been gone since yesterday. Someone saw them near an empty flat a few blocks over.\"",
+   "choices": [
+    {
+     "text": "\"I'll look.\""
+    }
+   ]
+  },
+  "found": {
+   "speaker": "parent",
+   "text": "Inside {child_place.name}, curled up asleep behind a stack of crates: the child, cold but fine. {parent.first} cries all the way home.",
+   "choices": [
+    {
+     "text": "\"Glad to help.\""
+    }
+   ]
+  }
+ }
+}

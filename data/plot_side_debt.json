@@ -1,0 +1,105 @@
+{
+ "id": "side_debt",
+ "title": "A Debt",
+ "side": true,
+ "roles": {
+  "debtor": {
+   "kind": "person",
+   "min_age": 25,
+   "max_age": 60,
+   "radius": 3
+  },
+  "collector": {
+   "kind": "faction",
+   "types": [
+    "gang"
+   ]
+  }
+ },
+ "beats": [
+  {
+   "id": "debtor_meet",
+   "act": 1,
+   "trigger": "meet",
+   "meet": "debtor",
+   "deliveries": 3,
+   "scene": "debtor_meet",
+   "objective": "{debtor.first} {debtor.family} wants a word"
+  },
+  {
+   "id": "payment_run",
+   "act": 1,
+   "trigger": "job",
+   "after": [
+    "debtor_meet"
+   ],
+   "flags": [
+    "carries_payment"
+   ],
+   "job": {
+    "to": "debtor",
+    "cargo": "an envelope of cash",
+    "kind": "parcel"
+   },
+   "scene": "payment_done",
+   "set_flags": [
+    "side_done"
+   ],
+   "objective": "Bring {debtor.first} the money they borrowed"
+  },
+  {
+   "id": "refused",
+   "act": 1,
+   "trigger": "scene",
+   "after": [
+    "debtor_meet"
+   ],
+   "flags": [
+    "refused_debtor"
+   ],
+   "scene": "refused",
+   "set_flags": [
+    "side_done"
+   ],
+   "objective": "Leave {debtor.first} to their troubles"
+  }
+ ],
+ "scenes": {
+  "debtor_meet": {
+   "speaker": "debtor",
+   "text": "{debtor.first} {debtor.family} catches your sleeve. \"I owe {collector.name}. If a friend could bring the money from my sister's place, quietly…\"",
+   "choices": [
+    {
+     "text": "\"I'll carry it.\"",
+     "flags": [
+      "carries_payment"
+     ]
+    },
+    {
+     "text": "\"Sorry, I can't.\"",
+     "flags": [
+      "refused_debtor"
+     ]
+    }
+   ]
+  },
+  "payment_done": {
+   "speaker": "debtor",
+   "text": "{debtor.first} counts it twice and breathes out for the first time in a week. \"I won't forget this.\"",
+   "choices": [
+    {
+     "text": "\"Stay out of debt.\""
+    }
+   ]
+  },
+  "refused": {
+   "speaker": "debtor",
+   "text": "{debtor.first} nods and looks away. Two days later their door has a new lock and a gang tag.",
+   "choices": [
+    {
+     "text": "Walk on."
+    }
+   ]
+  }
+ }
+}

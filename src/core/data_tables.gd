@@ -32,6 +32,12 @@ const TABLES := {
 	"plot_hidden_abundance": PLOT_SCHEMA,
 	"plot_election": PLOT_SCHEMA,
 	"plot_plague": PLOT_SCHEMA,
+	"plot_blackout": PLOT_SCHEMA,
+	"plot_fall_of_a_house": PLOT_SCHEMA,
+	"plot_descent": PLOT_SCHEMA,
+	"plot_side_debt": PLOT_SCHEMA,
+	"plot_side_affair": PLOT_SCHEMA,
+	"plot_side_child": PLOT_SCHEMA,
 	"lines": {"doorstep": {"home": "array", "asleep": "array", "household": "array", "left": "array"}},
 	"economy": {
 		"orders": {"per_hour": "number", "radius": "number", "higher_tier_share": "number", "rival_share": "number"},

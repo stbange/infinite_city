@@ -1,0 +1,81 @@
+{
+ "id": "side_affair",
+ "title": "A Secret",
+ "side": true,
+ "roles": {
+  "lover": {
+   "kind": "person",
+   "min_age": 22,
+   "max_age": 55,
+   "radius": 3
+  },
+  "spouse": {
+   "kind": "person",
+   "min_age": 22,
+   "max_age": 60,
+   "radius": 3
+  }
+ },
+ "beats": [
+  {
+   "id": "note",
+   "act": 1,
+   "trigger": "job",
+   "deliveries": 4,
+   "job": {
+    "to": "lover",
+    "cargo": "a perfumed note",
+    "kind": "parcel"
+   },
+   "scene": "lover_door",
+   "objective": "Deliver a note to {lover.first} {lover.family}, discreetly"
+  },
+  {
+   "id": "spouse_meet",
+   "act": 1,
+   "trigger": "meet",
+   "meet": "spouse",
+   "after": [
+    "note"
+   ],
+   "since": [
+    "note",
+    1
+   ],
+   "scene": "spouse_meet",
+   "set_flags": [
+    "side_done"
+   ],
+   "objective": "{spouse.first} {spouse.family} has questions"
+  }
+ ],
+ "scenes": {
+  "lover_door": {
+   "speaker": "lover",
+   "text": "{lover.first} {lover.family} reads the note, blushes, and tips far too much. \"You never saw this.\"",
+   "choices": [
+    {
+     "text": "\"Saw what?\""
+    }
+   ]
+  },
+  "spouse_meet": {
+   "speaker": "spouse",
+   "text": "{spouse.first} {spouse.family} blocks the corridor. \"You've been carrying notes. Who to?\"",
+   "choices": [
+    {
+     "text": "Keep the secret.",
+     "flags": [
+      "kept_secret"
+     ]
+    },
+    {
+     "text": "Tell the truth.",
+     "flags": [
+      "told_truth"
+     ]
+    }
+   ]
+  }
+ }
+}

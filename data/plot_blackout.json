@@ -1,0 +1,331 @@
+{
+ "id": "blackout",
+ "title": "The Blackout",
+ "roles": {
+  "patron": {
+   "kind": "patron"
+  },
+  "engineer": {
+   "kind": "person",
+   "min_age": 30,
+   "max_age": 65,
+   "radius": 3
+  },
+  "saboteur": {
+   "kind": "person",
+   "min_age": 20,
+   "max_age": 45,
+   "radius": 4
+  },
+  "neighbour": {
+   "kind": "person",
+   "min_age": 60,
+   "max_age": 110,
+   "radius": 3
+  },
+  "power": {
+   "kind": "faction",
+   "types": [
+    "company"
+   ],
+   "good": "power"
+  },
+  "enforcer": {
+   "kind": "faction",
+   "types": [
+    "authority",
+    "company"
+   ]
+  },
+  "disruptor": {
+   "kind": "faction",
+   "types": [
+    "gang"
+   ]
+  }
+ },
+ "beats": [
+  {
+   "id": "first_night",
+   "act": 1,
+   "trigger": "scene",
+   "scene": "first_night",
+   "objective": "Take your first orders at {patron.place}"
+  },
+  {
+   "id": "flicker",
+   "act": 1,
+   "trigger": "scene",
+   "after": [
+    "first_night"
+   ],
+   "deliveries": 2,
+   "scene": "flicker",
+   "objective": "Keep delivering"
+  },
+  {
+   "id": "candles",
+   "act": 1,
+   "trigger": "job",
+   "after": [
+    "flicker"
+   ],
+   "job": {
+    "to": "neighbour",
+    "cargo": "candles and a battery pack",
+    "kind": "parcel"
+   },
+   "scene": "neighbour_door",
+   "objective": "Bring candles to {neighbour.first} {neighbour.family}"
+  },
+  {
+   "id": "engineer_meet",
+   "act": 2,
+   "trigger": "meet",
+   "meet": "engineer",
+   "after": [
+    "candles"
+   ],
+   "since": [
+    "candles",
+    1
+   ],
+   "scene": "engineer_meet",
+   "objective": "Find {engineer.first}, the line engineer"
+  },
+  {
+   "id": "parts_run",
+   "act": 2,
+   "trigger": "job",
+   "after": [
+    "engineer_meet"
+   ],
+   "flags": [
+    "helps_engineer"
+   ],
+   "job": {
+    "to": "engineer",
+    "cargo": "relay parts",
+    "kind": "parcel"
+   },
+   "scene": "engineer_parts",
+   "objective": "Get the relay parts to {engineer.first}"
+  },
+  {
+   "id": "saboteur_meet",
+   "act": 2,
+   "trigger": "meet",
+   "meet": "saboteur",
+   "after": [
+    "engineer_meet"
+   ],
+   "any": [
+    "parts_run"
+   ],
+   "scene": "saboteur_meet",
+   "objective": "Find whoever cut the lines"
+  },
+  {
+   "id": "saboteur_meet_alone",
+   "act": 2,
+   "trigger": "meet",
+   "meet": "saboteur",
+   "after": [
+    "engineer_meet"
+   ],
+   "flags": [
+    "refused_engineer"
+   ],
+   "scene": "saboteur_meet",
+   "objective": "Find whoever cut the lines"
+  },
+  {
+   "id": "choice",
+   "act": 3,
+   "trigger": "scene",
+   "after": [
+    "engineer_meet"
+   ],
+   "any": [
+    "saboteur_meet",
+    "saboteur_meet_alone"
+   ],
+   "scene": "the_switch",
+   "objective": "Decide who gets the light back"
+  },
+  {
+   "id": "epilogue_restore",
+   "act": 3,
+   "trigger": "scene",
+   "after": [
+    "choice"
+   ],
+   "flags": [
+    "ending_restore"
+   ],
+   "scene": "epilogue_restore",
+   "set_flags": [
+    "story_done"
+   ],
+   "objective": "The lights came back",
+   "world": [
+    "prices_fall"
+   ]
+  },
+  {
+   "id": "epilogue_expose",
+   "act": 3,
+   "trigger": "scene",
+   "after": [
+    "choice"
+   ],
+   "flags": [
+    "ending_expose"
+   ],
+   "scene": "epilogue_expose",
+   "set_flags": [
+    "story_done"
+   ],
+   "objective": "{power.name} was exposed",
+   "heat": {
+    "disruptor": 0.5
+   }
+  },
+  {
+   "id": "epilogue_dark",
+   "act": 3,
+   "trigger": "scene",
+   "after": [
+    "choice"
+   ],
+   "flags": [
+    "ending_dark"
+   ],
+   "scene": "epilogue_dark",
+   "set_flags": [
+    "story_done"
+   ],
+   "objective": "The district stays dark",
+   "wallet": 400,
+   "world": [
+    "prices_soar"
+   ]
+  }
+ ],
+ "scenes": {
+  "first_night": {
+   "speaker": "patron",
+   "text": "{patron.first} {patron.family} has a lantern on the counter of {patron.place}. \"Power's been jumpy all week, {courier.first}. Take the order before the fridge dies.\"",
+   "choices": [
+    {
+     "text": "\"On my way.\""
+    }
+   ]
+  },
+  "flicker": {
+   "speaker": "patron",
+   "text": "The corridor lights die, come back, die again. Somewhere below, {power.name} announces \"maintenance\". Nobody believes them.",
+   "choices": [
+    {
+     "text": "Keep going."
+    }
+   ]
+  },
+  "neighbour_door": {
+   "speaker": "neighbour",
+   "text": "{neighbour.first} {neighbour.family} sits in the dark with a blanket. \"Forty years in this block and I've never seen a cut like this. Someone did this on purpose.\"",
+   "choices": [
+    {
+     "text": "\"Who would?\""
+    }
+   ]
+  },
+  "engineer_meet": {
+   "speaker": "engineer",
+   "text": "{engineer.first} {engineer.family}, a line engineer with grease to the elbows, looks up. \"The cables weren't worn. They were cut, clean. I can splice them if someone brings me relay parts without {power.name} noticing.\"",
+   "choices": [
+    {
+     "text": "\"I'll bring them.\"",
+     "flags": [
+      "helps_engineer"
+     ]
+    },
+    {
+     "text": "\"Not my fight.\"",
+     "flags": [
+      "refused_engineer"
+     ]
+    }
+   ]
+  },
+  "engineer_parts": {
+   "speaker": "engineer",
+   "text": "{engineer.first} weighs the relays in one hand. \"These came from a {power.name} store. Funny how they had spares while we had none.\"",
+   "choices": [
+    {
+     "text": "\"Funny indeed.\""
+    }
+   ]
+  },
+  "saboteur_meet": {
+   "speaker": "saboteur",
+   "text": "{saboteur.first} {saboteur.family} doesn't run. \"{power.name} paid me to cut the lines so the council would sign their new contract. I've got the transfer slips. What are you going to do about it?\"",
+   "choices": [
+    {
+     "text": "\"Show me.\""
+    }
+   ]
+  },
+  "the_switch": {
+   "speaker": "engineer",
+   "text": "The splice is ready, the slips are in your bag, and {disruptor.name} are offering good money to keep the district dark a little longer.",
+   "choices": [
+    {
+     "text": "Throw the switch and bring the light back.",
+     "flags": [
+      "ending_restore"
+     ]
+    },
+    {
+     "text": "Take the slips to the council.",
+     "flags": [
+      "ending_expose"
+     ]
+    },
+    {
+     "text": "Take the gang's money and walk away.",
+     "flags": [
+      "ending_dark"
+     ]
+    }
+   ]
+  },
+  "epilogue_restore": {
+   "speaker": "neighbour",
+   "text": "Window by window the block lights up again. {neighbour.first} waves from the balcony, and {patron.place} hands out free noodles all night.",
+   "choices": [
+    {
+     "text": "Back to work."
+    }
+   ]
+  },
+  "epilogue_expose": {
+   "speaker": "engineer",
+   "text": "The slips are read out in the council chamber. {power.name} loses its contract; {disruptor.name} lose their payday and remember who cost them.",
+   "choices": [
+    {
+     "text": "Back to work."
+    }
+   ]
+  },
+  "epilogue_dark": {
+   "speaker": "disruptor",
+   "text": "The money is real. So is the dark. Prices climb as generators become the only light, and {disruptor.name} sell the fuel.",
+   "choices": [
+    {
+     "text": "Back to work."
+    }
+   ]
+  }
+ }
+}

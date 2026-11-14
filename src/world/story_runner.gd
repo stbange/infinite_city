@@ -17,6 +17,10 @@ const MEET_DISTANCE := 3.5
 @export var people_path: NodePath
 @export var player_path: NodePath
 @export var interaction_path: NodePath
+## A side runner plays a short arc for regulars beside the main story (spec story-director / Side
+## arcs): it waits for the main runner's cast and casts nobody from it.
+@export var side: bool = false
+@export var main_path: NodePath
 ## When false, update() must be called manually (used by tests).
 @export var auto_update: bool = true
 
@@ -25,6 +29,8 @@ var state := StoryState.new()
 var _cast_key: Array = []
 var _connected: bool = false
 var _routines: Routines
+## True while the panel shows this runner's scene (the panel is shared with the side runner).
+var _showing: bool = false
 
 
 func _process(_delta: float) -> void:
@@ -49,6 +55,7 @@ func update() -> void:
 		StoryDirector.met(plot, state)
 	var panel := _panel()
 	if not state.scene.is_empty() and panel != null and not panel.is_open():
+		_showing = true
 		var menu := get_node_or_null(menu_path) as GameMenu if not menu_path.is_empty() else null
 		var courier: Dictionary = menu.profile if menu != null else {}
 		panel.open(StoryDirector.scene_text(plot, state, world.config.world_seed, courier),
@@ -57,11 +64,24 @@ func update() -> void:
 
 ## Casts right now on this thread (tests, or when no background jobs are available).
 func cast_now(world: CityWorld, patron: WorkplaceInfo) -> void:
+	if side:
+		var main := get_node_or_null(main_path) as StoryRunner if not main_path.is_empty() else null
+		var exclude := {}
+		if main != null:
+			for role: String in main.state.cast:
+				exclude[main.state.cast[role].get("key", "")] = true
+		plot = StoryDirector.template(StoryDirector.pick_side(world.config.world_seed))
+		state.template_id = plot["id"]
+		state.cast = StoryDirector.cast(world.population, world.chronicle, patron.cell, null, plot, exclude)
+		return
 	state.template_id = plot["id"]
 	state.cast = StoryDirector.cast(world.population, world.chronicle, patron.cell, patron, plot)
 
 
 func _poll_cast(world: CityWorld, patron: WorkplaceInfo) -> void:
+	if side:
+		_poll_side_cast(world, patron)
+		return
 	if _cast_key.is_empty():
 		_cast_key = ["story-cast", patron.cell, patron.floor_index, patron.unit]
 		var config := world.config
@@ -80,16 +100,40 @@ func _poll_cast(world: CityWorld, patron: WorkplaceInfo) -> void:
 		state.cast = found["cast"]
 
 
+func _poll_side_cast(world: CityWorld, patron: WorkplaceInfo) -> void:
+	var main := get_node_or_null(main_path) as StoryRunner if not main_path.is_empty() else null
+	if main == null or not main.state.is_cast():
+		return
+	if _cast_key.is_empty():
+		var exclude := {}
+		for role: String in main.state.cast:
+			exclude[main.state.cast[role].get("key", "")] = true
+		var id := StoryDirector.pick_side(world.config.world_seed)
+		_cast_key = ["side-cast", id, patron.cell]
+		var config := world.config
+		var start: Vector3i = patron.cell
+		world.background.submit(_cast_key, func() -> Variant:
+			var layout := CityLayout.new(config)
+			return {"template": id, "cast": StoryDirector.cast(Population.new(layout, null), CityChronicle.new(config), start, null,
+					StoryDirector.template(id), exclude)})
+	if world.background.is_ready(_cast_key):
+		var found: Dictionary = world.background.result(_cast_key)
+		plot = StoryDirector.template(found["template"])
+		state.template_id = found["template"]
+		state.cast = found["cast"]
+
+
 func _ensure_story_job(world: CityWorld, jobs: JobManager) -> void:
+	var job_id := ("side:" if side else "story:") + state.active
 	for job in jobs.carried:
-		if job.story_beat == state.active:
+		if job.id == job_id:
 			return
 	var entry: Dictionary = state.cast.get(state.job_role, {})
 	if entry.is_empty():
 		return
 	var spec: Dictionary = StoryDirector.beat(plot, state.active)["job"]
 	var job := DeliveryJob.new()
-	job.id = "story:" + state.active
+	job.id = job_id
 	job.story_beat = state.active
 	job.pickup = jobs.patron.id
 	job.patron_name = jobs.patron.name
@@ -165,17 +209,20 @@ func _connect() -> void:
 		panel.chosen.connect(choose)
 	var session := _session()
 	if session != null:
-		session.register_part("story", to_dict, from_dict)
+		session.register_part("story_side" if side else "story", to_dict, from_dict)
 	_connected = true
 
 
 func _on_delivered(job: DeliveryJob) -> void:
-	if not job.story_beat.is_empty() and job.story_beat == state.active:
+	if not job.story_beat.is_empty() and job.story_beat == state.active and job.id.begins_with("side:" if side else "story:"):
 		StoryDirector.deliver_story_job(plot, state)
 
 
-## Picks a choice of the open scene.
+## Picks a choice of the open scene (only when the panel shows this runner's scene).
 func choose(index: int) -> void:
+	if not _showing:
+		return
+	_showing = false
 	var jobs := _jobs()
 	var effects := StoryDirector.choose(plot, state, index, jobs.completed if jobs != null else 0)
 	var encounters := get_node_or_null(encounters_path) as EncounterDirector if not encounters_path.is_empty() else null

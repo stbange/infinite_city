@@ -23,6 +23,7 @@ extends CanvasLayer
 @export var hints_path: NodePath
 @export var lamp_path: NodePath
 @export var transit_path: NodePath
+@export var side_story_path: NodePath
 @export var simulation_path: NodePath
 
 const _REFRESH_SECONDS := 0.1
@@ -275,6 +276,9 @@ func _courier_panel(world: CityWorld, camera: Player, session: GameSession) -> S
 	var story := get_node_or_null(story_path) as StoryRunner if not story_path.is_empty() else null
 	if story != null and not story.objective_text().is_empty():
 		text += "\nStory · Act %d: %s" % [story.state.act, story.objective_text()]
+	var side := get_node_or_null(side_story_path) as StoryRunner if not side_story_path.is_empty() else null
+	if side != null and not side.objective_text().is_empty() and not side.state.flags.has("side_done"):
+		text += "\nSide · %s" % side.objective_text()
 	var coach := get_node_or_null(coach_path) as SessionCoach if not coach_path.is_empty() else null
 	if coach != null:
 		for line in coach.hud_lines():

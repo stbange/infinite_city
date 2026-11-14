@@ -1,0 +1,278 @@
+{
+ "id": "fall_of_a_house",
+ "title": "The Fall of a House",
+ "roles": {
+  "patron": {
+   "kind": "patron"
+  },
+  "heir": {
+   "kind": "person",
+   "min_age": 20,
+   "max_age": 40,
+   "radius": 3
+  },
+  "retainer": {
+   "kind": "person",
+   "min_age": 55,
+   "max_age": 100,
+   "radius": 3
+  },
+  "usurper": {
+   "kind": "person",
+   "min_age": 30,
+   "max_age": 60,
+   "radius": 4
+  },
+  "house": {
+   "kind": "faction",
+   "types": [
+    "gang",
+    "company",
+    "guild"
+   ]
+  },
+  "lender": {
+   "kind": "faction",
+   "types": [
+    "company",
+    "society"
+   ]
+  }
+ },
+ "beats": [
+  {
+   "id": "first_night",
+   "act": 1,
+   "trigger": "scene",
+   "scene": "first_night",
+   "objective": "Take your first orders at {patron.place}"
+  },
+  {
+   "id": "rumour",
+   "act": 1,
+   "trigger": "scene",
+   "after": [
+    "first_night"
+   ],
+   "deliveries": 2,
+   "scene": "rumour",
+   "objective": "Keep delivering"
+  },
+  {
+   "id": "retainer_order",
+   "act": 1,
+   "trigger": "job",
+   "after": [
+    "rumour"
+   ],
+   "job": {
+    "to": "retainer",
+    "cargo": "a sealed letter",
+    "kind": "parcel"
+   },
+   "scene": "retainer_door",
+   "objective": "Deliver the letter to {retainer.first} {retainer.family}"
+  },
+  {
+   "id": "heir_meet",
+   "act": 2,
+   "trigger": "meet",
+   "meet": "heir",
+   "after": [
+    "retainer_order"
+   ],
+   "since": [
+    "retainer_order",
+    1
+   ],
+   "scene": "heir_meet",
+   "objective": "Find {heir.first}, the heir of {house.name}"
+  },
+  {
+   "id": "ledger_run",
+   "act": 2,
+   "trigger": "job",
+   "after": [
+    "heir_meet"
+   ],
+   "since": [
+    "heir_meet",
+    1
+   ],
+   "job": {
+    "to": "usurper",
+    "cargo": "the house ledger",
+    "kind": "data"
+   },
+   "scene": "usurper_door",
+   "objective": "Carry the ledger to {usurper.first} {usurper.family}"
+  },
+  {
+   "id": "choice",
+   "act": 3,
+   "trigger": "scene",
+   "after": [
+    "ledger_run"
+   ],
+   "since": [
+    "ledger_run",
+    1
+   ],
+   "scene": "the_choice",
+   "objective": "Decide who holds {house.name}"
+  },
+  {
+   "id": "epilogue_heir",
+   "act": 3,
+   "trigger": "scene",
+   "after": [
+    "choice"
+   ],
+   "flags": [
+    "ending_heir"
+   ],
+   "scene": "epilogue_heir",
+   "set_flags": [
+    "story_done"
+   ],
+   "objective": "{heir.first} holds the house",
+   "world": [
+    "prices_fall"
+   ]
+  },
+  {
+   "id": "epilogue_usurper",
+   "act": 3,
+   "trigger": "scene",
+   "after": [
+    "choice"
+   ],
+   "flags": [
+    "ending_usurper"
+   ],
+   "scene": "epilogue_usurper",
+   "set_flags": [
+    "story_done"
+   ],
+   "objective": "{usurper.first} took the house",
+   "wallet": 500
+  },
+  {
+   "id": "epilogue_lender",
+   "act": 3,
+   "trigger": "scene",
+   "after": [
+    "choice"
+   ],
+   "flags": [
+    "ending_lender"
+   ],
+   "scene": "epilogue_lender",
+   "set_flags": [
+    "story_done"
+   ],
+   "objective": "{lender.name} owns everything",
+   "world": [
+    "prices_soar"
+   ]
+  }
+ ],
+ "scenes": {
+  "first_night": {
+   "speaker": "patron",
+   "text": "{patron.first} {patron.family} lowers their voice at the counter of {patron.place}. \"{house.name} run half of what you'll see on these floors, {courier.first}. Lately they're running out of money.\"",
+   "choices": [
+    {
+     "text": "\"Not my business.\""
+    }
+   ]
+  },
+  "rumour": {
+   "speaker": "patron",
+   "text": "The talk on every landing: the old head of {house.name} is dying, and {lender.name} hold their debts.",
+   "choices": [
+    {
+     "text": "Keep going."
+    }
+   ]
+  },
+  "retainer_door": {
+   "speaker": "retainer",
+   "text": "{retainer.first} {retainer.family}, who has served {house.name} for forty years, reads the letter and goes grey. \"The old one is gone. {heir.first} must hear it from a friend before {usurper.first} hears it at all.\"",
+   "choices": [
+    {
+     "text": "\"Where do I find them?\""
+    }
+   ]
+  },
+  "heir_meet": {
+   "speaker": "heir",
+   "text": "{heir.first} {heir.family} hears the news without a word, then: \"{usurper.first} has the ledger that says who owes us. Without it we're nothing. Carry it — but carry it where?\"",
+   "choices": [
+    {
+     "text": "\"I'll decide when I have it.\""
+    }
+   ]
+  },
+  "usurper_door": {
+   "speaker": "usurper",
+   "text": "{usurper.first} {usurper.family} opens before you knock. \"You have something of mine, courier. Or of theirs. It depends who pays.\"",
+   "choices": [
+    {
+     "text": "Keep the ledger for now."
+    }
+   ]
+  },
+  "the_choice": {
+   "speaker": "retainer",
+   "text": "Three doors, one ledger. {heir.first} wants the house to survive, {usurper.first} wants it for themself, and {lender.name} would simply foreclose.",
+   "choices": [
+    {
+     "text": "Give it to {heir.first}.",
+     "flags": [
+      "ending_heir"
+     ]
+    },
+    {
+     "text": "Sell it to {usurper.first}.",
+     "flags": [
+      "ending_usurper"
+     ]
+    },
+    {
+     "text": "Hand it to {lender.name}.",
+     "flags": [
+      "ending_lender"
+     ]
+    }
+   ]
+  },
+  "epilogue_heir": {
+   "speaker": "heir",
+   "text": "{heir.first} forgives half the debts in the ledger the same night. The floors breathe easier, and prices with them.",
+   "choices": [
+    {
+     "text": "Back to work."
+    }
+   ]
+  },
+  "epilogue_usurper": {
+   "speaker": "usurper",
+   "text": "{usurper.first} pays in full and smiles too much. {retainer.first} is not seen again on these floors.",
+   "choices": [
+    {
+     "text": "Back to work."
+    }
+   ]
+  },
+  "epilogue_lender": {
+   "speaker": "lender",
+   "text": "{lender.name} take the house, the blocks and the debts. Rents rise the following week.",
+   "choices": [
+    {
+     "text": "Back to work."
+    }
+   ]
+  }
+ }
+}
