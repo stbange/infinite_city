@@ -10,6 +10,7 @@ const SCAN_SECONDS := 10.0
 @export var player_path: NodePath
 @export var jobs_path: NodePath
 @export var encounters_path: NodePath
+@export var hints_path: NodePath
 
 var last_message: String = ""
 var _beacon: MeshInstance3D
@@ -90,6 +91,9 @@ func scan() -> bool:
 	_beacon.global_position = target
 	_beacon.visible = true
 	_beacon_time = SCAN_SECONDS
+	var hints := get_node_or_null(hints_path) as RouteHints if not hints_path.is_empty() else null
+	if hints != null:
+		hints.show_full()
 	return true
 
 

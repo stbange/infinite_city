@@ -133,3 +133,34 @@ func test_bounded_search() -> void:
 	var route := nav.route(NavPlace.inside(block.cell, 0, 0), NavPlace.inside(far, 0, 0), CityNav.MAX_CELLS, 5000)
 	assert_true(route.is_empty())
 	assert_lte(nav.last_expanded, 5001)
+
+
+func test_nearest_node_and_walking_length() -> void:
+	var block := _bridged_blocks(1)[0]
+	var plan := population.plan_of(block)
+	var unit := plan.units[0]
+	var near_door := Vector3(unit.door_x + 0.2, plan.floor_y(1) + 0.02, unit.front_z() + unit.front_sign * 1.2)
+	var node := nav.nearest_node(block.cell, near_door)
+	assert_eq(node, nav.node_of(NavPlace.door(block.cell, 1, 0)))
+	var route := nav.route(NavPlace.inside(block.cell, 0, 0), NavPlace.inside(block.cell, 2, 0))
+	assert_almost_eq(route.length, route.cost, 0.01, "no penalties: length is the cost")
+
+
+func test_gang_bridges_cost_more() -> void:
+	var block := _bridged_blocks(1)[0]
+	var bridge := layout.bridges_of(block.cell)[0]
+	var other_cell := bridge.cell_b if bridge.cell_a == block.cell else bridge.cell_a
+	var plain := nav.route(NavPlace.inside(block.cell, 0, 0), NavPlace.inside(other_cell, 0, 0))
+	nav.bridge_penalties = {WorldOverlays.bridge_key(bridge): 300.0}
+	var careful := nav.route(NavPlace.inside(block.cell, 0, 0), NavPlace.inside(other_cell, 0, 0))
+	nav.bridge_penalties = {}
+	assert_false(careful.is_empty())
+	var sign := 1 if bridge.cell_a == block.cell else -1
+	var floor_here := population.plan_of(block).floor_at(bridge.start.y + 0.5)
+	var entrance := nav.node_of(NavPlace.entrance(block.cell, floor_here, bridge.axis, sign)).w
+	var crosses := careful.passes(block.cell, entrance)
+	if crosses:
+		assert_almost_eq(careful.cost, plain.cost + 300.0, 0.01, "no other way: the penalty is paid")
+	else:
+		assert_lt(careful.cost, plain.cost + 300.0, "a detour avoids the gang's bridge")
+		assert_gt(careful.length, plain.length)

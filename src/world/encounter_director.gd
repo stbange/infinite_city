@@ -9,6 +9,8 @@ signal paid(amount: int)
 enum State { IDLE, OFFER, CHASE }
 
 const FIGURES := 3
+const REPLAN_SECONDS := 0.5
+const CHASE_BUDGET := 6000
 const FRIENDLY_DISCOUNT := 0.7
 const DECK_MARGIN := 0.6
 
@@ -35,6 +37,11 @@ var _figures: Array[PersonAgent] = []
 var _figure_cells: Array[Vector3i] = []
 var _figure_locals: Array[Vector3] = []
 var _registered: bool = false
+## Each chaser's remaining path (points relative to the centre of its path cell).
+var chase_paths: Array[PackedVector3Array] = []
+var _path_cells: Array[Vector3i] = []
+var _replan: float = 0.0
+var _chase_nav: CityNav
 
 
 func _process(delta: float) -> void:
@@ -178,6 +185,7 @@ func run() -> void:
 	_jobs().courier.reputation.add(gang_key, Reputation.RAN)
 	state = State.CHASE
 	chase_time = 0.0
+	_replan = 0.0
 	last_outcome = "Run! %s give chase" % gang_name()
 
 
@@ -185,13 +193,33 @@ func _chase(world: CityWorld, player: Player, delta: float) -> void:
 	chase_time += delta
 	var feet := player.global_position
 	var nearest := INF
+	_replan -= delta
+	if _replan <= 0.0:
+		_replan = REPLAN_SECONDS
+		_plan_chase(world, feet)
 	for i in _figures.size():
 		var base := world.origin.scene_position_of_cell_center(_figure_cells[i])
 		var position := base + _figure_locals[i]
-		var to_player := feet - position
-		var step := minf(EncounterRules.GANG_SPEED * delta, to_player.length())
-		if to_player.length() > 0.001:
-			position += to_player.normalized() * step
+		var budget := EncounterRules.GANG_SPEED * delta
+		# Follow the planned path through corridors and stairs; the last stretch goes straight.
+		var path: PackedVector3Array = chase_paths[i] if i < chase_paths.size() else PackedVector3Array()
+		while budget > 0.0:
+			var aim := feet
+			if not path.is_empty():
+				aim = world.origin.scene_position_of_cell_center(_path_cells[i]) + path[0]
+			var to_aim := aim - position
+			var gap := to_aim.length()
+			if gap <= budget:
+				position = aim
+				budget -= gap
+				if path.is_empty():
+					break
+				path.remove_at(0)
+			else:
+				position += to_aim / gap * budget
+				budget = 0.0
+		if i < chase_paths.size():
+			chase_paths[i] = path
 		_figure_locals[i] = position - base
 		nearest = minf(nearest, position.distance_to(feet))
 	if nearest <= EncounterRules.CATCH_DISTANCE:
@@ -205,6 +233,26 @@ func _chase(world: CityWorld, player: Player, delta: float) -> void:
 	elif nearest >= EncounterRules.ESCAPE_DISTANCE or chase_time >= EncounterRules.CHASE_SECONDS:
 		last_outcome = "You lost %s in the fog" % gang_name()
 		_end()
+
+
+## Plans each chaser's path over the nav graph to the player (spec wayfinding / Chases on the graph).
+func _plan_chase(world: CityWorld, feet: Vector3) -> void:
+	if _chase_nav == null or _chase_nav.population != world.population:
+		_chase_nav = CityNav.new(world.population)
+	var cell := world.origin.absolute_cell_of(feet)
+	var goal := _chase_nav.nearest_node(cell, feet - world.origin.scene_position_of_cell_center(cell))
+	chase_paths.clear()
+	_path_cells.clear()
+	for i in _figures.size():
+		var at := world.origin.scene_position_of_cell_center(_figure_cells[i]) + _figure_locals[i]
+		var from_cell := world.origin.absolute_cell_of(at)
+		var start := _chase_nav.nearest_node(from_cell, at - world.origin.scene_position_of_cell_center(from_cell))
+		var route := _chase_nav.route_between(start, goal, 1, CHASE_BUDGET)
+		var path := PackedVector3Array()
+		if not route.is_empty() and start != goal:
+			path = route.points.slice(1)
+		chase_paths.append(path)
+		_path_cells.append(route.start_cell if not route.is_empty() else from_cell)
 
 
 ## Ends a chase as an escape (a flare, spec traversal-tools).
@@ -234,6 +282,8 @@ func _end() -> void:
 	_figures.clear()
 	_figure_cells.clear()
 	_figure_locals.clear()
+	chase_paths.clear()
+	_path_cells.clear()
 
 
 func _spawn_figures(world: CityWorld, player: Player) -> void:

@@ -1,4 +1,4 @@
-[gd_scene load_steps=32 format=3]
+[gd_scene load_steps=33 format=3]
 
 [ext_resource type="Script" path="res://src/world/game_main.gd" id="1_main"]
 [ext_resource type="Script" path="res://src/world/city_world.gd" id="2_world"]
@@ -28,6 +28,7 @@
 [ext_resource type="Script" path="res://src/world/ambience.gd" id="26_ambience"]
 [ext_resource type="Script" path="res://src/world/session_coach.gd" id="27_coach"]
 [ext_resource type="Script" path="res://src/world/doorstep.gd" id="28_doorstep"]
+[ext_resource type="Script" path="res://src/world/route_hints.gd" id="29_hints"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_sky"]
 shader = ExtResource("5_sky")
@@ -162,6 +163,7 @@ script = ExtResource("22_tools")
 player_path = NodePath("../Player")
 jobs_path = NodePath("../JobManager")
 encounters_path = NodePath("../EncounterDirector")
+hints_path = NodePath("../RouteHints")
 
 [node name="SimulationRunner" type="Node" parent="."]
 script = ExtResource("23_sim")
@@ -199,6 +201,7 @@ shop_path = NodePath("../CourierShop")
 coach_path = NodePath("../SessionCoach")
 doorstep_path = NodePath("../Doorstep")
 people_path = NodePath("../PeopleManager")
+hints_path = NodePath("../RouteHints")
 encounters_path = NodePath("../EncounterDirector")
 hazards_path = NodePath("../HazardDirector")
 
@@ -206,6 +209,13 @@ hazards_path = NodePath("../HazardDirector")
 script = ExtResource("28_doorstep")
 world_path = NodePath("../CityWorld")
 session_path = NodePath("../GameSession")
+
+[node name="RouteHints" type="Node3D" parent="."]
+script = ExtResource("29_hints")
+world_path = NodePath("../CityWorld")
+player_path = NodePath("../Player")
+jobs_path = NodePath("../JobManager")
+encounters_path = NodePath("../EncounterDirector")
 
 [node name="CityFog" type="Node" parent="."]
 script = ExtResource("11_fog")

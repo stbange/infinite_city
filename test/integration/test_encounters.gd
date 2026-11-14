@@ -206,3 +206,28 @@ func test_scanning_for_the_door() -> void:
 	assert_true(t.scan())
 	assert_true(t.beacon_visible())
 	assert_almost_eq(t.beacon_position(), jobs.waypoint()["position"], Vector3.ONE * 0.01)
+
+
+func test_chasers_follow_the_graph() -> void:
+	var bridge := _offer("toll")
+	director.run()
+	# The courier runs into the block at the bridge's start and up a floor.
+	var plan := world.population.plan_of(world.layout.block_at(bridge.cell_a))
+	var unit := plan.units[0]
+	var floor_index := mini(plan.floor_at(bridge.start.y + 0.5) + 1, plan.floors - 1)
+	var local := Vector3(unit.door_x, plan.floor_y(floor_index) + 0.02, unit.front_z() + unit.front_sign * 1.2)
+	var absolute := PackedFloat64Array()
+	for axis in 3:
+		absolute.append((bridge.cell_a[axis] + 0.5) * world.config.cell_size[axis] + local[axis])
+	world.teleport_focus(absolute)
+	director.update(0.05)
+	var routed := 0
+	for path in director.chase_paths:
+		if path.size() > 1:
+			routed += 1
+	assert_eq(routed, EncounterDirector.FIGURES, "every chaser has a path through the block")
+	var before := director.chase_distance()
+	for i in 10:
+		director.update(0.1)
+	if director.state == EncounterDirector.State.CHASE:
+		assert_lt(director.chase_distance(), before, "they close in along the corridors and stairs")

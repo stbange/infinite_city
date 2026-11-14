@@ -7,6 +7,8 @@ extends RefCounted
 var nodes: Array[Vector4i] = []
 var points: PackedVector3Array = PackedVector3Array()
 var length: float = 0.0
+## Search cost (length plus any penalties such as gang bridges).
+var cost: float = 0.0
 var start_cell: Vector3i
 
 

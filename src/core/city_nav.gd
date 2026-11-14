@@ -13,6 +13,9 @@ var _navs: Dictionary = {}   # Vector3i -> BlockNav (or null for open air)
 var _mutex := Mutex.new()
 ## Nodes the last search expanded (for tests and budgets).
 var last_expanded: int = 0
+## Extra cost in metres for crossing a bridge, by "cell|axis" key (spec wayfinding / Gang-aware
+## routes). Both directions of a bridge use the same key.
+var bridge_penalties: Dictionary = {}
 
 
 func _init(p_population: Population) -> void:
@@ -82,6 +85,7 @@ func neighbours(node: Vector4i) -> Array:
 			continue
 		var other_node := Vector4i(other_cell.x, other_cell.y, other_cell.z, other.node(other_floor, other_t))
 		var cost := position_of(node, cell).distance_to(position_of(other_node, cell))
+		cost += float(bridge_penalties.get(WorldOverlays.bridge_key(bridge), 0.0))
 		result.append([other_node, cost])
 	return result
 
@@ -89,16 +93,38 @@ func neighbours(node: Vector4i) -> Array:
 ## Shortest route between two places, or an empty route when none is found within the box and
 ## the node budget.
 func route(from: NavPlace, to: NavPlace, max_cells: int = MAX_CELLS, budget: int = NODE_BUDGET) -> NavRoute:
+	return route_between(node_of(from), node_of(to), max_cells, budget)
+
+
+## The nav node nearest a point (relative to the centre of `cell`) on the floor it stands on, in
+## the block of that cell; Vector4i with w = -1 when the cell has no block.
+func nearest_node(cell: Vector3i, local: Vector3) -> Vector4i:
+	var nav := block_nav(cell)
+	if nav == null:
+		return Vector4i(cell.x, cell.y, cell.z, -1)
+	var floor_index := nav.plan.floor_at(local.y + 0.5)
+	var best := -1
+	var best_d := INF
+	for t in nav.size:
+		var d := nav.points[t].distance_squared_to(Vector2(local.x, local.z))
+		if d < best_d:
+			best_d = d
+			best = t
+	return Vector4i(cell.x, cell.y, cell.z, nav.node(floor_index, best))
+
+
+## Shortest route between two global nodes (see route()).
+func route_between(start: Vector4i, goal: Vector4i, max_cells: int = MAX_CELLS, budget: int = NODE_BUDGET) -> NavRoute:
 	var result := NavRoute.new()
-	result.start_cell = from.cell
+	result.start_cell = Vector3i(start.x, start.y, start.z)
 	last_expanded = 0
-	var start := node_of(from)
-	var goal := node_of(to)
 	if start.w < 0 or goal.w < 0:
 		return result
-	var lo := Vector3i(mini(from.cell.x, to.cell.x), mini(from.cell.y, to.cell.y), mini(from.cell.z, to.cell.z)) - Vector3i.ONE * max_cells
-	var hi := Vector3i(maxi(from.cell.x, to.cell.x), maxi(from.cell.y, to.cell.y), maxi(from.cell.z, to.cell.z)) + Vector3i.ONE * max_cells
-	var origin := from.cell
+	var from_cell := Vector3i(start.x, start.y, start.z)
+	var to_cell := Vector3i(goal.x, goal.y, goal.z)
+	var lo := Vector3i(mini(from_cell.x, to_cell.x), mini(from_cell.y, to_cell.y), mini(from_cell.z, to_cell.z)) - Vector3i.ONE * max_cells
+	var hi := Vector3i(maxi(from_cell.x, to_cell.x), maxi(from_cell.y, to_cell.y), maxi(from_cell.z, to_cell.z)) + Vector3i.ONE * max_cells
+	var origin := from_cell
 	var goal_pos := position_of(goal, origin)
 	var dist := {start: 0.0}
 	var came := {}
@@ -135,8 +161,24 @@ func route(from: NavPlace, to: NavPlace, max_cells: int = MAX_CELLS, budget: int
 	result.nodes.reverse()
 	for n in result.nodes:
 		result.points.append(position_of(n, origin))
-	result.length = dist[goal]
+	result.cost = dist[goal]
+	result.length = _walking_length(result)
 	return result
+
+
+## Walking metres of a route: point distances, with stairs counted at their flight length.
+func _walking_length(r: NavRoute) -> float:
+	var total := 0.0
+	for i in range(1, r.nodes.size()):
+		var a := r.nodes[i - 1]
+		var b := r.nodes[i]
+		var same_cell := a.x == b.x and a.y == b.y and a.z == b.z
+		var nav := block_nav(Vector3i(a.x, a.y, a.z))
+		if same_cell and nav.floor_of(a.w) != nav.floor_of(b.w):
+			total += BlockNav.STAIR_COST
+		else:
+			total += r.points[i - 1].distance_to(r.points[i])
+	return total
 
 
 ## Binary min-heap of (priority, Vector4i).
