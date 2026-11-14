@@ -84,7 +84,10 @@ func set_activity(kind: String) -> void:
 	if kind == activity:
 		return
 	activity = kind
-	_body.material_override = _material(COLORS.get(kind, COLORS["walking"]))
+	var color: Color = COLORS.get(kind, COLORS["walking"])
+	# Gang members and wardens stay recognisable; everyone else wears muted cloth (spec art-style).
+	var keep := 0.6 if kind == "gang" or kind == "warden" else ArtStyle.FIGURE_SATURATION
+	_body.material_override = _material(ArtStyle.mute(color, keep))
 
 
 static func _material(color: Color) -> StandardMaterial3D:

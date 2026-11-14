@@ -22,12 +22,14 @@ const COOL_WHITE := Color(0.8, 0.86, 0.95)
 const LAMPS: Array[Color] = [SODIUM, SODIUM, COOL_WHITE]
 const CORRIDOR_LIGHTS: Array[Color] = [Color(0.95, 0.88, 0.76), Color(0.8, 0.85, 0.92), Color(1.0, 0.78, 0.55)]
 ## Fog: blue-grey, dark below the fogline.
-const FOG_ABOVE := Color(0.14, 0.145, 0.16)
-const FOG_BELOW := Color(0.075, 0.078, 0.088)
-const FOG_DEEP := Color(0.03, 0.031, 0.036)
+const FOG_ABOVE := Color(0.16, 0.165, 0.18)
+const FOG_BELOW := Color(0.115, 0.12, 0.135)
+const FOG_DEEP := Color(0.055, 0.058, 0.066)
 const SUN_HAZE := Color(0.27, 0.26, 0.245)
 ## How much saturation signs, faction colours and furniture keep (0 grey … 1 unchanged).
 const ACCENT_SATURATION := 0.35
+## Figures: activity colours as muted cloth tones.
+const FIGURE_SATURATION := 0.3
 ## Global grade applied by the environment.
 const GRADE_SATURATION := 0.6
 const GRADE_CONTRAST := 1.12

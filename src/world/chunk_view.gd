@@ -269,8 +269,10 @@ func set_block_hidden(cell: Vector3i, hidden: bool) -> void:
 	if hidden:
 		xf = Transform3D(Basis.from_scale(Vector3.ZERO), xf.origin)
 	_blocks_mmi.multimesh.set_instance_transform(index, xf)
-	for shape: CollisionShape3D in _block_shapes.get(cell, []):
-		shape.disabled = hidden
+	for shape: Variant in _block_shapes.get(cell, []):
+		# Collision shapes may already be freed when the chunk is unloading.
+		if is_instance_valid(shape):
+			(shape as CollisionShape3D).disabled = hidden
 
 
 func is_block_hidden(cell: Vector3i) -> bool:
