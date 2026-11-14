@@ -15,8 +15,13 @@ jobs, routines and relationships, and a plot cast from the people and factions a
 You begin with noodle deliveries to real doors and end holding a key every power in the district
 wants.
 
-| On a bridge in the fog, 21 layers down | Inside: the corridor behind the entrance |
+| **The current look: a city in space above the fog** | **A corridor under a sodium lamp** |
 |---|---|
+| ![Roof](docs/images/style-roof.jpg) | ![Corridor](docs/images/style-corridor.jpg) |
+| **A flat at night, figures in muted cloth** | **A gang on its bridge** |
+| ![Flat](docs/images/style-flat.jpg) | ![Toll](docs/images/style-toll.jpg) |
+| *The images below show the earlier neon style.* | |
+| On a bridge in the fog, 21 layers down | Inside: the corridor behind the entrance |
 | ![Entrance](docs/images/interior-entrance.jpg) | ![Corridor](docs/images/interior-corridor.jpg) |
 | **The stair core** | **A flat's living room** |
 | ![Stairs](docs/images/interior-stairs.jpg) | ![Flat](docs/images/interior-flat.jpg) |
@@ -224,6 +229,7 @@ Git history follows this rhythm (*Propose → Implement → Archive*) for each c
 | M16 `add-transit-hubs`, `add-lifts-and-spans` | `transit` |
 | M17 `add-plot-templates-2`, `add-side-arcs` | `story-director` |
 | M18 `add-export-builds`, `add-accessibility`, `add-music-and-sound`, `add-save-slots` | `release-candidate` |
+| `rework-art-style` | `art-style` |
 
 ```bash
 scripts/install-godot.sh              # once: Godot 4.7.2 into .tools/godot/
