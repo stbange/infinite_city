@@ -12,8 +12,10 @@ static var REQUIREMENTS: Dictionary:
 		}
 
 
+## Highest cargo tier: bronze 1, silver 2, gold 3 and escorts (tier 4).
 static func max_tier(level: String) -> int:
-	return LEVELS.find(level) + 1
+	var i := LEVELS.find(level)
+	return 4 if i == LEVELS.size() - 1 else i + 1
 
 
 static func next_level(level: String) -> String:

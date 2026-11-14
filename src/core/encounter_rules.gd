@@ -4,6 +4,7 @@ extends RefCounted
 
 const SALT_ENCOUNTER := 171
 const SALT_TALK := 172
+const SALT_CHECKPOINT := 173
 static var TOLL_CHANCE: float:
 	get:
 		return Economy.num("encounters", "toll_chance")
@@ -63,3 +64,25 @@ static func talk_succeeds(seed_value: int, bridge: BridgeInfo, hour: int, heat: 
 	var c := bridge.cell_a
 	var u := DetHash.u01(DetHash.hash4(seed_value, SALT_TALK, c.x, c.y, c.z, bridge.axis * 1000003 + hour))
 	return u < TALK_CHANCE - HEAT_TALK * minf(heat, 1.0)
+
+
+## Whether the Authority runs a checkpoint on a bridge: some bridges of the top layers below the
+## roof (spec checkpoints).
+static func is_checkpoint(seed_value: int, bridge: BridgeInfo, roof_layer: int) -> bool:
+	var depth := roof_layer - bridge.cell_a.y
+	if depth < 0 or depth >= Economy.whole("checkpoints", "layers"):
+		return false
+	var c := bridge.cell_a
+	return DetHash.u01(DetHash.hash4(seed_value, SALT_CHECKPOINT, c.x, c.y, c.z, bridge.axis)) < Economy.num("checkpoints", "share")
+
+
+## What a checkpoint wants from a courier: {kind: "pass" | "permit" | "contraband", price}.
+static func checkpoint(carried: Array[DeliveryJob], light_rights: bool) -> Dictionary:
+	if carried.is_empty():
+		return {"kind": "pass", "price": 0}
+	for job in carried:
+		if CargoKind.is_contraband(job.cargo_kind):
+			return {"kind": "contraband", "price": roundi(toll(carried.size(), 0.0) * Economy.num("checkpoints", "bribe_factor"))}
+	if light_rights:
+		return {"kind": "pass", "price": 0}
+	return {"kind": "permit", "price": Economy.whole("checkpoints", "permit")}

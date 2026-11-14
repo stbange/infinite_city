@@ -50,7 +50,7 @@ func _claimed_bridge(wanted: String) -> Array:
 	for x in range(-10, 11):
 		for z in range(-10, 11):
 			for bridge in world.layout.bridges_of(spawn.cell + Vector3i(x, 0, z)):
-				if turf.claim_of(bridge).is_empty():
+				if turf.claim_of(bridge).is_empty() or EncounterRules.is_checkpoint(world.config.world_seed, bridge, world.config.roof_layer):
 					continue
 				for h in 48:
 					if EncounterRules.roll(world.config.world_seed, bridge, first_hour + h, 1, 0.0) == wanted:
@@ -231,3 +231,90 @@ func test_chasers_follow_the_graph() -> void:
 		director.update(0.1)
 	if director.state == EncounterDirector.State.CHASE:
 		assert_lt(director.chase_distance(), before, "they close in along the corridors and stairs")
+
+
+func _checkpoint_bridge() -> BridgeInfo:
+	var spawn := SpawnFinder.find_on_foot(world.layout)
+	for x in range(-12, 13):
+		for z in range(-12, 13):
+			for dy: int in [0, -1]:
+				var cell := Vector3i(spawn.cell.x + x, world.config.roof_layer + dy, spawn.cell.z + z)
+				for bridge in world.layout.bridges_of(cell):
+					if EncounterRules.is_checkpoint(world.config.world_seed, bridge, world.config.roof_layer):
+						return bridge
+	return null
+
+
+func test_contraband_at_a_checkpoint() -> void:
+	var bridge := _checkpoint_bridge()
+	assert_not_null(bridge)
+	_carry_one()
+	var smuggled := DeliveryJob.new()
+	smuggled.id = "crate"
+	smuggled.cargo_kind = "contraband"
+	jobs.carried.append(smuggled)
+	_stand_on(bridge, 0.4)
+	director.update(0.016)
+	assert_eq(director.state, EncounterDirector.State.OFFER)
+	assert_eq(director.kind, "contraband")
+	assert_eq(director.gang_key, EncounterDirector.authority_key(world))
+	assert_string_contains(director.hud_line(), "hand it over")
+	director.run()
+	assert_eq(director.state, EncounterDirector.State.IDLE, "no chase: they take it")
+	assert_eq(jobs.carried.size(), 1)
+	assert_eq(jobs.carried[0].cargo_kind, "food")
+
+
+func test_permits_and_light_rights() -> void:
+	var bridge := _checkpoint_bridge()
+	_carry_one()
+	jobs.courier.light_rights = true
+	_stand_on(bridge, 0.4)
+	director.update(0.016)
+	assert_eq(director.state, EncounterDirector.State.IDLE, "light rights pass")
+	session.clock.add_minutes(60)
+	jobs.courier.light_rights = false
+	director.update(0.016)
+	assert_eq(director.kind, "permit")
+	jobs.courier.wallet.credits = 100
+	director.pay()
+	assert_eq(jobs.courier.wallet.credits, 100 - Economy.whole("checkpoints", "permit"))
+
+
+func test_an_escort_must_keep_up() -> void:
+	var escort := Escort.new()
+	escort.name = "Escort"
+	escort.auto_update = false
+	world.add_child(escort)
+	escort.world_path = NodePath("..")
+	escort.player_path = NodePath("../Player")
+	escort.jobs_path = NodePath("../JobManager")
+	escort.encounters_path = NodePath("../EncounterDirector")
+	jobs.escort_path = NodePath("../Escort")
+	var bridge := _claimed_bridge("toll")[0] as BridgeInfo
+	var job := DeliveryJob.new()
+	job.id = "witness"
+	job.cargo_kind = "person"
+	job.cargo = "a witness"
+	var plan := world.population.plan_of(world.layout.block_at(bridge.cell_a))
+	job.dropoff_cell = bridge.cell_a
+	job.dropoff_floor = plan.floor_at(bridge.start.y + 0.5)
+	job.dropoff_unit = 0
+	job.customer = PersonId.of(world.layout, bridge.cell_a, job.dropoff_floor, 0, 0)
+	job.pickup = job.customer
+	jobs.carried.append(job)
+	_stand_on(bridge, 0.5)
+	escort.update(0.016)
+	assert_not_null(escort.figure)
+	# The courier dashes to the door while the escort is far behind.
+	var door := DoorPlaces.scene_position(world, job.dropoff_cell, job.dropoff_floor, 0)
+	escort.figure.global_position = door + Vector3(40, 0, 0)
+	assert_false(escort.is_with(door))
+	jobs._on_interacted({"kind": "door", "payload": {"cell": job.dropoff_cell, "floor": job.dropoff_floor, "unit": 0}})
+	assert_eq(jobs.carried.size(), 1, "no delivery without the passenger")
+	assert_string_contains(jobs.last_message, "passenger")
+	# Waiting at the start, the escort walks up.
+	var before := escort.figure.global_position.distance_to(player.global_position)
+	for i in 30:
+		escort.update(0.1)
+	assert_lt(escort.figure.global_position.distance_to(player.global_position), maxf(before, Escort.KEEP_DISTANCE + 0.5))

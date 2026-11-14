@@ -21,6 +21,7 @@ varying flat vec3 v_max;
 varying flat vec4 v_tint;
 varying flat float v_seed;
 varying flat float v_ruin;
+varying flat float v_dark;
 
 float hash21(vec2 p) {
 	p = fract(p * vec2(123.34, 456.21));
@@ -40,6 +41,7 @@ void vertex() {
 	v_tint = COLOR;
 	v_seed = INSTANCE_CUSTOM.x;
 	v_ruin = INSTANCE_CUSTOM.z;
+	v_dark = INSTANCE_CUSTOM.w;
 }
 
 void fragment() {
@@ -58,7 +60,7 @@ void fragment() {
 	float window = step(0.3, f.x) * step(f.x, 0.7) * step(0.3, f.y) * step(f.y, 0.72) * side;
 	float face_id = round(v_normal.x) * 13.0 + round(v_normal.z) * 29.0;
 	float face_seed = floor(v_seed * 997.0) + face_id;
-	float share = mix(lit_share, 0.03, step(0.5, v_ruin));
+	float share = mix(lit_share, 0.03, step(0.5, v_ruin)) * (1.0 - step(0.5, v_dark));
 	float lit = step(1.0 - share, hash21(id + face_seed));
 	float hue = hash21(id * 1.7 + face_seed + 5.0);
 	vec3 glow = hue < 0.62 ? vec3(1.0, 0.62, 0.3) : (hue < 0.82 ? vec3(0.4, 0.72, 1.0) : (hue < 0.93 ? vec3(1.0, 0.28, 0.7) : vec3(0.3, 1.0, 0.8)));

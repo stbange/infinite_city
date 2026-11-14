@@ -2,7 +2,8 @@
  "orders": {
   "per_hour": 3,
   "radius": 2,
-  "higher_tier_share": 0.35
+  "higher_tier_share": 0.35,
+  "rival_share": 0.5
  },
  "pay": {
   "base": 8.0,
@@ -40,7 +41,8 @@
   "drift": 0.1,
   "price_min": 0.8,
   "price_max": 1.5,
-  "shortage_price": 3.0
+  "shortage_price": 3.0,
+  "blackout_chance": 0.08
  },
  "shop": {
   "scanner": 120,
@@ -52,6 +54,18 @@
   "silver_fee": 400,
   "silver_mutual": 30,
   "gold_fee": 1000,
-  "gold_mutual": 80
+  "gold_mutual": 80,
+  "light_rights_fee": 800
+ },
+ "checkpoints": {
+  "share": 0.25,
+  "layers": 2,
+  "permit": 15,
+  "bribe_factor": 3.0,
+  "confiscation_heat": 0.6
+ },
+ "escorts": {
+  "speed": 3.6,
+  "with_you": 6.0
  }
 }

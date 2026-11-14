@@ -21,6 +21,8 @@ extends CanvasLayer
 @export var doorstep_path: NodePath
 @export var people_path: NodePath
 @export var hints_path: NodePath
+@export var lamp_path: NodePath
+@export var simulation_path: NodePath
 
 const _REFRESH_SECONDS := 0.1
 
@@ -235,6 +237,9 @@ func refresh() -> void:
 			var factor := jobs_node.overlays.price_factor(district)
 			if absf(factor - 1.0) >= 0.05:
 				lines += "\nFood prices ×%.1f" % factor
+		var sim := get_node_or_null(simulation_path) as SimulationRunner if not simulation_path.is_empty() else null
+		if sim != null and sim.is_dark_at(world, world.origin.absolute_cell_of(camera.global_position)):
+			lines += "\nBlackout: the district's lights are out"
 		if _debug.visible:
 			_debug.text = _timeline(world.chronicle, reach)
 	var pockets := get_node_or_null(pocket_manager_path) as PocketManager \
@@ -260,6 +265,12 @@ func refresh() -> void:
 ## Wallet, waypoint, gangs, story, guide and stats (spec hud-panels / Panels).
 func _courier_panel(world: CityWorld, camera: Player, session: GameSession) -> String:
 	var text := _courier_lines(camera, session) + _encounter_lines(world, camera)
+	var lamp := get_node_or_null(lamp_path) as CourierLamp if not lamp_path.is_empty() else null
+	if lamp != null:
+		text += "\nLamp %s · battery %d%%" % ["on" if lamp.on else "off", roundi(lamp.battery * 100.0)]
+	var jobs := get_node_or_null(jobs_path) as JobManager if not jobs_path.is_empty() else null
+	if jobs != null and jobs.rivals_this_hour > 0:
+		text += "\nRival couriers took %d order%s this hour" % [jobs.rivals_this_hour, "" if jobs.rivals_this_hour == 1 else "s"]
 	var story := get_node_or_null(story_path) as StoryRunner if not story_path.is_empty() else null
 	if story != null and not story.objective_text().is_empty():
 		text += "\nStory · Act %d: %s" % [story.state.act, story.objective_text()]
@@ -274,7 +285,7 @@ func _courier_panel(world: CityWorld, camera: Player, session: GameSession) -> S
 func _message_panel() -> PackedStringArray:
 	var now := Time.get_ticks_msec() / 1000.0
 	var sources := {"session": session_path, "tools": tools_path, "shop": shop_path, "hazards": hazards_path,
-		"doorstep": doorstep_path, "people": people_path, "hints": hints_path}
+		"doorstep": doorstep_path, "people": people_path, "hints": hints_path, "lamp": lamp_path, "jobs": jobs_path}
 	for source: String in sources:
 		var path: NodePath = sources[source]
 		var node := get_node_or_null(path) if not path.is_empty() else null
@@ -366,7 +377,7 @@ func _build_legend() -> void:
 func _build_controls() -> void:
 	var hint := Label.new()
 	hint.name = "Controls"
-	hint.text = "Click: look   WASD: move   E: interact   Space: jump / up / glide   Shift: sprint / boost   F: walk ⇄ fly   Q/Ctrl: down (fly)   Wheel: fly speed   Esc: release mouse\nU: shop   M: address book   H: route hints   J: avoid gangs   R: scan   G: grapple   X: flare   1–3: choose   F4: stats   F5/F9: save/load   Esc: menu"
+	hint.text = "Click: look   WASD: move   E: interact   Space: jump / up / glide   Shift: sprint / boost   F: walk ⇄ fly   Q/Ctrl: down (fly)   Wheel: fly speed   Esc: release mouse\nU: shop   M: address book   H: route hints   J: avoid gangs   L: lamp   R: scan   G: grapple   X: flare   1–3: choose   F4: stats   F5/F9: save/load   Esc: menu"
 	hint.add_theme_font_size_override("font_size", 13)
 	hint.add_theme_color_override("font_outline_color", Color.BLACK)
 	hint.add_theme_constant_override("outline_size", 4)

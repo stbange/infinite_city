@@ -4,6 +4,7 @@ extends RefCounted
 
 const SALT_ORDERS := 151
 const SALT_CARGO := 152
+const SALT_RIVAL := 153
 ## Share of orders that become higher-tier cargo when the licence allows it.
 static var HIGHER_TIER_SHARE: float:
 	get:
@@ -106,6 +107,16 @@ static func _cargo(patron: WorkplaceInfo, rng: CellRandom) -> String:
 
 
 ## Pay when delivered at `minute`: the base plus a tip that falls to zero over 30 game minutes.
+## Minute of the hour at which a rival courier takes an order from the counter, or -1 if none does
+## (spec rival-couriers).
+func rival_minute(patron: WorkplaceInfo, day: int, hour: int, index: int) -> int:
+	var h := DetHash.hash4(population.world_seed(), SALT_RIVAL, patron.id.district.x * 7919 + patron.id.district.z,
+			patron.id.local, day * 24 + hour, index)
+	if DetHash.u01(h) >= Economy.num("orders", "rival_share"):
+		return -1
+	return 10 + (h >> 12) % 50
+
+
 static func pay_for(job: DeliveryJob, minute: int, tip_factor: float = 1.0) -> int:
 	var elapsed := float(minute - job.picked_minute)
 	var heat := clampf(1.0 - elapsed / COOLING_MINUTES, 0.0, 1.0)

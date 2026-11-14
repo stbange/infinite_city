@@ -34,7 +34,7 @@ const TABLES := {
 	"plot_plague": PLOT_SCHEMA,
 	"lines": {"doorstep": {"home": "array", "asleep": "array", "household": "array", "left": "array"}},
 	"economy": {
-		"orders": {"per_hour": "number", "radius": "number", "higher_tier_share": "number"},
+		"orders": {"per_hour": "number", "radius": "number", "higher_tier_share": "number", "rival_share": "number"},
 		"pay": {"base": "number", "per_metre": "number", "per_floor": "number", "tip": "number", "cooling_minutes": "number"},
 		"rent": {"amount": "number", "minute": "number", "start_credits": "number"},
 		"encounters": {"toll_chance": "number", "shakedown_chance": "number", "heat_shakedown": "number",
@@ -43,9 +43,13 @@ const TABLES := {
 			"run_heat": "number", "short_heat": "number"},
 		"hazards": {"rescue_fee": "number"},
 		"shop": {"scanner": "number", "flare": "number", "glider": "number", "grapple": "number"},
-		"licences": {"silver_fee": "number", "silver_mutual": "number", "gold_fee": "number", "gold_mutual": "number"},
+		"licences": {"silver_fee": "number", "silver_mutual": "number", "gold_fee": "number", "gold_mutual": "number",
+			"light_rights_fee": "number"},
+		"checkpoints": {"share": "number", "layers": "number", "permit": "number", "bribe_factor": "number",
+			"confiscation_heat": "number"},
+		"escorts": {"speed": "number", "with_you": "number"},
 		"live": {"takeover_chance": "number", "life_chance": "number", "drift": "number", "price_min": "number",
-			"price_max": "number", "shortage_price": "number"},
+			"price_max": "number", "shortage_price": "number", "blackout_chance": "number"},
 	},
 }
 

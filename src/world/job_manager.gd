@@ -14,6 +14,8 @@ signal delivered(job: DeliveryJob)
 @export var interaction_path: NodePath
 ## Optional: who answers the door decides the tip (spec doorsteps).
 @export var doorstep_path: NodePath
+## Optional: an escort job only counts with the escort at the door (spec escorts).
+@export var escort_path: NodePath
 
 ## Wallet, standing, licence and tools (spec courier-state).
 var courier := CourierState.new()
@@ -21,6 +23,10 @@ var courier := CourierState.new()
 var overlays: WorldOverlays
 var carried: Array[DeliveryJob] = []
 var completed: int = 0
+## Orders rival couriers took from the counter this hour (spec rival-couriers).
+var rivals_this_hour: int = 0
+## Why the last door interaction did nothing, for the HUD.
+var last_message: String = ""
 var patron: WorkplaceInfo
 var home := {}
 var board: CourierBoard
@@ -95,14 +101,22 @@ func open_orders() -> Array[DeliveryJob]:
 	var session := _session()
 	if patron == null or board == null or session == null:
 		return result
-	for job in board.offers(patron, session.clock.day_number(), session.clock.hour(), Licence.max_tier(courier.licence)):
+	var offers := board.offers(patron, session.clock.day_number(), session.clock.hour(), Licence.max_tier(courier.licence))
+	var rivals := 0
+	for i in offers.size():
+		var job := offers[i]
 		if _taken.has(job.id):
+			continue
+		var rival := board.rival_minute(patron, session.clock.day_number(), session.clock.hour(), i)
+		if rival >= 0 and session.clock.minute() >= rival:
+			rivals += 1
 			continue
 		if overlays != null:
 			if overlays.is_dead(job.customer.key()) or overlays.has_moved(job.customer.key()):
 				continue
 			job.base_pay = roundi(job.base_pay * overlays.price_factor(_world().layout.district_of(job.dropoff_cell)))
 		result.append(job)
+	rivals_this_hour = rivals
 	return result
 
 
@@ -148,6 +162,11 @@ func _on_interacted(target: Dictionary) -> void:
 		carried.append(job)
 		return
 	var done := _job_at(payload)
+	var escort := get_node_or_null(escort_path) as Escort if not escort_path.is_empty() else null
+	if done != null and done.cargo_kind == "person" and escort != null \
+			and not escort.is_with(DoorPlaces.scene_position(_world(), done.dropoff_cell, done.dropoff_floor, done.dropoff_unit)):
+		last_message = "Your passenger is not with you"
+		return
 	if done != null:
 		var doorstep := get_node_or_null(doorstep_path) as Doorstep if not doorstep_path.is_empty() else null
 		var tip := float(doorstep.answer(done)["tip"]) if doorstep != null else 1.0

@@ -120,7 +120,13 @@ func _check_bridge(world: CityWorld, session: GameSession, player: Player) -> vo
 		return
 	var claim := turf.claim_of(b)
 	var hour := _hour(session)
-	if claim.is_empty() or _resolved.has(_resolved_key(b, hour)):
+	if _resolved.has(_resolved_key(b, hour)):
+		return
+	if EncounterRules.is_checkpoint(world.config.world_seed, b, world.config.roof_layer):
+		_resolved[_resolved_key(b, hour)] = true
+		_checkpoint(world, player, b)
+		return
+	if claim.is_empty():
 		return
 	_resolved[_resolved_key(b, hour)] = true
 	var minute := session.clock.total_minutes
@@ -138,6 +144,29 @@ func _check_bridge(world: CityWorld, session: GameSession, player: Player) -> vo
 		price = roundi(price * FRIENDLY_DISCOUNT)
 	state = State.OFFER
 	_spawn_figures(world, player)
+
+
+## The Authority's checkpoint on a bridge (spec checkpoints).
+func _checkpoint(world: CityWorld, player: Player, b: BridgeInfo) -> void:
+	var jobs := _jobs()
+	var check := EncounterRules.checkpoint(jobs.carried, jobs.courier.light_rights)
+	if check["kind"] == "pass":
+		return
+	bridge = b
+	gang_key = authority_key(world)
+	kind = check["kind"]
+	price = check["price"]
+	talked = false
+	state = State.OFFER
+	_spawn_figures(world, player, "warden")
+
+
+## Key of the city's authority (the power that runs the checkpoints).
+static func authority_key(world: CityWorld) -> String:
+	for f in world.chronicle.history.powers:
+		if f.type == "authority":
+			return f.key
+	return "G0"
 
 
 func gang_name() -> String:
@@ -181,12 +210,29 @@ func talk() -> void:
 func run() -> void:
 	if state != State.OFFER:
 		return
+	if kind == "contraband":
+		_confiscate()
+		return
 	heat.add(gang_key, EncounterRules.RUN_HEAT, _session().clock.total_minutes)
 	_jobs().courier.reputation.add(gang_key, Reputation.RAN)
 	state = State.CHASE
 	chase_time = 0.0
 	_replan = 0.0
 	last_outcome = "Run! %s give chase" % gang_name()
+
+
+## Refusing a bribe at a checkpoint: the contraband is taken, nobody chases.
+func _confiscate() -> void:
+	var jobs := _jobs()
+	var taken := 0
+	for job: DeliveryJob in jobs.carried.duplicate():
+		if CargoKind.is_contraband(job.cargo_kind):
+			jobs.carried.erase(job)
+			taken += 1
+	heat.add(gang_key, Economy.num("checkpoints", "confiscation_heat"), _session().clock.total_minutes)
+	jobs.courier.reputation.add(gang_key, Reputation.CAUGHT)
+	last_outcome = "%s confiscate %d package%s" % [gang_name(), taken, "" if taken == 1 else "s"]
+	_end()
 
 
 func _chase(world: CityWorld, player: Player, delta: float) -> void:
@@ -286,7 +332,7 @@ func _end() -> void:
 	_path_cells.clear()
 
 
-func _spawn_figures(world: CityWorld, player: Player) -> void:
+func _spawn_figures(world: CityWorld, player: Player, activity: String = "gang") -> void:
 	var base := world.origin.scene_position_of_cell_center(bridge.cell_a)
 	var local := player.global_position - base
 	var mid := (bridge.start + bridge.end) * 0.5
@@ -296,7 +342,7 @@ func _spawn_figures(world: CityWorld, player: Player) -> void:
 	var lateral := Vector3(0, 0, 1) if bridge.axis == Vector3.AXIS_X else Vector3(1, 0, 0)
 	for i in FIGURES:
 		var agent := PersonAgent.new()
-		agent.set_activity("gang")
+		agent.set_activity(activity)
 		agent.person_key = gang_key
 		agent.label = gang_name()
 		add_child(agent)
@@ -313,8 +359,13 @@ func _place_figures(world: CityWorld) -> void:
 func hud_line() -> String:
 	match state:
 		State.OFFER:
-			var what := "toll" if kind == "toll" else "shakedown"
 			var talk_text := "" if talked else " · 2 talk"
+			match kind:
+				"permit":
+					return "%s checkpoint: courier permit ¤%d — 1 pay%s · 3 run" % [gang_name(), price, talk_text]
+				"contraband":
+					return "%s found something in your bag: ¤%d to look away — 1 pay%s · 3 hand it over" % [gang_name(), price, talk_text]
+			var what := "toll" if kind == "toll" else "shakedown"
 			return "%s block the bridge: %s ¤%d — 1 pay%s · 3 run" % [gang_name(), what, price, talk_text]
 		State.CHASE:
 			return "Chased by %s · %d m" % [gang_name(), roundi(chase_distance())]

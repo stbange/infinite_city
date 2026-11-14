@@ -397,7 +397,23 @@ func block_color(index: int) -> Color:
 	return Color(_block_buffer[at], _block_buffer[at + 1], _block_buffer[at + 2], _block_buffer[at + 3])
 
 
-## Instance custom data of a block: (window seed, kind / 16, ruin flag, 0).
+## Switches the windows of the blocks in some districts off (a blackout, spec blackouts) or on.
+## `dark` holds district keys (WorldOverlays.district_key); returns how many blocks changed.
+func set_blackout(layout: CityLayout, dark: Dictionary) -> int:
+	if _blocks_mmi == null or _data == null:
+		return 0
+	var changed := 0
+	for i in _data.blocks.size():
+		var flag := 1.0 if dark.has(WorldOverlays.district_key(layout.district_of(_data.blocks[i].cell))) else 0.0
+		var at := i * BLOCK_STRIDE + 19
+		if _block_buffer[at] != flag:
+			_block_buffer[at] = flag
+			_blocks_mmi.multimesh.set_instance_custom_data(i, block_custom(i))
+			changed += 1
+	return changed
+
+
+## Instance custom data of a block: (window seed, kind / 16, ruin flag, blackout flag).
 func block_custom(index: int) -> Color:
 	var at := index * BLOCK_STRIDE + 16
 	return Color(_block_buffer[at], _block_buffer[at + 1], _block_buffer[at + 2], _block_buffer[at + 3])

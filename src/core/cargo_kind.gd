@@ -9,6 +9,7 @@ const TABLE := {
 	"medicine": {"tier": 2, "pay": 1.8, "heat": 0.1, "labels": ["insulin packs", "a cooler of antibiotics", "blight tonic"]},
 	"contraband": {"tier": 3, "pay": 2.6, "heat": 0.5, "labels": ["unmarked crates", "untaxed seed", "a bag that clinks"]},
 	"data": {"tier": 3, "pay": 2.3, "heat": 0.3, "labels": ["a shielded drive", "council ledgers", "a sealed memory card"]},
+	"person": {"tier": 4, "pay": 3.2, "heat": 0.2, "labels": ["a witness who must not be seen", "a runaway apprentice", "a council candidate"]},
 }
 
 
@@ -27,7 +28,7 @@ static func heat(kind: String) -> float:
 ## Kinds of exactly a tier, in a fixed order.
 static func kinds_of_tier(t: int) -> Array[String]:
 	var result: Array[String] = []
-	for kind: String in ["food", "parcel", "medicine", "contraband", "data"]:
+	for kind: String in ["food", "parcel", "medicine", "contraband", "data", "person"]:
 		if tier(kind) == t:
 			result.append(kind)
 	return result
@@ -39,3 +40,8 @@ static func total_heat(jobs: Array[DeliveryJob]) -> float:
 	for job in jobs:
 		total += heat(job.cargo_kind)
 	return total
+
+
+## Kinds a checkpoint scan finds (spec checkpoints).
+static func is_contraband(kind: String) -> bool:
+	return kind == "contraband" or kind == "data"

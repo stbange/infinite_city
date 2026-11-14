@@ -8,6 +8,8 @@ var reputation := Reputation.new()
 var licence: String = "bronze"
 ## Tool -> count (1 for tools that are kept, any number for consumables).
 var tools: Dictionary = {}
+## Light rights: free passage at the Authority's checkpoints and the roof (spec checkpoints).
+var light_rights: bool = false
 
 
 ## Buys a tool from the shop; false when refused.
@@ -28,6 +30,16 @@ func upgrade_licence() -> bool:
 	return true
 
 
+## Buys light rights (silver licence or better); false when refused.
+func buy_light_rights() -> bool:
+	var fee := Economy.whole("licences", "light_rights_fee")
+	if light_rights or Licence.LEVELS.find(licence) < 1 or wallet.credits < fee:
+		return false
+	wallet.credits -= fee
+	light_rights = true
+	return true
+
+
 func has_tool(tool: String) -> bool:
 	return int(tools.get(tool, 0)) > 0
 
@@ -43,7 +55,7 @@ func use_tool(tool: String) -> bool:
 
 
 func to_dict() -> Dictionary:
-	return {"wallet": wallet.to_dict(), "reputation": reputation.to_dict(), "licence": licence, "tools": tools.duplicate()}
+	return {"wallet": wallet.to_dict(), "reputation": reputation.to_dict(), "licence": licence, "tools": tools.duplicate(), "light_rights": light_rights}
 
 
 ## Also reads the version 2 layout, where these fields sat in the courier part.
@@ -51,6 +63,7 @@ func from_dict(data: Dictionary) -> void:
 	wallet.from_dict(data.get("wallet", {}))
 	reputation.from_dict(data.get("reputation", {}))
 	licence = str(data.get("licence", "bronze"))
+	light_rights = bool(data.get("light_rights", false))
 	tools.clear()
 	var owned: Dictionary = data.get("tools", {})
 	for tool: String in owned:

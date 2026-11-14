@@ -21,7 +21,7 @@ func test_upgrading_the_licence() -> void:
 	assert_eq(Licence.next_level("bronze"), "silver")
 	assert_false(Licence.can_upgrade("silver", rep, 100000))
 	assert_eq(Licence.max_tier("bronze"), 1)
-	assert_eq(Licence.max_tier("gold"), 3)
+	assert_eq(Licence.max_tier("gold"), 4)
 
 
 func test_higher_tiers_with_a_better_licence() -> void:

@@ -36,6 +36,7 @@ func update() -> void:
 	var player := get_node_or_null(player_path) as Player if not player_path.is_empty() else null
 	if player != null:
 		visited[world.layout.district_of(world.origin.absolute_cell_of(player.global_position))] = true
+	_apply_blackouts(world, session.clock.total_minutes)
 	var today := session.clock.day_number()
 	if ticked_day < 0:
 		ticked_day = today
@@ -62,6 +63,32 @@ func run_day(world: CityWorld, day: int) -> void:
 	for event in LiveSimulation.tick(world.population, world.chronicle, overlays, _turf, day, districts, shortage, protected):
 		log.events.append(event)
 		overlays.apply(event)
+
+
+## Districts dark right now, for the HUD and the windows (spec blackouts).
+var dark_districts: Dictionary = {}
+var _dark_applied: Dictionary = {}   # chunk view instance id -> dark set hash it shows
+
+
+func _apply_blackouts(world: CityWorld, minute: int) -> void:
+	var dark := {}
+	for key: String in overlays.blackouts:
+		var p := key.split(",")
+		var district := Vector3i(int(p[0]), int(p[1]), int(p[2]))
+		if overlays.is_dark(district, minute):
+			dark[key] = true
+	dark_districts = dark
+	var stamp := dark.hash()
+	for chunk in world.loaded_chunks():
+		var view := world.chunk_view(chunk)
+		if view == null or _dark_applied.get(view.get_instance_id(), 0) == stamp:
+			continue
+		view.set_blackout(world.layout, dark)
+		_dark_applied[view.get_instance_id()] = stamp
+
+
+func is_dark_at(world: CityWorld, cell: Vector3i) -> bool:
+	return dark_districts.has(WorldOverlays.district_key(world.layout.district_of(cell)))
 
 
 ## Appends an event (from the story) and applies it.

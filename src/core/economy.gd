@@ -3,7 +3,7 @@ extends RefCounted
 ## The numbers that decide how the game feels (spec economy-tables): pay, rent, tolls, chases,
 ## fees and price drift, read from data/economy.json. Tests and tuning may override single values.
 
-const SECTIONS := ["orders", "pay", "rent", "encounters", "hazards", "live", "shop", "licences"]
+const SECTIONS := ["orders", "pay", "rent", "encounters", "hazards", "live", "shop", "licences", "checkpoints", "escorts"]
 
 static var _overrides: Dictionary = {}
 

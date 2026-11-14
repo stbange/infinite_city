@@ -39,6 +39,8 @@ static func tick(population: Population, chronicle: CityChronicle, overlays: Wor
 		_takeover(population, chronicle, turf, district, rng, minute, events)
 		_price(overlays, district, rng, shortage, minute, events)
 		_life(population, overlays, district, rng, minute, protected, events)
+		if rng.next_float() < Economy.num("live", "blackout_chance"):
+			events.append({"kind": "blackout", "minute": minute, "district": WorldOverlays.district_key(district), "day": day})
 	return events
 
 

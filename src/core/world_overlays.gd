@@ -8,6 +8,7 @@ var prices: Dictionary = {}      # "x,y,z" district -> factor
 var dead: Dictionary = {}        # person key -> true
 var moved: Dictionary = {}       # person key -> [x, y, z, floor, unit]
 var moved_in: Dictionary = {}    # "x,y,z|floor|unit" -> Array of person keys
+var blackouts: Dictionary = {}   # "x,y,z" district -> Array of days whose night is dark
 
 
 static func bridge_key(bridge: BridgeInfo) -> String:
@@ -28,6 +29,7 @@ func rebuild(log: EventLog) -> void:
 	dead.clear()
 	moved.clear()
 	moved_in.clear()
+	blackouts.clear()
 	for event in log.events:
 		apply(event)
 
@@ -40,6 +42,11 @@ func apply(event: Dictionary) -> void:
 			prices[str(event["district"])] = float(event["factor"])
 		"death":
 			dead[str(event["person"])] = true
+		"blackout":
+			var key := str(event["district"])
+			if not blackouts.has(key):
+				blackouts[key] = []
+			(blackouts[key] as Array).append(int(event["day"]))
 		"moved":
 			var key := str(event["person"])
 			if moved.has(key):
@@ -57,6 +64,16 @@ func apply(event: Dictionary) -> void:
 ## The gang an event gave a bridge to, or "" when the baseline holds.
 func claim_override(key: String) -> String:
 	return str(claims.get(key, ""))
+
+
+## Whether a district's lights are out at a game minute: from 19:00 of a blackout day to 06:00.
+func is_dark(district: Vector3i, minute: int) -> bool:
+	var days: Array = blackouts.get(district_key(district), [])
+	if days.is_empty():
+		return false
+	var day := floori(float(minute) / GameClock.MINUTES_PER_DAY)
+	var at := posmod(minute, GameClock.MINUTES_PER_DAY)
+	return (days.has(day) and at >= 19 * 60) or (days.has(day - 1) and at < 6 * 60)
 
 
 func price_factor(district: Vector3i) -> float:

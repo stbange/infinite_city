@@ -61,6 +61,8 @@ func entries() -> PackedStringArray:
 	else:
 		var need: Dictionary = Licence.REQUIREMENTS[next]
 		lines.append("Upgrade to %s licence · ¤%d · needs Mutual standing %d" % [next, need["fee"], need["mutual"]])
+	lines.append("Light rights (free passage at Authority checkpoints) · ¤%d · silver licence%s" % [
+		Economy.whole("licences", "light_rights_fee"), " · held" if jobs.courier.light_rights else ""])
 	return lines
 
 
@@ -69,6 +71,8 @@ func _on_chosen(index: int) -> void:
 	if index < ShopCatalogue.ORDER.size():
 		var tool := ShopCatalogue.ORDER[index]
 		last_message = ("Bought: %s" % tool) if jobs.courier.buy(tool) else ("Can't buy the %s yet" % tool)
+	elif index == ShopCatalogue.ORDER.size() + 1:
+		last_message = "Light rights granted" if jobs.courier.buy_light_rights() else "Light rights need a silver licence and the fee"
 	elif jobs.courier.upgrade_licence():
 		last_message = "Licence upgraded to %s" % jobs.courier.licence
 	else:

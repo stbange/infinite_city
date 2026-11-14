@@ -10,6 +10,7 @@ const COLORS := {
 	"at home": Color(0.65, 0.45, 1.0),
 	"walking": Color(0.9, 0.9, 0.95),
 	"gang": Color(0.95, 0.15, 0.2),
+	"warden": Color(0.3, 0.45, 1.0),
 }
 
 const STRIDE_RATE := 7.0

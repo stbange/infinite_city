@@ -30,7 +30,12 @@ func play(patron: WorkplaceInfo, start: int, end: int, speed: float = GameClock.
 	while minute < end:
 		var clock := GameClock.at(int(minute))
 		var bag: Array[DeliveryJob] = []
-		for job in board.offers(patron, clock.day_number(), clock.hour(), max_tier):
+		var offers := board.offers(patron, clock.day_number(), clock.hour(), max_tier)
+		for i in offers.size():
+			var job := offers[i]
+			var rival := board.rival_minute(patron, clock.day_number(), clock.hour(), i)
+			if rival >= 0 and clock.minute() >= rival:
+				continue
 			if not taken.has(job.id) and bag.size() < 3:
 				bag.append(job)
 				taken[job.id] = true

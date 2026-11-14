@@ -132,3 +132,57 @@ func test_orders_follow_prices_and_the_dead() -> void:
 	a.runner.overlays.apply(event)
 	for job in a.jobs.open_orders():
 		assert_ne(job.customer.key(), first.customer.key())
+
+
+func test_the_lights_go_out() -> void:
+	var a := _scene()
+	a.world.prime_focus()
+	a.runner.update()
+	var cell := a.world.origin.absolute_cell_of(a.player.global_position)
+	var district := a.world.layout.district_of(cell)
+	var day := a.session.clock.day_number()
+	a.runner.record({"kind": "blackout", "district": WorldOverlays.district_key(district), "day": day}, a.session.clock.total_minutes)
+	a.session.clock.total_minutes = day * DAY + 21 * 60
+	a.runner.update()
+	assert_true(a.runner.is_dark_at(a.world, cell))
+	var dark := 0
+	var lit := 0
+	for chunk in a.world.loaded_chunks():
+		var view := a.world.chunk_view(chunk)
+		if view == null:
+			continue
+		for i in view.block_count():
+			if view.block_custom(i).a > 0.5:
+				dark += 1
+			else:
+				lit += 1
+	assert_gt(dark, 0, "windows in the district are dark")
+	a.session.clock.total_minutes = (day + 1) * DAY + 8 * 60
+	a.runner.update()
+	assert_false(a.runner.is_dark_at(a.world, cell))
+
+
+func test_the_lamp_runs_on_a_battery() -> void:
+	var a := _scene()
+	var lamp := CourierLamp.new()
+	lamp.name = "CourierLamp"
+	a.world.add_child(lamp)
+	lamp.player_path = NodePath("../Player")
+	lamp.session_path = NodePath("../GameSession")
+	lamp.jobs_path = NodePath("../JobManager")
+	lamp.update()
+	lamp.toggle()
+	assert_true(lamp.on)
+	a.session.clock.add_minutes(300)
+	lamp.update()
+	assert_almost_eq(lamp.battery, 0.5, 0.01)
+	a.session.clock.add_minutes(400)
+	lamp.update()
+	assert_false(lamp.on)
+	lamp.toggle()
+	assert_false(lamp.on, "an empty lamp does not light")
+	var market := a.world.population.job_market(Vector3i(0, -3, 0))
+	a.jobs.set_patron(market.workplace(market.active_indices()[0]))
+	var p := a.jobs.patron
+	lamp._on_interacted({"kind": "door", "payload": {"cell": p.cell, "floor": p.floor_index, "unit": p.unit}})
+	assert_eq(lamp.battery, 1.0)
