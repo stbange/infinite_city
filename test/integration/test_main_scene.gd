@@ -125,3 +125,32 @@ func test_real_lights_follow_the_player() -> void:
 	var camera := _camera().global_position
 	for light in active:
 		assert_lt(light.global_position.distance_to(camera), 600.0)
+
+
+## Every property the scene file sets exists on the node's script, and every node link resolves
+## (a link set on the wrong node is silently ignored by the engine).
+func test_scene_links_are_wired() -> void:
+	var text := FileAccess.get_file_as_string(MAIN_SCENE)
+	var node_name := ""
+	var problems: Array[String] = []
+	for line in text.split("\n"):
+		if line.begins_with("[node "):
+			var found := RegEx.create_from_string("name=\"([^\"]+)\"").search(line)
+			node_name = found.get_string(1) if found != null else ""
+			continue
+		if node_name.is_empty() or node_name == "Main" or not line.contains(" = ") or line.begins_with("["):
+			continue
+		var prop := line.get_slice(" = ", 0)
+		var node := main.get_node_or_null(node_name)
+		if node == null or node.get_script() == null or prop == "script":
+			continue
+		var known := false
+		for entry in (node.get_script() as Script).get_script_property_list():
+			known = known or entry["name"] == prop
+		if not known:
+			problems.append("%s.%s is not a property of its script" % [node_name, prop])
+		elif prop.ends_with("_path"):
+			var path: Variant = node.get(prop)
+			if path is NodePath and not (path as NodePath).is_empty() and node.get_node_or_null(path) == null:
+				problems.append("%s.%s points nowhere" % [node_name, prop])
+	assert_eq(problems, [] as Array[String])

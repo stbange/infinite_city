@@ -14,6 +14,7 @@ extends Node
 ##           --scenario=delivery|toll|checkpoint|transit|blackout (a scripted gameplay moment near the
 ##             start: an order in the bag with route hints, a gang toll on a bridge, an Authority
 ##             checkpoint, the transit hub's ride list, a district in a blackout at night)
+##           --hide-story (close the story's scene panel before capturing)
 ##           --no-hud  --scale=0.6 (resize)  out.jpg saves a JPEG instead of a PNG
 ## Usage: scripts/screenshot.sh out.png --pos=0,200,0 --pitch=-30
 
@@ -280,6 +281,10 @@ func _process(_delta: float) -> void:
 	if _frames_ready < int(_args.get("wait", "20" if _wait_for_interior else "8")):
 		return
 	var path: String = _args["screenshot"]
+	if _args.has("hide-story"):
+		var story_panel := _node("DialoguePanel") as DialoguePanel
+		if story_panel != null:
+			story_panel.close()
 	var people := get_tree().current_scene.get_node_or_null("PeopleManager") as PeopleManager
 	if people != null:
 		print("people shown: ", people.agents().size(), " of ", people.candidate_count(), " candidates")

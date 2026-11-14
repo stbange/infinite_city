@@ -7,6 +7,10 @@ signal chosen(index: int)
 
 const WIDTH := 760.0
 
+## Extra lift above the bottom edge, so a second panel (shop, transit, address book) sits above a
+## story scene instead of on top of it.
+@export var raise: float = 0.0
+
 var _panel: PanelContainer
 var _text: Label
 var _choices: Label
@@ -22,8 +26,8 @@ func _ready() -> void:
 	_panel.anchor_bottom = 1.0
 	_panel.offset_left = -WIDTH * 0.5
 	_panel.offset_right = WIDTH * 0.5
-	_panel.offset_top = -40.0
-	_panel.offset_bottom = -40.0
+	_panel.offset_top = -40.0 - raise
+	_panel.offset_bottom = -40.0 - raise
 	_panel.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.06, 0.04, 0.1, 0.88)

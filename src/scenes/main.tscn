@@ -157,6 +157,7 @@ interaction_path = NodePath("../Interaction")
 
 [node name="ShopPanel" type="CanvasLayer" parent="."]
 script = ExtResource("20_dialogue")
+raise = 290.0
 
 [node name="CourierShop" type="Node" parent="."]
 script = ExtResource("21_shop")
@@ -169,11 +170,6 @@ player_path = NodePath("../Player")
 jobs_path = NodePath("../JobManager")
 encounters_path = NodePath("../EncounterDirector")
 hints_path = NodePath("../RouteHints")
-lamp_path = NodePath("../CourierLamp")
-transit_path = NodePath("../TransitDirector")
-side_story_path = NodePath("../SideStoryRunner")
-rest_path = NodePath("../HomeRest")
-simulation_path = NodePath("../SimulationRunner")
 
 [node name="SimulationRunner" type="Node" parent="."]
 script = ExtResource("23_sim")
@@ -191,6 +187,7 @@ player_path = NodePath("../Player")
 
 [node name="BookPanel" type="CanvasLayer" parent="."]
 script = ExtResource("20_dialogue")
+raise = 290.0
 
 [node name="AddressBook" type="Node" parent="."]
 script = ExtResource("25_book")
@@ -210,15 +207,6 @@ session_path = NodePath("../GameSession")
 jobs_path = NodePath("../JobManager")
 panel_path = NodePath("../DialoguePanel")
 shop_path = NodePath("../CourierShop")
-coach_path = NodePath("../SessionCoach")
-doorstep_path = NodePath("../Doorstep")
-people_path = NodePath("../PeopleManager")
-hints_path = NodePath("../RouteHints")
-lamp_path = NodePath("../CourierLamp")
-transit_path = NodePath("../TransitDirector")
-side_story_path = NodePath("../SideStoryRunner")
-rest_path = NodePath("../HomeRest")
-simulation_path = NodePath("../SimulationRunner")
 encounters_path = NodePath("../EncounterDirector")
 hazards_path = NodePath("../HazardDirector")
 
@@ -250,6 +238,7 @@ jobs_path = NodePath("../JobManager")
 
 [node name="TransitPanel" type="CanvasLayer" parent="."]
 script = ExtResource("20_dialogue")
+raise = 290.0
 
 [node name="TransitDirector" type="Node" parent="."]
 script = ExtResource("32_transit")
@@ -308,6 +297,15 @@ hazards_path = NodePath("../HazardDirector")
 story_path = NodePath("../StoryRunner")
 tools_path = NodePath("../TraversalTools")
 shop_path = NodePath("../CourierShop")
+coach_path = NodePath("../SessionCoach")
+doorstep_path = NodePath("../Doorstep")
+people_path = NodePath("../PeopleManager")
+hints_path = NodePath("../RouteHints")
+lamp_path = NodePath("../CourierLamp")
+simulation_path = NodePath("../SimulationRunner")
+transit_path = NodePath("../TransitDirector")
+side_story_path = NodePath("../SideStoryRunner")
+rest_path = NodePath("../HomeRest")
 
 [node name="ScreenshotCapture" type="Node" parent="."]
 script = ExtResource("6_capture")
