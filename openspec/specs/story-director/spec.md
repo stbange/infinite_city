@@ -75,3 +75,24 @@ at their figure or at the door of the unit they are in — and the objective SHA
 #### Scenario: Meeting where they are
 - **WHEN** the story waits for the friend and the courier knocks on another door, then on the door of the unit the friend is in
 - **THEN** the first does nothing, the objective names where the friend is, and the second opens the scene
+
+### Requirement: Six templates
+The story director SHALL hold six main templates — the Hidden Abundance, the Election, the Plague,
+the Blackout, the Fall of a House and the Descent — each castable, free of dead ends and with every
+slot filled.
+
+#### Scenario: Every template is complete
+- **WHEN** each of the six templates is cast and its beat graph explored
+- **THEN** every role is filled, every path can reach the end of the story, and no slot is left unfilled
+
+### Requirement: Side arcs
+A short side arc for regulars SHALL run beside the main story, cast from people who are not in it,
+free of dead ends, and sharing the scene panel without taking the main story's choices.
+
+#### Scenario: Side arcs
+- **WHEN** each side arc is cast beside a main cast and explored
+- **THEN** every role is filled by someone outside the main story, every path ends the arc, and seeds pick every side arc
+
+#### Scenario: A side arc beside the main story
+- **WHEN** the courier plays on with a side arc running
+- **THEN** the side arc ends and the main story moves on as well
