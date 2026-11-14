@@ -1,0 +1,57 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  export:
+    name: Export builds (Linux, Windows, macOS)
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Godot binary
+        uses: actions/cache@v4
+        with:
+          path: .tools/godot
+          key: godot-4.7.2-stable-linux-x86_64
+
+      - name: Cache export templates
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/godot/export_templates
+          key: godot-4.7.2-stable-export-templates
+
+      - name: Install Godot and export templates
+        run: |
+          scripts/install-godot.sh
+          scripts/install-export-templates.sh
+
+      - name: Run tests
+        run: scripts/test.sh -gdisable_colors
+
+      - name: Export
+        run: scripts/export.sh
+
+      - name: Package
+        run: |
+          mkdir -p dist
+          tar -C build/linux -czf dist/fogline-linux-x86_64.tar.gz .
+          (cd build/windows && zip -r ../../dist/fogline-windows-x86_64.zip .)
+          cp build/macos/fogline.zip dist/fogline-macos.zip
+
+      - name: Upload builds
+        uses: actions/upload-artifact@v4
+        with:
+          name: fogline-builds
+          path: dist/*
+
+      - name: Attach to the release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*

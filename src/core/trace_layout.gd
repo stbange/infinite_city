@@ -83,7 +83,7 @@ func tags_of(block: BlockInfo, doorway: DoorwayInfo, existing: Array[SignInfo]) 
 	for i in wanted:
 		for attempt in ATTEMPTS:
 			var size := Vector2(rng.range_float(1.2, 2.4), rng.range_float(0.6, 1.4))
-			var sign := _place(block, size, rng.range_float(1.5, 12.0), gang.color, rng)
+			var sign := _place(block, size, rng.range_float(1.5, 12.0), FactionPalette.display(gang.color), rng)
 			if sign != null and CityLighting.fits(sign, doorway, placed):
 				result.append(sign)
 				placed.append(sign)

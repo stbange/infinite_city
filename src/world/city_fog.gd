@@ -35,7 +35,7 @@ static func material() -> ShaderMaterial:
 		_material.set_shader_parameter("max_distance", MAX_DISTANCE)
 		_material.set_shader_parameter("bank_size", BANK_SIZE)
 		_material.set_shader_parameter("bank_strength", BANK_STRENGTH)
-		_material.set_shader_parameter("wind", WIND)
+		_material.set_shader_parameter("wind", Vector3.ZERO if GameSettings.reduced_motion else WIND)
 	return _material
 
 

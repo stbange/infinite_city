@@ -57,6 +57,8 @@ func to_dict() -> Dictionary:
 		position = [absolute[0], absolute[1], absolute[2]]
 	var data := {
 		"version": SAVE_VERSION,
+		"saved_at": Time.get_datetime_string_from_system(false, true),
+		"label": clock.describe(),
 		"seed": world.config.world_seed if world != null else 0,
 		"minutes": clock.total_minutes,
 		"player": {
@@ -95,6 +97,29 @@ func from_dict(data: Dictionary) -> String:
 		if data.has(part_name):
 			(_parts[part_name][1] as Callable).call(data[part_name])
 	return ""
+
+
+## Saved slots, newest first: {slot, saved_at, label} (spec release-candidate / Save slots).
+static func list_slots() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	var dir := DirAccess.open(SAVE_DIR)
+	if dir == null:
+		return result
+	for file in dir.get_files():
+		if not file.ends_with(".json"):
+			continue
+		var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(SAVE_DIR + "/" + file))
+		if not data is Dictionary:
+			continue
+		result.append({"slot": file.get_basename(), "saved_at": str((data as Dictionary).get("saved_at", "")),
+			"label": str((data as Dictionary).get("label", ""))})
+	result.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a["saved_at"] > b["saved_at"])
+	return result
+
+
+## A new slot name from the date and time.
+static func new_slot_name() -> String:
+	return "save-" + Time.get_datetime_string_from_system(false, false).replace(":", "-").replace("T", "_")
 
 
 static func slot_path(slot: String) -> String:

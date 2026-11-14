@@ -19,6 +19,11 @@ const COLLISION_RADIUS := 1
 @export var radius_h: int = 4
 @export var radius_v: int = 3
 @export var chunks_per_tick: int = 4
+## Horizontal streaming radius (chunks) below the fogline, where the fog hides everything beyond
+## a few hundred metres (spec release-candidate / Fog-limited streaming).
+@export var fog_radius_h: int = 2
+## Layers below the roof top from which the fog radius applies.
+const FOG_STREAMING_DEPTH := 0.75
 ## Node whose position drives streaming and rebasing (usually the camera rig).
 @export var focus_path: NodePath
 ## Optional: environment and light that follow the depth atmosphere.
@@ -76,6 +81,13 @@ func _process(_delta: float) -> void:
 		tick()
 
 
+## The streaming radius for where the focus is: smaller in the fog than above it.
+func effective_radius_h() -> int:
+	if streaming_node() != null and focus_depth_layers() > FOG_STREAMING_DEPTH:
+		return mini(radius_h, fog_radius_h)
+	return radius_h
+
+
 ## One streaming step: rebase if needed, release far chunks, load up to the budget.
 func tick() -> void:
 	var focus := focus_node()
@@ -83,6 +95,7 @@ func tick() -> void:
 		var delta := origin.rebase_delta(focus.global_position)
 		if delta != Vector3i.ZERO:
 			rebase(delta)
+	planner.radius_h = effective_radius_h()
 	var focus_chunk := focus_chunk()
 	for chunk in planner.to_unload(focus_chunk, _loaded):
 		_unload(chunk)

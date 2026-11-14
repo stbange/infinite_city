@@ -101,3 +101,60 @@ func test_ambience_follows_depth() -> void:
 	var deep := Ambience.levels_for(20.0)
 	assert_gt(deep.x, high.x, "louder below")
 	assert_lt(deep.y, high.y, "darker below")
+
+
+func test_sleeping_at_home_saves() -> void:
+	var rest := HomeRest.new()
+	rest.name = "HomeRest"
+	world.add_child(rest)
+	rest.session_path = NodePath("../GameSession")
+	rest.jobs_path = NodePath("../JobManager")
+	session.clock.total_minutes = GameClock.new_game().day_number() * GameClock.MINUTES_PER_DAY + 22 * 60
+	assert_eq(rest.sleep(), "")
+	assert_eq(session.clock.minute_of_day(), HomeRest.WAKE_MINUTE)
+	assert_eq(session.clock.day_number(), GameClock.new_game().day_number() + 1)
+	var slots := GameSession.list_slots()
+	var found := false
+	for entry in slots:
+		found = found or entry["slot"] == HomeRest.SLOT
+	assert_true(found, "the autosave is listed")
+	DirAccess.remove_absolute(GameSession.slot_path(HomeRest.SLOT))
+
+
+func test_save_slots_in_the_menu() -> void:
+	var slot := menu.save_new_slot()
+	assert_ne(slot, "")
+	assert_eq(GameSession.list_slots()[0]["slot"], slot, "newest first")
+	session.clock.add_minutes(500)
+	assert_eq(menu.load_slot(slot), "")
+	assert_false(menu.is_open())
+	DirAccess.remove_absolute(GameSession.slot_path(slot))
+
+
+func test_rebinding_a_key() -> void:
+	menu.open()
+	menu.rebinding = "interact"
+	menu.press_key_for_rebinding(KEY_Y)
+	assert_eq(menu.rebinding, "")
+	var keys := []
+	for event in InputMap.action_get_events("interact"):
+		if event is InputEventKey:
+			keys.append((event as InputEventKey).physical_keycode)
+	assert_eq(keys, [KEY_Y])
+	var again := GameSettings.new()
+	again.load_from(TEST_SETTINGS)
+	assert_eq(int(again.bindings["interact"]), KEY_Y)
+	GameSettings.apply_binding("interact", KEY_E)
+
+
+func test_fog_limited_streaming() -> void:
+	world.radius_h = 4
+	world.fog_radius_h = 2
+	var roof := PackedFloat64Array([0.0, (world.config.roof_layer + 1) * world.config.cell_size.y + 30.0, 0.0])
+	world.teleport_focus(roof)
+	assert_eq(world.effective_radius_h(), 4, "clear air above the roof")
+	var deep := PackedFloat64Array([0.0, (world.config.roof_layer - 6) * world.config.cell_size.y, 0.0])
+	world.teleport_focus(deep)
+	assert_eq(world.effective_radius_h(), 2, "the fog hides what lies further")
+	world.tick()
+	assert_eq(world.planner.radius_h, 2)

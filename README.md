@@ -163,7 +163,19 @@ go to and the story's current objective.
   cargo, and a shop (**U**): scanner (**R**), flares (**X**), glider and grapple (**G**).
   **M** opens the address book.
 - **The world remembers:** districts you know tick daily (gangs take bridges, prices follow the
-  blight, people die and move) into an event log. **F5** saves, **F9** loads.
+  blight, people die and move, now and then a district goes dark) into an event log. **F5**
+  saves, **F9** loads, the menu keeps named slots, and sleeping at your own door saves too.
+- **At the door:** whoever is home answers (or a flatmate, or nobody), and the tip follows. Press
+  **E** on anyone in the corridors to hear some gossip; story people are met where their day puts
+  them.
+- **Finding the way:** small lights mark the next 30 m of the route (**H** toggles them, **J**
+  avoids gang bridges). **L** switches your lamp on; it recharges at your patron's counter.
+- **Dangers:** gangs on their bridges, Authority checkpoints at the fogline (permits, bribes for
+  contraband, or light rights from the shop), rival couriers who take orders left waiting, and
+  passengers to escort with a gold licence.
+- **Getting around:** every district has a transit hub (**E** at its platform door) linked to its
+  neighbours and to express hubs; tall blocks have lifts in the stair core.
+- **More stories:** six main plots and three side stories for regulars. **F4** shows session stats.
 
 ## How it is developed: OpenSpec + test-driven development
 
@@ -200,10 +212,21 @@ Git history follows this rhythm (*Propose → Implement → Archive*) for each c
 | M8 `add-courier-progression`, `add-traversal-tools` | `courier-progression`, `traversal-tools` |
 | M9 `add-event-log`, `add-live-simulation` | `event-log`, `save-games`, `live-simulation` |
 | M10 `add-plot-acts-3-to-5`, `add-plot-templates`, `add-game-menus` | `story-director`, `game-menus` |
+| M11 `add-economy-tables`, `add-first-night-guide` | `economy-tables`, `first-night-guide` |
+| M12 `split-courier-state`, `add-hud-panels`, `speed-up-tests` | `courier-state`, `hud-panels`, `test-suite`, `save-games` |
+| M13 `add-doorsteps`, `add-meetings`, `add-figure-animation` | `doorsteps`, `story-director`, `people-in-the-city` |
+| M14 `add-route-hints`, `add-gang-aware-routes` | `wayfinding` |
+| M15 `add-checkpoints`, `add-blackouts`, `add-escorts`, `add-rival-couriers` | `checkpoints`, `blackouts`, `escorts`, `rival-couriers` |
+| M16 `add-transit-hubs`, `add-lifts-and-spans` | `transit` |
+| M17 `add-plot-templates-2`, `add-side-arcs` | `story-director` |
+| M18 `add-export-builds`, `add-accessibility`, `add-music-and-sound`, `add-save-slots` | `release-candidate` |
 
 ```bash
 scripts/install-godot.sh              # once: Godot 4.7.2 into .tools/godot/
-scripts/test.sh                       # ~430 GUT tests, headless (unit and integration in two processes, ~6 min)
+scripts/test.sh                       # ~480 GUT tests, headless (unit and integration in two processes, ~6.5 min)
+scripts/install-export-templates.sh   # once: Godot's export templates (1.3 GB download)
+scripts/export.sh Linux               # release build into build/ (Linux, Windows, macOS)
+scripts/godot.sh --headless --path . -s res://tools/balance_report.gd   # what a day of deliveries earns
 scripts/test.sh -gselect=interior     # only test files matching "interior"
 scripts/screenshot.sh out.jpg --doorway --inside           # headless render (needs Xvfb)
 scripts/screenshot.sh out.jpg --interior=flat --pos=100,-1300,60
@@ -218,15 +241,15 @@ every push. Static typing is enforced, so untyped declarations are parse errors.
 
 ## Roadmap
 
-The Fogline plan (milestones M0–M10) is implemented. Next candidates:
+Draft 2 of the plan (M11–M18) is implemented. What is still open:
 
-1. **More of the plot:** escorts (tier-4 cargo that walks with you), checkpoints at the fogline,
-   blackouts, more templates (*The Blackout*, *The Fall of a House*, *The Descent*).
-2. **Teleport network and city connections:** transit hubs, long-span bridges, lifts.
-3. **People:** walking animations, doors that open, conversations beyond gossip and scenes.
-4. **Atmosphere and sound:** rain, steam, light cones in the fog; recorded sound and music.
-5. **Performance:** stream and draw only what the fog lets through; chunk and interior generation
-   on worker threads.
+1. **Playtests:** the ten human sessions of M11 and the slice checks (an evening of deliveries;
+   two playthroughs that differ) still need people. `docs/playtest-sheet.md` is the sheet.
+2. **Long spans** across canyons need openings in block walls and new bridge geometry.
+3. **Routes across districts** through transit hubs for the hints and the figures.
+4. **Recorded sound and music**, code-signed macOS builds.
+5. **Speed:** the suite takes about 6.5 minutes (target was 3); chunk and interior generation on
+   worker threads.
 
 ## Known limitations of this prototype
 
@@ -240,4 +263,5 @@ The Fogline plan (milestones M0–M10) is implemented. Next candidates:
 - Furniture is made of boxes, and people are capsules that glide without walking animations.
 - A district's job market takes about a second to build on a worker thread; until then its
   workers and routines are not shown.
-- Story scenes trigger on deliveries rather than on meeting people in the world.
+- Figures are simple capsules with swinging legs; there is no recorded sound.
+- The release builds are not code-signed; the macOS build needs a right-click → Open.
