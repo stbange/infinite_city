@@ -32,6 +32,10 @@ wants.
 | ![Deep](docs/images/deep.jpg) | |
 | **A magic doorway…** | **…opens into a hall hundreds of metres long** |
 | ![Doorway outside](docs/images/doorway-outside.jpg) | ![Doorway inside](docs/images/doorway-inside.jpg) |
+| **On the job: an order in the bag, the guide, the story objective** | **The Fog Crows block a bridge: pay, talk or run** |
+| ![Delivery](docs/images/play-delivery.jpg) | ![Toll](docs/images/play-toll.jpg) |
+| **A transit hub's platform and its rides** | **A blackout: the district's windows dark at 21:30** |
+| ![Transit](docs/images/play-transit.jpg) | ![Blackout](docs/images/play-blackout.jpg) |
 | **Looking back out at the city from inside** | **The first scene of the story, cast from the city** |
 | ![Look back](docs/images/doorway-look-back.jpg) | ![Story](docs/images/story-start.jpg) |
 
