@@ -158,3 +158,11 @@ func test_fog_limited_streaming() -> void:
 	assert_eq(world.effective_radius_h(), 2, "the fog hides what lies further")
 	world.tick()
 	assert_eq(world.planner.radius_h, 2)
+	world.chunks_per_tick = 64
+	for i in 20:
+		world.tick()
+		if world.is_streaming_complete():
+			break
+	assert_true(world.is_streaming_complete(), "streaming settles in the fog instead of loading and unloading forever")
+	for chunk in world.loaded_chunks():
+		assert_lte(world.planner.region_distance(chunk - world.focus_chunk(), 3, world.radius_v + 1), 1.0)

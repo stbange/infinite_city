@@ -11,6 +11,9 @@ extends Node
 ##             (a block near the start: on the bridge before an entrance, in the corridor behind
 ##              it, before the stair core, in a flat or a unit of block kind KIND, or at a window)
 ##           --time=HH:MM [--day=n] (game time of day on the first day, or n days later)
+##           --scenario=delivery|toll|checkpoint|transit|blackout (a scripted gameplay moment near the
+##             start: an order in the bag with route hints, a gang toll on a bridge, an Authority
+##             checkpoint, the transit hub's ride list, a district in a blackout at night)
 ##           --no-hud  --scale=0.6 (resize)  out.jpg saves a JPEG instead of a PNG
 ## Usage: scripts/screenshot.sh out.png --pos=0,200,0 --pitch=-30
 
@@ -20,6 +23,7 @@ extends Node
 @export var interiors_path: NodePath
 
 var _args: Dictionary = {}
+var _scenario_done: bool = false
 var _frames_ready: int = 0
 var _entered: bool = false
 ## Cell of the block whose interior must be ready before the frame is saved.
@@ -244,6 +248,9 @@ func _process(_delta: float) -> void:
 		get_tree().quit(2)
 		return
 	var world := get_node(world_path) as CityWorld
+	if _frames_total % 50 == 0:
+		print("frame %d: streaming %s, scenario %s, waiting for interior %s, ready frames %d, %d fps" % [_frames_total,
+			world.is_streaming_complete(), _scenario_done, _wait_for_interior, _frames_ready, Engine.get_frames_per_second()])
 	if not world.is_streaming_complete():
 		return
 	if _args.has("inside") and not _entered and _pockets() != null and _pockets().active_doorway() != null:
@@ -257,6 +264,11 @@ func _process(_delta: float) -> void:
 			camera.set_view(camera.yaw + PI, camera.pitch)
 		if _args.has("pitch"):
 			camera.set_view(camera.yaw, deg_to_rad(float(_args["pitch"])))
+		_frames_ready = 0
+		return
+	if _args.has("scenario") and not _scenario_done:
+		_scenario_done = true
+		_run_scenario(str(_args["scenario"]))
 		_frames_ready = 0
 		return
 	if _wait_for_interior:
@@ -278,3 +290,107 @@ func _process(_delta: float) -> void:
 	var error := image.save_jpg(path, 0.88) if path.ends_with(".jpg") else image.save_png(path)
 	print("screenshot ", path, " -> ", error_string(error))
 	get_tree().quit(0 if error == OK else 1)
+
+
+
+# --- Scripted gameplay moments (--scenario) -------------------------------------------------
+
+func _node(name: String) -> Node:
+	return get_tree().current_scene.get_node_or_null(name)
+
+
+## Puts the player's feet at a cell-local point looking along `yaw` and loads the area.
+func _stand(cell: Vector3i, local: Vector3, yaw: float, pitch: float = -0.08) -> void:
+	var world := get_node(world_path) as CityWorld
+	var camera := get_node(camera_path) as Player
+	var absolute := PackedFloat64Array()
+	for axis in 3:
+		absolute.append((cell[axis] + 0.5) * world.config.cell_size[axis] + local[axis])
+	world.teleport_focus(absolute)
+	camera.set_view(yaw, pitch)
+	world.prime_focus()
+	_interior_cell = cell
+	_wait_for_interior = true
+
+
+func _food_patron(world: CityWorld) -> WorkplaceInfo:
+	var spawn := SpawnFinder.find_on_foot(world.layout)
+	var start := StartScenario.find(world.population, spawn.cell)
+	return start.get("patron") as WorkplaceInfo
+
+
+func _run_scenario(name: String) -> void:
+	var world := get_node(world_path) as CityWorld
+	var camera := get_node(camera_path) as Player
+	var session := _node("GameSession") as GameSession
+	var jobs := _node("JobManager") as JobManager
+	var patron := _food_patron(world)
+	if jobs != null and patron != null:
+		jobs.set_patron(patron)
+	match name:
+		"delivery":
+			var orders := jobs.open_orders()
+			if not orders.is_empty():
+				orders[0].picked_minute = session.clock.total_minutes
+				jobs.carried.append(orders[0])
+			var plan := world.population.plan_of(world.layout.block_at(patron.cell))
+			var unit := plan.units[patron.unit]
+			var x := unit.door_x - 6.0 if unit.door_x > 0.0 else unit.door_x + 6.0
+			_stand(patron.cell, Vector3(x, plan.floor_y(patron.floor_index) + 0.02, 0.0), PI * 0.5 if unit.door_x > 0.0 else -PI * 0.5)
+			var hints := _node("RouteHints") as RouteHints
+			if hints != null:
+				hints.update()
+		"toll", "checkpoint":
+			var turf := TurfMap.new(world.chronicle, world.layout)
+			var spawn := SpawnFinder.find_on_foot(world.layout)
+			var hour0 := session.clock.total_minutes / 60
+			for r in 12:
+				for x in range(-r, r + 1):
+					for z in range(-r, r + 1):
+						for dy: int in [0, -1]:
+							for bridge in world.layout.bridges_of(spawn.cell + Vector3i(x, dy, z)):
+								var checkpoint := EncounterRules.is_checkpoint(world.config.world_seed, bridge, world.config.roof_layer)
+								if name == "checkpoint" and not checkpoint:
+									continue
+								if name == "toll" and (checkpoint or turf.claim_of(bridge).is_empty()):
+									continue
+								for h in 24:
+									if name == "toll" and EncounterRules.roll(world.config.world_seed, bridge, hour0 + h, 1, 0.0) != "toll":
+										continue
+									session.clock.total_minutes = (hour0 + h) * 60 + 10
+									var job := jobs.open_orders()[0] if not jobs.open_orders().is_empty() else DeliveryJob.new()
+									job.picked_minute = session.clock.total_minutes
+									jobs.carried.append(job)
+									if name == "checkpoint":
+										var crate := DeliveryJob.new()
+										crate.id = "crate"
+										crate.cargo_kind = "contraband"
+										crate.cargo = "unmarked crates"
+										jobs.carried.append(crate)
+									var local := bridge.start.lerp(bridge.end, 0.25) + Vector3(0, 0.02, 0)
+									var yaw := -PI * 0.5 if bridge.axis == Vector3.AXIS_X else PI
+									_stand(bridge.cell_a, local, yaw, -0.05)
+									_wait_for_interior = false
+									camera.set_mode(Player.Mode.WALK)
+									var director := _node("EncounterDirector") as EncounterDirector
+									if director != null:
+										director.update(0.016)
+									return
+		"transit":
+			var district := world.layout.district_of(world.origin.absolute_cell_of(camera.global_position)) + Vector3i(0, -1, 0)
+			var transit := _node("TransitDirector") as TransitDirector
+			transit._setup()
+			var hub := transit.network.hub_of(district)
+			var plan := world.population.plan_of(world.layout.block_at(hub["cell"]))
+			var unit := plan.units[hub["unit"]]
+			_stand(hub["cell"], Vector3(unit.door_x, plan.floor_y(hub["floor"]) + 0.02, unit.front_z() + unit.front_sign * 2.5),
+					0.0 if unit.front_sign > 0 else PI)
+			transit.open_hub(hub["cell"])
+		"blackout":
+			var runner := _node("SimulationRunner") as SimulationRunner
+			var cell := world.origin.absolute_cell_of(camera.global_position)
+			var district := world.layout.district_of(cell)
+			session.clock.total_minutes = session.clock.day_number() * GameClock.MINUTES_PER_DAY + 21 * 60 + 30
+			runner.record({"kind": "blackout", "district": WorldOverlays.district_key(district), "day": session.clock.day_number()},
+					session.clock.total_minutes)
+			runner.update()

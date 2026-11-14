@@ -3,8 +3,13 @@ extends RefCounted
 ## Decides which chunks should be loaded around a focus chunk (spec world-streaming).
 ## Pure logic: works on chunk coordinates only.
 
-## Horizontal radius of the streaming ellipsoid, in chunks.
-var radius_h: int
+## Horizontal radius of the streaming ellipsoid, in chunks. Setting it rebuilds the load order.
+var radius_h: int:
+	set(value):
+		if value != radius_h:
+			radius_h = value
+			if radius_v > 0:
+				_offsets = _sorted_offsets()
 ## Vertical radius of the streaming ellipsoid, in chunks.
 var radius_v: int
 ## Highest chunk y that can contain anything (chunks above are never loaded).
