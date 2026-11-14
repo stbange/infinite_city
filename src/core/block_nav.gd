@@ -6,7 +6,7 @@ extends RefCounted
 ## Two 3 m flights rising 2 m each and the turn between them.
 const STAIR_COST := 2.0 * 3.6056 + 1.2
 ## Blocks this tall have a lift in the stair core (spec transit / Lifts): waiting and riding cost.
-const LIFT_MIN_FLOORS := 10
+const LIFT_MIN_FLOORS := 12
 const LIFT_BASE := 12.0
 const LIFT_PER_FLOOR := 1.0
 ## How far behind its door the node inside a unit lies.

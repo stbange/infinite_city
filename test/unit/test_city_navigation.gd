@@ -77,7 +77,8 @@ func test_every_unit_reachable_from_every_entrance() -> void:
 func test_stairs_join_the_floors() -> void:
 	var block: BlockInfo = null
 	for candidate in _bridged_blocks(40):
-		if population.plan_of(candidate).floors >= 4:
+		var floors := population.plan_of(candidate).floors
+		if floors >= 4 and floors < BlockNav.LIFT_MIN_FLOORS:
 			block = candidate
 			break
 	assert_not_null(block)

@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Lifts
-Blocks of ten floors or more SHALL have a lift in the stair core that takes the courier to the
+Blocks of twelve floors or more (roughly a quarter to a third of blocks) SHALL have a lift in the stair core that takes the courier to the
 ground floor, the top floor or five floors up or down, and that routes use.
 
 #### Scenario: Lifts in tall blocks

@@ -43,10 +43,13 @@ func test_lifts_in_tall_blocks() -> void:
 	var spawn := SpawnFinder.find_on_foot(population.layout)
 	var nav := CityNav.new(population)
 	var tall: BlockInfo = null
-	for dx in range(-8, 9):
-		for dz in range(-8, 9):
-			var block := population.layout.block_at(spawn.cell + Vector3i(dx, -1, dz))
-			if block != null and population.plan_of(block).floors >= BlockNav.LIFT_MIN_FLOORS + 2:
+	for i in 17 * 17 * 4:
+		var dx := i % 17 - 8
+		var dz := (i / 17) % 17 - 8
+		var dy := -(i / 289)
+		if true:
+			var block := population.layout.block_at(spawn.cell + Vector3i(dx, dy, dz))
+			if block != null and population.plan_of(block).floors >= BlockNav.LIFT_MIN_FLOORS:
 				tall = block
 				break
 		if tall != null:

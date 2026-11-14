@@ -166,7 +166,7 @@ func route_between(start: Vector4i, goal: Vector4i, max_cells: int = MAX_CELLS, 
 	return result
 
 
-## Walking metres of a route: point distances, with stairs counted at their flight length.
+## Walking metres of a route: point distances, stairs at their flight length, lift rides at their cost.
 func _walking_length(r: NavRoute) -> float:
 	var total := 0.0
 	for i in range(1, r.nodes.size()):
@@ -174,8 +174,11 @@ func _walking_length(r: NavRoute) -> float:
 		var b := r.nodes[i]
 		var same_cell := a.x == b.x and a.y == b.y and a.z == b.z
 		var nav := block_nav(Vector3i(a.x, a.y, a.z))
-		if same_cell and nav.floor_of(a.w) != nav.floor_of(b.w):
+		var floors := absi(nav.floor_of(a.w) - nav.floor_of(b.w)) if same_cell else 0
+		if floors == 1:
 			total += BlockNav.STAIR_COST
+		elif floors > 1:
+			total += BlockNav.LIFT_BASE + BlockNav.LIFT_PER_FLOOR * floors
 		else:
 			total += r.points[i - 1].distance_to(r.points[i])
 	return total
