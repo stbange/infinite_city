@@ -7,9 +7,9 @@ extends RefCounted
 ## of the roof layer, negative above the roof).
 
 const FALLOFF_LAYERS := 80.0
-const ABOVE_FOG := Color(0.17, 0.16, 0.27)
-const BELOW_FOG := Color(0.15, 0.085, 0.22)
-const DEEP_FOG := Color(0.065, 0.045, 0.11)
+const ABOVE_FOG := ArtStyle.FOG_ABOVE
+const BELOW_FOG := ArtStyle.FOG_BELOW
+const DEEP_FOG := ArtStyle.FOG_DEEP
 const ABOVE_DENSITY := 0.0015
 const BELOW_DENSITY := 0.02
 const DEEP_EXTRA_DENSITY := 0.004
@@ -20,7 +20,7 @@ const CLEAR_LAYERS := 0.5
 const FOG_SEA_DEPTH := 1.0
 const FOG_SEA_BAND := 0.5
 ## Fog in and above the roof layer glows with the light source.
-const SUN_HAZE := Color(0.3, 0.24, 0.27)
+const SUN_HAZE := ArtStyle.SUN_HAZE
 const AMBIENT := 0.04
 const SUN_ENERGY := 1.4
 ## Sunlight fades out over this many metres above and below the bottom of the roof layer.

@@ -44,16 +44,21 @@ sky_material = SubResource("ShaderMaterial_sky")
 background_mode = 2
 sky = SubResource("Sky_space")
 ambient_light_source = 2
-ambient_light_color = Color(0.42, 0.45, 0.65, 1)
+ambient_light_color = Color(0.5, 0.52, 0.56, 1)
 ambient_light_energy = 0.04
 tonemap_mode = 2
+tonemap_white = 6.0
 glow_enabled = true
 glow_levels/5 = 1.0
-glow_levels/6 = 0.6
-glow_intensity = 1.0
-glow_bloom = 0.12
-glow_hdr_threshold = 0.6
+glow_levels/6 = 0.4
+glow_intensity = 0.55
+glow_bloom = 0.04
+glow_hdr_threshold = 0.9
 fog_enabled = false
+adjustment_enabled = true
+adjustment_brightness = 0.95
+adjustment_contrast = 1.12
+adjustment_saturation = 0.6
 
 [sub_resource type="Resource" id="Resource_config"]
 script = ExtResource("7_config")
@@ -66,9 +71,12 @@ environment = SubResource("Environment_city")
 
 [node name="Sun" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.866025, -0.469846, 0.17101, 0, 0.34202, 0.939693, -0.5, -0.813798, 0.296198, 0, 0, 0)
-light_color = Color(1, 0.95, 0.86, 1)
+light_color = Color(1, 0.96, 0.9, 1)
 light_energy = 1.4
 light_cull_mask = 1
+shadow_enabled = true
+shadow_bias = 0.05
+directional_shadow_max_distance = 450.0
 
 [node name="CityWorld" type="Node3D" parent="."]
 script = ExtResource("2_world")

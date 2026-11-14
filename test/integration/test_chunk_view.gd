@@ -182,3 +182,12 @@ func test_magic_doorways_leave_a_gap_in_the_block() -> void:
 			beside_hit = beside_hit or box.has_point(beside)
 		assert_false(probe_hit, "the doorway gap of %s is blocked" % doorway.cell)
 		assert_true(beside_hit, "behind the gap the block of %s must be solid" % doorway.cell)
+
+
+func test_solid_things_cast_shadows() -> void:
+	var view := _make_view(_interesting_chunk())
+	for child in view.get_children():
+		if child is MultiMeshInstance3D:
+			var glows := child.name == "Signs" or child.name == "LampHeads"
+			var casts := (child as MultiMeshInstance3D).cast_shadow != GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			assert_eq(casts, not glows, str(child.name))

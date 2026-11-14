@@ -25,7 +25,7 @@ const NEON_PALETTE: Array[Color] = [
 	Color(0.45, 1.0, 0.3),    # acid green
 	Color(1.0, 0.25, 0.25),   # red
 ]
-const LAMP_COLORS: Array[Color] = [Color(1.0, 0.72, 0.42), Color(0.55, 0.85, 1.0), Color(1.0, 0.4, 0.85)]
+const LAMP_COLORS: Array[Color] = ArtStyle.LAMPS
 
 var city: CityLayout
 

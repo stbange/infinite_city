@@ -11,8 +11,12 @@ uniform float sun_fade = 16.0;
 uniform float skylight = 0.12;
 uniform float floor_height = 4.0;
 uniform float bay_width = 4.0;
-uniform float lit_share = 0.22;
-uniform vec3 base_color : source_color = vec3(0.075, 0.08, 0.095);
+uniform float lit_share = 0.13;
+uniform vec3 base_color : source_color = vec3(0.075, 0.077, 0.083);
+uniform vec3 window_warm : source_color = vec3(1.0, 0.76, 0.48);
+uniform vec3 window_cool : source_color = vec3(0.78, 0.84, 0.92);
+uniform vec3 strip_color : source_color = vec3(0.55, 0.57, 0.6);
+uniform float strip_energy = 0.5;
 
 varying vec3 v_world;
 varying vec3 v_normal;
@@ -63,7 +67,9 @@ void fragment() {
 	float share = mix(lit_share, 0.03, step(0.5, v_ruin)) * (1.0 - step(0.5, v_dark));
 	float lit = step(1.0 - share, hash21(id + face_seed));
 	float hue = hash21(id * 1.7 + face_seed + 5.0);
-	vec3 glow = hue < 0.62 ? vec3(1.0, 0.62, 0.3) : (hue < 0.82 ? vec3(0.4, 0.72, 1.0) : (hue < 0.93 ? vec3(1.0, 0.28, 0.7) : vec3(0.3, 1.0, 0.8)));
+	// Mostly warm windows, some cool white, a few faintly tinted by the block's function (spec art-style).
+	vec3 grey_tint = vec3(dot(v_tint.rgb, vec3(0.3, 0.59, 0.11)));
+	vec3 glow = hue < 0.78 ? window_warm : (hue < 0.95 ? window_cool : mix(grey_tint, v_tint.rgb, 0.45) * 1.2);
 	glow *= mix(0.45, 1.0, hash21(id * 3.1 + face_seed));
 
 	// Fade the window grid where it gets smaller than a few pixels; far facades glow on average.
@@ -71,29 +77,29 @@ void fragment() {
 	float detail = clamp(1.5 - max(footprint.x, footprint.y) * 4.0, 0.0, 1.0);
 	float window_area = 0.4 * 0.42;
 
-	// Accent strips in the function colour: roofline band on every block, corner strips on half.
+	// Dim grey edge strips: a roofline band on every block, corner strips on a few.
 	float edge = min(u - u_min, u_max - u);
-	float corner = step(edge, 0.35) * side * step(0.5, v_seed);
-	float roofline = step(v_max.y - v_world.y, 0.6) * side;
+	float corner = step(edge, 0.25) * side * step(0.85, v_seed);
+	float roofline = step(v_max.y - v_world.y, 0.35) * side;
 	float accent = max(corner, roofline);
 
 	vec2 panels = fract(v_world.xz / 8.0);
 	float seam = step(0.94, max(panels.x, panels.y)) * top * detail;
 
-	vec3 shade = mix(base_color, v_tint.rgb, 0.12) * mix(1.0, 1.35, top) * (1.0 - seam * 0.35);
-	vec3 glass = vec3(0.02, 0.022, 0.03);
+	vec3 shade = mix(base_color, v_tint.rgb, 0.04) * mix(1.0, 1.3, top) * (1.0 - seam * 0.35);
+	vec3 glass = vec3(0.015, 0.016, 0.018);
 	vec3 albedo = mix(mix(shade, glass, window_area * side), mix(shade, glass, window), detail);
 	// Ruins (spec faction-traces): scorched, streaked facades.
 	float scorch = step(0.5, v_ruin) * (0.55 + 0.25 * hash21(floor(v_world.xz / 3.0) + floor(v_world.y / 7.0)));
 	albedo *= 1.0 - scorch;
 	vec3 near_glow = glow * window * lit;
-	vec3 far_glow = vec3(0.9, 0.62, 0.5) * window_area * share * side * 0.75;
+	vec3 far_glow = window_warm * 0.85 * window_area * share * side * 0.75;
 
 	ALBEDO = albedo;
 	ROUGHNESS = mix(0.8, 0.12, window * detail);
 	METALLIC = 0.1;
 	EMISSION = mix(far_glow, near_glow, detail) * 1.1
-			+ v_tint.rgb * accent * 2.2
+			+ strip_color * accent * strip_energy
 			+ albedo * skylight * sun_mask(v_world.y);
 }
 

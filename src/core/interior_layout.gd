@@ -148,7 +148,7 @@ const WINDOW_SIZE := Vector2(1.6, 1.68)
 const ENTRANCE_SIZE := Vector2(2.0, 3.0)
 const ALCOVE_DEPTH := 1.3
 const CORRIDOR_LIGHT_SPACING := 10.0
-const CORRIDOR_COLORS: Array[Color] = [Color(0.2, 0.9, 1.0), Color(1.0, 0.25, 0.7), Color(0.65, 0.3, 1.0)]
+const CORRIDOR_COLORS: Array[Color] = ArtStyle.CORRIDOR_LIGHTS
 
 
 func floor_of(plan: InteriorPlan, k: int) -> InteriorFloor:

@@ -346,7 +346,7 @@ func _build_signs(signs: Array[SignInfo], layout: CityLayout, origin_cell: Vecto
 		var centre := (Vector3(sign.cell - origin_cell) + half) * cell_size + sign.centre
 		var at := i * SIGN_STRIDE
 		_write_transform(_sign_buffer, at, Transform3D(Basis.from_scale(scale), centre))
-		_write_color(_sign_buffer, at + 12, sign.color)
+		_write_color(_sign_buffer, at + 12, ArtStyle.mute(sign.color))
 		_write_color(_sign_buffer, at + 16, Color(sign.pattern_seed, 1.0 if sign.flicker else 0.0, 0.0, 0.0))
 		var normal := Vector3()
 		normal[sign.face_axis] = sign.face_sign
@@ -445,7 +445,9 @@ func _make_instance(node_name: String, material: Material, buffer: PackedFloat32
 	instance.name = node_name
 	instance.multimesh = multimesh
 	instance.material_override = material
-	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	# Solid things cast shadows (spec art-style / Shadows); glowing signs and lamp heads do not.
+	var glows := node_name == "Signs" or node_name == "LampHeads"
+	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF if glows else GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	add_child(instance)
 	return instance
 

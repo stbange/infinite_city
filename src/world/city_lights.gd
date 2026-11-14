@@ -6,6 +6,8 @@ extends Node3D
 ## floating-origin rebase moves them with everything else.
 
 const POOL_SIZE := 12
+## The first lights of the pool (the best anchors) cast shadows (spec art-style / Shadows).
+const SHADOW_LIGHTS := 4
 const REFRESH_SECONDS := 0.2
 const FADE_SECONDS := 0.3
 
@@ -26,7 +28,7 @@ func _ready() -> void:
 		var light := OmniLight3D.new()
 		light.name = "PoolLight%d" % i
 		light.visible = false
-		light.shadow_enabled = false
+		light.shadow_enabled = i < SHADOW_LIGHTS
 		light.light_cull_mask = RenderLayers.CITY | RenderLayers.INTERIOR
 		light.omni_attenuation = 1.6
 		add_child(light)

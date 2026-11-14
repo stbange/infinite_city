@@ -314,11 +314,11 @@ func _build_floor(k: int) -> void:
 	for i in f.items.size():
 		if f.item_glow[i] > 0.0:
 			glowing.append(f.items[i])
-			glow_colors.append(f.item_colors[i])
+			glow_colors.append(ArtStyle.mute(f.item_colors[i]))
 			glow_custom.append(Color(0.0, 0.0, 1.0, f.item_glow[i]))
 		else:
 			matte.append(f.items[i])
-			matte_colors.append(f.item_colors[i])
+			matte_colors.append(ArtStyle.mute(f.item_colors[i], 0.5))
 	for i in f.lamps.size():
 		glowing.append(f.lamps[i])
 		glow_colors.append(f.lamp_colors[i])
@@ -373,5 +373,6 @@ static func _add_boxes(parent: Node3D, node_name: String, boxes: Array[AABB], ma
 	instance.multimesh = multimesh
 	instance.material_override = material
 	instance.layers = layers
-	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var glows := node_name == "Lights" or node_name == "Glass"
+	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF if glows else GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	parent.add_child(instance)

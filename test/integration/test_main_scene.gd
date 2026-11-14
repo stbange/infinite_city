@@ -154,3 +154,19 @@ func test_scene_links_are_wired() -> void:
 			if path is NodePath and not (path as NodePath).is_empty() and node.get_node_or_null(path) == null:
 				problems.append("%s.%s points nowhere" % [node_name, prop])
 	assert_eq(problems, [] as Array[String])
+
+
+func test_shadows_and_grade() -> void:
+	var sun := main.get_node("Sun") as DirectionalLight3D
+	assert_true(sun.shadow_enabled, "the sun casts shadows")
+	var env := (main.get_node("WorldEnvironment") as WorldEnvironment).environment
+	assert_true(env.adjustment_enabled)
+	assert_almost_eq(env.adjustment_saturation, ArtStyle.GRADE_SATURATION, 0.001)
+	assert_almost_eq(env.adjustment_contrast, ArtStyle.GRADE_CONTRAST, 0.001)
+	assert_almost_eq(env.adjustment_brightness, ArtStyle.GRADE_BRIGHTNESS, 0.001)
+	var lights := main.get_node("CityLights") as CityLights
+	var shadowed := 0
+	for light in lights.get_children():
+		if light is OmniLight3D and (light as OmniLight3D).shadow_enabled:
+			shadowed += 1
+	assert_eq(shadowed, CityLights.SHADOW_LIGHTS)

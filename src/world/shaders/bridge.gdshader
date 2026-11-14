@@ -5,8 +5,8 @@ render_mode cull_back;
 
 uniform float roof_bottom_y = 0.0;
 uniform float sun_fade = 16.0;
-uniform vec3 deck_color : source_color = vec3(0.16, 0.17, 0.2);
-uniform vec3 strip_color : source_color = vec3(0.2, 0.9, 1.0);
+uniform vec3 deck_color : source_color = vec3(0.15, 0.155, 0.165);
+uniform vec3 strip_color : source_color = vec3(0.5, 0.52, 0.55);
 
 varying vec3 v_local;
 varying flat vec3 v_scale;
@@ -30,7 +30,7 @@ void fragment() {
 	ALBEDO = deck_color;
 	ROUGHNESS = 0.25;
 	METALLIC = 0.6;
-	EMISSION = strip_color * strip * 2.2 + deck_color * 0.12 * sun_mask(v_world.y);
+	EMISSION = strip_color * strip * 0.9 + deck_color * 0.12 * sun_mask(v_world.y);
 }
 
 void light() {

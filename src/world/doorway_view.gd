@@ -18,7 +18,7 @@ static func frame_material() -> StandardMaterial3D:
 		_frame_material = StandardMaterial3D.new()
 		_frame_material.albedo_color = Color(0.12, 0.06, 0.18)
 		_frame_material.emission_enabled = true
-		_frame_material.emission = Color(0.62, 0.22, 1.0)
+		_frame_material.emission = ArtStyle.mute(Color(0.62, 0.22, 1.0), 0.6)
 		_frame_material.emission_energy_multiplier = 1.1
 	return _frame_material
 

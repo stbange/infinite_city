@@ -4,7 +4,7 @@
 shader_type sky;
 
 uniform vec3 space_color : source_color = vec3(0.004, 0.006, 0.018);
-uniform vec3 haze_color : source_color = vec3(0.42, 0.5, 0.72);
+uniform vec3 haze_color : source_color = vec3(0.38, 0.4, 0.44);
 // 0 at or above the roof, 1 a few layers below it (set by CityWorld).
 uniform float inside = 0.0;
 uniform vec3 sun_color : source_color = vec3(1.0, 0.93, 0.78);
