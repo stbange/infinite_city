@@ -4,6 +4,8 @@ extends Node
 ## starts beats on deliveries, hands out story jobs, opens scenes and applies choices.
 
 const STORY_PAY := 15
+## How close the courier must come to a figure to meet them (spec doorsteps / Meetings).
+const MEET_DISTANCE := 3.5
 
 @export var world_path: NodePath
 @export var session_path: NodePath
@@ -12,6 +14,9 @@ const STORY_PAY := 15
 @export var encounters_path: NodePath
 @export var simulation_path: NodePath
 @export var menu_path: NodePath
+@export var people_path: NodePath
+@export var player_path: NodePath
+@export var interaction_path: NodePath
 ## When false, update() must be called manually (used by tests).
 @export var auto_update: bool = true
 
@@ -19,6 +24,7 @@ var plot: Dictionary = StoryDirector.template()
 var state := StoryState.new()
 var _cast_key: Array = []
 var _connected: bool = false
+var _routines: Routines
 
 
 func _process(_delta: float) -> void:
@@ -39,6 +45,8 @@ func update() -> void:
 		StoryDirector.begin(plot, state, jobs.completed)
 	if not state.job_role.is_empty():
 		_ensure_story_job(world, jobs)
+	if not state.meet_role.is_empty() and _figure_in_reach():
+		StoryDirector.met(plot, state)
 	var panel := _panel()
 	if not state.scene.is_empty() and panel != null and not panel.is_open():
 		var menu := get_node_or_null(menu_path) as GameMenu if not menu_path.is_empty() else null
@@ -99,9 +107,58 @@ func _ensure_story_job(world: CityWorld, jobs: JobManager) -> void:
 	jobs.carried.insert(0, job)
 
 
+## Where the person to meet is now: the unit their routine puts them in, else their home.
+func meet_place() -> Dictionary:
+	var entry: Dictionary = state.cast.get(state.meet_role, {})
+	if not entry.has("cell"):
+		return {}
+	var c: Array = entry["cell"]
+	var place := {"cell": Vector3i(int(c[0]), int(c[1]), int(c[2])), "floor": int(entry["floor"]), "unit": int(entry["unit"])}
+	var world := _world()
+	var session := _session()
+	var id := PersonId.from_key(entry["key"])
+	if world != null and session != null and world.population.has_job_market(id.district):
+		if _routines == null or _routines.population != world.population:
+			_routines = Routines.new(world.population)
+		var step := _routines.at(id, session.clock.total_minutes)
+		var at := step.place
+		if not step.walking and at.where == NavPlace.Where.UNIT:
+			place = {"cell": at.cell, "floor": at.floor_index, "unit": at.unit}
+	return place
+
+
+func _figure_in_reach() -> bool:
+	var people := get_node_or_null(people_path) as PeopleManager if not people_path.is_empty() else null
+	var player := get_node_or_null(player_path) as Player if not player_path.is_empty() else null
+	var entry: Dictionary = state.cast.get(state.meet_role, {})
+	if people == null or player == null or not entry.has("key"):
+		return false
+	var agent := people.agent_for(entry["key"])
+	return agent != null and agent.global_position.distance_to(player.global_position) <= MEET_DISTANCE
+
+
+func _on_interacted(target: Dictionary) -> void:
+	if state.meet_role.is_empty():
+		return
+	var payload: Dictionary = target.get("payload", {})
+	var entry: Dictionary = state.cast.get(state.meet_role, {})
+	var found := false
+	if target.get("kind") == "person":
+		found = payload.get("person") == entry.get("key")
+	elif target.get("kind") == "door":
+		var place := meet_place()
+		found = not place.is_empty() and payload.get("cell") == place["cell"] and payload.get("floor") == place["floor"] \
+				and payload.get("unit") == place["unit"]
+	if found:
+		StoryDirector.met(plot, state)
+
+
 func _connect() -> void:
 	if _connected:
 		return
+	var interaction := get_node_or_null(interaction_path) as Interaction if not interaction_path.is_empty() else null
+	if interaction != null:
+		interaction.interacted.connect(_on_interacted)
 	_jobs().delivered.connect(_on_delivered)
 	var panel := _panel()
 	if panel != null:
@@ -142,7 +199,12 @@ func choose(index: int) -> void:
 func objective_text() -> String:
 	if not state.is_cast():
 		return ""
-	return StoryDirector.objective(plot, state)
+	var text := StoryDirector.objective(plot, state)
+	var jobs := _jobs()
+	var place := meet_place() if not state.meet_role.is_empty() else {}
+	if not place.is_empty() and jobs != null and jobs.names != null:
+		text += " · now at %s" % Address.format(jobs.names, place["cell"], place["floor"], place["unit"])
+	return text
 
 
 func to_dict() -> Dictionary:

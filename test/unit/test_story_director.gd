@@ -144,6 +144,10 @@ func _successors(state: StoryState, deliveries: int) -> Array:
 		var s := _copy(state)
 		StoryDirector.deliver_story_job(plot, s)
 		result.append([s, deliveries + 1])
+	if not state.meet_role.is_empty():
+		var s := _copy(state)
+		StoryDirector.met(plot, s)
+		result.append([s, deliveries])
 	if deliveries < 40:
 		var s := _copy(state)
 		StoryDirector.begin(plot, s, deliveries + 1)
@@ -156,7 +160,7 @@ func _snapshot(state: StoryState, deliveries: int) -> String:
 	done.sort()
 	var flags: Array = state.flags.keys()
 	flags.sort()
-	return "%d|%s|%s|%s|%s|%s" % [deliveries, ",".join(done), ",".join(flags), state.active, state.scene, state.job_role]
+	return "%d|%s|%s|%s|%s|%s|%s" % [deliveries, ",".join(done), ",".join(flags), state.active, state.scene, state.job_role, state.meet_role]
 
 
 func test_scenes_name_the_cast() -> void:

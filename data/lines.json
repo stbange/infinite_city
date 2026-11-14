@@ -1,0 +1,20 @@
+{
+ "doorstep": {
+  "home": [
+   "{name} opens the door. \"[Right on time|Smells good|Finally, I'm starving].\"",
+   "{name} takes the bag. \"[Thanks, courier|Keep the change|You found us in this fog?]\""
+  ],
+  "asleep": [
+   "After a long wait, {name} opens in a dressing gown. \"[Do you know what time it is?|Next time, knock softer.]\"",
+   "{name} squints through the crack. \"[I'd fallen asleep|Oh. The food. Right.]\""
+  ],
+  "household": [
+   "{name} opens instead. \"[They're out — I'll take it|They're at work. I'll put it in the cooler].\"",
+   "{name} answers. \"[For my flatmate? I'll pass it on|They forgot they ordered, didn't they?]\""
+  ],
+  "left": [
+   "Nobody answers. You leave the bag by the door of {name}'s flat.",
+   "No one home. You wedge the bag behind {name}'s door plate and hope for the best."
+  ]
+ }
+}

@@ -32,6 +32,7 @@ const TABLES := {
 	"plot_hidden_abundance": PLOT_SCHEMA,
 	"plot_election": PLOT_SCHEMA,
 	"plot_plague": PLOT_SCHEMA,
+	"lines": {"doorstep": {"home": "array", "asleep": "array", "household": "array", "left": "array"}},
 	"economy": {
 		"orders": {"per_hour": "number", "radius": "number", "higher_tier_share": "number"},
 		"pay": {"base": "number", "per_metre": "number", "per_floor": "number", "tip": "number", "cooling_minutes": "number"},

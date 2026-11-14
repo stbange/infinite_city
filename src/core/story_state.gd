@@ -13,6 +13,8 @@ var active: String = ""
 var scene: String = ""
 ## Role whose story job must be delivered for the active beat, or "".
 var job_role: String = ""
+## Role the courier must meet in person for the active beat, or "".
+var meet_role: String = ""
 
 
 func is_cast() -> bool:
@@ -21,7 +23,7 @@ func is_cast() -> bool:
 
 func to_dict() -> Dictionary:
 	return {"template": template_id, "act": act, "cast": cast.duplicate(true), "flags": flags.keys(),
-		"done": done.duplicate(), "active": active, "scene": scene, "job_role": job_role}
+		"done": done.duplicate(), "active": active, "scene": scene, "job_role": job_role, "meet_role": meet_role}
 
 
 func from_dict(data: Dictionary) -> void:
@@ -38,6 +40,7 @@ func from_dict(data: Dictionary) -> void:
 	active = data.get("active", "")
 	scene = data.get("scene", "")
 	job_role = data.get("job_role", "")
+	meet_role = data.get("meet_role", "")
 
 
 ## JSON brings numbers back as floats; whole ones become ints again (ages, cells, floors).

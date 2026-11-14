@@ -185,6 +185,7 @@ func test_a_commuter_on_the_route() -> void:
 	people.update()
 	var later := walked + PeopleManager.WALK_SPEED
 	assert_almost_eq(people.agent_for(key).global_position, base + route.point_at(later), Vector3.ONE * 0.05)
+	assert_ne(people.agent_for(key).walk_phase, 0.0, "a walker swings their legs")
 
 
 func test_figure_cap() -> void:

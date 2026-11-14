@@ -106,10 +106,10 @@ static func _cargo(patron: WorkplaceInfo, rng: CellRandom) -> String:
 
 
 ## Pay when delivered at `minute`: the base plus a tip that falls to zero over 30 game minutes.
-static func pay_for(job: DeliveryJob, minute: int) -> int:
+static func pay_for(job: DeliveryJob, minute: int, tip_factor: float = 1.0) -> int:
 	var elapsed := float(minute - job.picked_minute)
 	var heat := clampf(1.0 - elapsed / COOLING_MINUTES, 0.0, 1.0)
-	return job.base_pay + roundi(job.base_pay * TIP * heat)
+	return job.base_pay + roundi(job.base_pay * TIP * heat * tip_factor)
 
 
 static func heat_of(job: DeliveryJob, minute: int) -> float:

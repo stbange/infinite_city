@@ -225,12 +225,16 @@ static func begin(plot: Dictionary, state: StoryState, deliveries: int) -> Strin
 		if not _ready_to_start(b, state, deliveries):
 			continue
 		state.active = b["id"]
-		if b["trigger"] == "job":
-			state.job_role = (b["job"] as Dictionary)["to"]
-			state.scene = ""
-		else:
-			state.scene = b["scene"]
-			state.job_role = ""
+		state.job_role = ""
+		state.meet_role = ""
+		state.scene = ""
+		match str(b["trigger"]):
+			"job":
+				state.job_role = (b["job"] as Dictionary)["to"]
+			"meet":
+				state.meet_role = b["meet"]
+			_:
+				state.scene = b["scene"]
 		return state.active
 	return ""
 
@@ -240,6 +244,14 @@ static func deliver_story_job(plot: Dictionary, state: StoryState) -> void:
 	if state.job_role.is_empty():
 		return
 	state.job_role = ""
+	state.scene = beat(plot, state.active)["scene"]
+
+
+## The courier met the person the active beat waits for: its scene opens.
+static func met(plot: Dictionary, state: StoryState) -> void:
+	if state.meet_role.is_empty():
+		return
+	state.meet_role = ""
 	state.scene = beat(plot, state.active)["scene"]
 
 

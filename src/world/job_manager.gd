@@ -12,6 +12,8 @@ signal delivered(job: DeliveryJob)
 @export var world_path: NodePath
 @export var session_path: NodePath
 @export var interaction_path: NodePath
+## Optional: who answers the door decides the tip (spec doorsteps).
+@export var doorstep_path: NodePath
 
 ## Wallet, standing, licence and tools (spec courier-state).
 var courier := CourierState.new()
@@ -147,7 +149,10 @@ func _on_interacted(target: Dictionary) -> void:
 		return
 	var done := _job_at(payload)
 	if done != null:
-		courier.wallet.credits += CourierBoard.pay_for(done, session.clock.total_minutes)
+		var doorstep := get_node_or_null(doorstep_path) as Doorstep if not doorstep_path.is_empty() else null
+		var tip := float(doorstep.answer(done)["tip"]) if doorstep != null else 1.0
+		done.paid = CourierBoard.pay_for(done, session.clock.total_minutes, tip)
+		courier.wallet.credits += done.paid
 		carried.erase(done)
 		completed += 1
 		courier.reputation.add(Reputation.MUTUAL, Reputation.DELIVERY if done.story_beat.is_empty() else Reputation.STORY_DELIVERY)

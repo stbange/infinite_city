@@ -51,7 +51,7 @@ func update() -> void:
 
 func _connect(session: GameSession, jobs: JobManager) -> void:
 	jobs.delivered.connect(func(job: DeliveryJob) -> void:
-		stats.delivered(CourierBoard.pay_for(job, session.clock.total_minutes), job.picked_minute, session.clock.total_minutes)
+		stats.delivered(job.paid if job.paid > 0 else CourierBoard.pay_for(job, session.clock.total_minutes), job.picked_minute, session.clock.total_minutes)
 		guide.mark("delivered"))
 	var panel := get_node_or_null(panel_path) as DialoguePanel if not panel_path.is_empty() else null
 	if panel != null:

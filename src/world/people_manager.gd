@@ -31,6 +31,8 @@ var _state: Dictionary = {}    # person key -> {"step", "route", "cell", "local"
 var _route_queue: Array[String] = []
 var _agents: Dictionary = {}   # person key -> PersonAgent
 var _connected: bool = false
+## What the last person you spoke to said (spec doorsteps / Figures), for the HUD.
+var last_message: String = ""
 
 
 func _process(_delta: float) -> void:
@@ -89,6 +91,7 @@ func _setup(world: CityWorld) -> void:
 		var interaction := get_node_or_null(interaction_path) as Interaction if not interaction_path.is_empty() else null
 		if interaction != null:
 			interaction.add_provider(targets_near)
+			interaction.interacted.connect(_on_interacted)
 		_connected = true
 
 
@@ -255,6 +258,7 @@ func _place(world: CityWorld, player: Player, now: float, speed: float) -> void:
 			state["label"] = _label(state["id"], step)
 		agent.label = state["label"]
 		agent.global_position = entry[2]
+		agent.animate(get_process_delta_time() if is_inside_tree() else 0.016)
 		var direction: Vector3 = entry[3]
 		direction.y = 0.0
 		if direction.length_squared() > 0.01:
@@ -276,6 +280,21 @@ func _label(id: PersonId, step: RoutineStep) -> String:
 	if person == null:
 		return step.activity
 	return "%s %s, %d · %s" % [person.given_name, person.family_name, person.age, step.activity]
+
+
+## Pressing E on a figure: they share a piece of gossip.
+func _on_interacted(target: Dictionary) -> void:
+	if target.get("kind") != "person":
+		return
+	var world := _world()
+	var key := str((target.get("payload", {}) as Dictionary).get("person", ""))
+	if world == null or world.gossip == null or key.is_empty():
+		return
+	var id := PersonId.from_key(key)
+	var person := _population.person(id)
+	var heard := world.gossip.about(id) if _population.has_job_market(id.district) else PackedStringArray()
+	var who := person.given_name if person != null else "They"
+	last_message = "%s: \"%s\"" % [who, heard[0] if not heard.is_empty() else "Busy night, courier."]
 
 
 ## Interaction targets: figures within reach of a point (spec people-in-the-city / Looking at a person).

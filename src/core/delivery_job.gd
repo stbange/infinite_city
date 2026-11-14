@@ -19,6 +19,8 @@ var base_pay: int = 0
 var picked_minute: int = -1
 ## Beat of the story this delivery belongs to, or "" for an ordinary order.
 var story_beat: String = ""
+## Credits paid on delivery (0 until delivered).
+var paid: int = 0
 ## Cargo tier kind (CargoKind.TABLE).
 var cargo_kind: String = "food"
 

@@ -1,4 +1,4 @@
-[gd_scene load_steps=31 format=3]
+[gd_scene load_steps=32 format=3]
 
 [ext_resource type="Script" path="res://src/world/game_main.gd" id="1_main"]
 [ext_resource type="Script" path="res://src/world/city_world.gd" id="2_world"]
@@ -27,6 +27,7 @@
 [ext_resource type="Script" path="res://src/world/address_book.gd" id="25_book"]
 [ext_resource type="Script" path="res://src/world/ambience.gd" id="26_ambience"]
 [ext_resource type="Script" path="res://src/world/session_coach.gd" id="27_coach"]
+[ext_resource type="Script" path="res://src/world/doorstep.gd" id="28_doorstep"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_sky"]
 shader = ExtResource("5_sky")
@@ -104,6 +105,7 @@ script = ExtResource("14_jobs")
 world_path = NodePath("../CityWorld")
 session_path = NodePath("../GameSession")
 interaction_path = NodePath("../Interaction")
+doorstep_path = NodePath("../Doorstep")
 
 [node name="PeopleManager" type="Node3D" parent="."]
 script = ExtResource("15_people")
@@ -143,6 +145,9 @@ panel_path = NodePath("../DialoguePanel")
 encounters_path = NodePath("../EncounterDirector")
 simulation_path = NodePath("../SimulationRunner")
 menu_path = NodePath("../GameMenu")
+people_path = NodePath("../PeopleManager")
+player_path = NodePath("../Player")
+interaction_path = NodePath("../Interaction")
 
 [node name="ShopPanel" type="CanvasLayer" parent="."]
 script = ExtResource("20_dialogue")
@@ -192,8 +197,15 @@ jobs_path = NodePath("../JobManager")
 panel_path = NodePath("../DialoguePanel")
 shop_path = NodePath("../CourierShop")
 coach_path = NodePath("../SessionCoach")
+doorstep_path = NodePath("../Doorstep")
+people_path = NodePath("../PeopleManager")
 encounters_path = NodePath("../EncounterDirector")
 hazards_path = NodePath("../HazardDirector")
+
+[node name="Doorstep" type="Node3D" parent="."]
+script = ExtResource("28_doorstep")
+world_path = NodePath("../CityWorld")
+session_path = NodePath("../GameSession")
 
 [node name="CityFog" type="Node" parent="."]
 script = ExtResource("11_fog")

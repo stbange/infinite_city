@@ -137,3 +137,26 @@ func test_courier_state_survives_a_reload() -> void:
 	assert_eq(jobs.courier.wallet.credits, 333)
 	assert_eq(jobs.carried.size(), 1)
 	assert_eq(jobs.carried[0].customer_name, (saved["courier"]["carried"] as Array)[0]["customer_name"])
+
+
+func test_the_door_decides_the_tip() -> void:
+	var doorstep := Doorstep.new()
+	doorstep.name = "Doorstep"
+	world.add_child(doorstep)
+	doorstep.world_path = NodePath("..")
+	doorstep.session_path = NodePath("../GameSession")
+	jobs.doorstep_path = NodePath("../Doorstep")
+	var patron := _patron()
+	jobs.set_patron(patron)
+	_face(patron.cell, patron.floor_index, patron.unit)
+	interaction.interact()
+	var job := jobs.carried[0]
+	_face(job.dropoff_cell, job.dropoff_floor, job.dropoff_unit)
+	var before := jobs.courier.wallet.credits
+	interaction.interact()
+	var answer := doorstep.last_answer
+	assert_false(answer.is_empty())
+	assert_eq(jobs.courier.wallet.credits - before, CourierBoard.pay_for(job, session.clock.total_minutes, answer["tip"]))
+	assert_eq(job.paid, jobs.courier.wallet.credits - before)
+	if answer["who"] != null:
+		assert_true(doorstep.figure_visible(), "someone stands in the doorway")

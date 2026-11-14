@@ -308,7 +308,7 @@
   {
    "id": "friend_hurt",
    "act": 4,
-   "trigger": "scene",
+   "trigger": "meet",
    "after": [
     "medicine_run",
     "testimony_run"
@@ -317,7 +317,8 @@
    "heat": {
     "disruptor": 0.5
    },
-   "objective": "Decide what the key is for"
+   "objective": "Find {friend.first} — they were hurt for knowing you",
+   "meet": "friend"
   },
   {
    "id": "vault",

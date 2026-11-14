@@ -83,6 +83,10 @@ func _step(pick: Callable) -> void:
 		if not job.story_beat.is_empty():
 			_deliver(job)
 			return
+	if not runner.state.meet_role.is_empty():
+		var place := runner.meet_place()
+		runner._on_interacted(_door(place["cell"], place["floor"], place["unit"]))
+		return
 	jobs._on_interacted(_door(patron.cell, patron.floor_index, patron.unit))
 	for job in jobs.carried:
 		if job.story_beat.is_empty():
@@ -170,3 +174,20 @@ func test_endings_change_the_district() -> void:
 		assert_true(keeper_died, "the keeper dies by a plot beat")
 		assert_true(changed, "ending %d changes the district" % ending)
 		assert_eq(runner.state.act, 5)
+
+
+func test_meeting_where_they_are() -> void:
+	var pick := func(_scene: String) -> int: return 0
+	for i in 400:
+		if runner.state.meet_role == "friend":
+			break
+		_step(pick)
+	assert_eq(runner.state.meet_role, "friend")
+	var place := runner.meet_place()
+	assert_false(place.is_empty())
+	runner._on_interacted(_door(patron.cell, patron.floor_index, patron.unit))
+	assert_eq(runner.state.meet_role, "friend", "the wrong door is no meeting")
+	assert_string_contains(runner.objective_text(), "now at")
+	runner._on_interacted(_door(place["cell"], place["floor"], place["unit"]))
+	assert_eq(runner.state.meet_role, "")
+	assert_eq(runner.state.scene, "friend_hurt")
