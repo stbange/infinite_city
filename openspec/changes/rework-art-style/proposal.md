@@ -18,7 +18,7 @@ small, rare accents, and real shadows.
 - **Shadows:** the sun casts shadows across the roof (450 m); blocks, bridges, railings, posts and
   interior walls, floors and furniture cast them; the four best pool lights near the player cast
   shadows too.
-- **Grade:** the environment desaturates (0.6), adds contrast (1.12) and darkens slightly; glow is
+- **Grade:** the environment desaturates (0.6), adds contrast (1.06) and darkens slightly; glow is
   weaker and only the brightest things bloom; ambient light is neutral grey.
 
 ## Capabilities

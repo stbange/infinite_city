@@ -21,7 +21,7 @@ const FOG_SEA_DEPTH := 1.0
 const FOG_SEA_BAND := 0.5
 ## Fog in and above the roof layer glows with the light source.
 const SUN_HAZE := ArtStyle.SUN_HAZE
-const AMBIENT := 0.04
+const AMBIENT := 0.05
 const SUN_ENERGY := 1.4
 ## Sunlight fades out over this many metres above and below the bottom of the roof layer.
 const SUN_FADE_M := 16.0
