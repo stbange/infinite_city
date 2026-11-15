@@ -75,9 +75,9 @@ func configure(p_look: FigureLook) -> void:
 	_part(_body, _sphere, Vector3(0, hip_y + 0.02 * h, 0), Vector3(0.2 * h * look.hips * g, 0.11 * h, 0.13 * h * g), look.bottom)
 	for side: float in [-1.0, 1.0]:
 		var hip := _joint(_body, Vector3(side * 0.055 * h * look.hips, hip_y, 0))
-		_part(hip, _capsule, Vector3(0, -thigh * 0.5, 0), Vector3(0.085 * h * g, thigh * 0.5, 0.09 * h * g), look.bottom)
+		_part(hip, _capsule, Vector3(0, -thigh * 0.5, 0), Vector3(0.085 * h * g, thigh * 0.58, 0.09 * h * g), look.bottom)
 		var knee := _joint(hip, Vector3(0, -thigh, 0))
-		_part(knee, _capsule, Vector3(0, -shin * 0.5, 0), Vector3(0.066 * h, shin * 0.5, 0.072 * h), look.bottom)
+		_part(knee, _capsule, Vector3(0, -shin * 0.48, 0), Vector3(0.066 * h, shin * 0.56, 0.072 * h), look.bottom)
 		var foot := _part(knee, _box, Vector3(0, -shin - 0.012 * h, -0.03 * h), Vector3(0.055 * h, 0.04 * h, 0.14 * h), look.shoes)
 		foot.visibility_range_end = DETAIL_RANGE
 		_hips.append(hip)
@@ -85,12 +85,15 @@ func configure(p_look: FigureLook) -> void:
 	# Torso, leaning forward with age.
 	_torso = _joint(_body, Vector3(0, hip_y + 0.05 * h, 0))
 	_torso.rotation.x = -look.stoop
-	_top_parts.append(_part(_torso, _capsule, Vector3(0, 0.15 * h, 0), Vector3(0.24 * h * look.shoulders * g, 0.15 * h, 0.14 * h * g), look.top))
+	# Abdomen from the belt up, then a chest that is broadest at the shoulders.
+	_top_parts.append(_part(_torso, _capsule, Vector3(0, 0.07 * h, 0), Vector3(0.19 * h * look.hips * g, 0.09 * h, 0.12 * h * g), look.top))
+	_top_parts.append(_part(_torso, _capsule, Vector3(0, 0.19 * h, 0), Vector3(0.22 * h * look.shoulders * g, 0.1 * h, 0.125 * h * g), look.top))
+	_top_parts.append(_part(_torso, _capsule, Vector3(0, 0.255 * h, 0), Vector3(0.27 * h * look.shoulders * sqrt(g), 0.04 * h, 0.1 * h), look.top))
 	for side: float in [-1.0, 1.0]:
 		var shoulder := _joint(_torso, Vector3(side * 0.135 * h * look.shoulders * sqrt(g), 0.265 * h, 0))
-		_top_parts.append(_part(shoulder, _capsule, Vector3(0, -0.078 * h, 0), Vector3(0.068 * h, 0.08 * h, 0.068 * h), look.top))
+		_top_parts.append(_part(shoulder, _capsule, Vector3(0, -0.078 * h, 0), Vector3(0.068 * h, 0.092 * h, 0.068 * h), look.top))
 		var elbow := _joint(shoulder, Vector3(0, -0.155 * h, 0))
-		_top_parts.append(_part(elbow, _capsule, Vector3(0, -0.068 * h, 0), Vector3(0.056 * h, 0.072 * h, 0.056 * h), look.top))
+		_top_parts.append(_part(elbow, _capsule, Vector3(0, -0.07 * h, 0), Vector3(0.056 * h, 0.084 * h, 0.056 * h), look.top))
 		var hand := _part(elbow, _sphere, Vector3(0, -0.15 * h, 0), Vector3(0.05 * h, 0.06 * h, 0.035 * h), look.skin)
 		hand.visibility_range_end = DETAIL_RANGE
 		_shoulders.append(shoulder)
@@ -100,6 +103,10 @@ func configure(p_look: FigureLook) -> void:
 	_head = _joint(_torso, Vector3(0, 0.325 * h, 0))
 	_head.rotation.x = look.stoop * 0.7
 	_part(_head, _sphere, Vector3(0, 0.062 * h, 0), Vector3(0.105 * h, 0.13 * h, 0.12 * h), look.skin)
+	var nose := _part(_head, _sphere, Vector3(0, 0.045 * h, -0.06 * h), Vector3(0.022 * h, 0.03 * h, 0.03 * h), look.skin.darkened(0.08))
+	nose.visibility_range_end = DETAIL_RANGE
+	var brows := _part(_head, _box, Vector3(0, 0.07 * h, -0.056 * h), Vector3(0.07 * h, 0.006 * h, 0.012 * h), look.hair.darkened(0.2))
+	brows.visibility_range_end = DETAIL_RANGE
 	_hair(h)
 	set_activity(activity if not activity.is_empty() else "at home")
 
