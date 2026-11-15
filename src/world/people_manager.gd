@@ -246,23 +246,23 @@ func _place(world: CityWorld, player: Player, now: float, speed: float) -> void:
 		var key: String = entry[1]
 		visible[key] = true
 		var agent := _agents.get(key) as PersonAgent
+		var state: Dictionary = _state[key]
 		if agent == null:
-			agent = PersonAgent.new()
+			agent = PersonAgent.new(_look(state))
 			agent.person_key = key
 			add_child(agent)
 			_agents[key] = agent
-		var state: Dictionary = _state[key]
+			# Standing people face a direction of their own until they walk.
+			agent.rotation.y = float(DetHash.hash1(_population.world_seed(), Routines.SALT_ROUTINE + 3, (state["id"] as PersonId).local) % 628) / 100.0
 		var step := state["step"] as RoutineStep
 		agent.set_activity("walking" if step.walking else step.activity)
 		if not state.has("label"):
 			state["label"] = _label(state["id"], step)
 		agent.label = state["label"]
+		var delta := get_process_delta_time() if is_inside_tree() and get_process_delta_time() > 0.0 else 0.016
 		agent.global_position = entry[2]
-		agent.animate(get_process_delta_time() if is_inside_tree() else 0.016)
-		var direction: Vector3 = entry[3]
-		direction.y = 0.0
-		if direction.length_squared() > 0.01:
-			agent.global_basis = Basis.looking_at(direction.normalized(), Vector3.UP)
+		agent.animate(delta)
+		agent.face(entry[3], delta)
 	for key: String in _agents.keys():
 		if not visible.has(key):
 			(_agents[key] as PersonAgent).queue_free()
@@ -273,6 +273,14 @@ func _place(world: CityWorld, player: Player, now: float, speed: float) -> void:
 func _left_block(route: NavRoute, step: RoutineStep) -> bool:
 	var last := route.nodes[route.nodes.size() - 1]
 	return Vector3i(last.x, last.y, last.z) != step.place.cell or nav.node_of(step.place).w != last.w
+
+
+## The figure look of a candidate (spec realistic-people / Looks), cached with its state.
+func _look(state: Dictionary) -> FigureLook:
+	if not state.has("look"):
+		var person := _population.person(state["id"])
+		state["look"] = FigureLook.of(person, _population.world_seed()) if person != null else FigureLook.generic(str(state["id"]))
+	return state["look"]
 
 
 func _label(id: PersonId, step: RoutineStep) -> String:

@@ -48,9 +48,14 @@ func figure_visible() -> bool:
 
 
 func _show_figure(world: CityWorld, job: DeliveryJob) -> void:
+	var who: PersonId = last_answer.get("who", job.customer)
+	var person := world.population.person(who) if who != null else null
+	var look := FigureLook.of(person, world.population.world_seed()) if person != null else FigureLook.generic(job.id)
 	if _figure == null:
-		_figure = PersonAgent.new()
+		_figure = PersonAgent.new(look)
 		add_child(_figure)
+	else:
+		_figure.configure(look)
 	var plan := world.population.plan_of(world.layout.block_at(job.dropoff_cell))
 	var unit := plan.units[job.dropoff_unit]
 	var local := Vector3(unit.door_x, plan.floor_y(job.dropoff_floor), unit.front_z() - unit.front_sign * 0.6)

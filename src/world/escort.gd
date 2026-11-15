@@ -69,7 +69,7 @@ func _escort_job(jobs: JobManager) -> DeliveryJob:
 
 func _spawn(world: CityWorld, player: Player) -> void:
 	if figure == null:
-		figure = PersonAgent.new()
+		figure = PersonAgent.new(FigureLook.generic(job.id))
 		figure.set_activity("out")
 		add_child(figure)
 	figure.label = job.cargo

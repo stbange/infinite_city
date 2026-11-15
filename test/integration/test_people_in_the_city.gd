@@ -231,3 +231,58 @@ func test_looking_at_a_person() -> void:
 	assert_string_contains(str(target.get("label")), person.given_name)
 	assert_string_contains(str(target.get("label")), str(person.age))
 	assert_string_contains(str(target.get("label")), "working")
+
+
+func _mesh_top(node: Node) -> float:
+	var top := -INF
+	for child in node.get_children():
+		if child is MeshInstance3D:
+			var box := (child as MeshInstance3D).global_transform * (child as MeshInstance3D).get_aabb()
+			top = maxf(top, box.end.y)
+		top = maxf(top, _mesh_top(child))
+	return top
+
+
+func test_bodies_and_gait() -> void:
+	var look := FigureLook.generic("test")
+	look.height = 1.8
+	var agent := PersonAgent.new(look)
+	add_child_autofree(agent)
+	agent.global_position = Vector3.ZERO
+	assert_almost_eq(_mesh_top(agent), 1.8, 0.08, "the head ends at the figure's height")
+	var small := PersonAgent.new(FigureLook.generic("child"))
+	small.look.height = 1.1
+	small.configure(small.look)
+	add_child_autofree(small)
+	assert_almost_eq(_mesh_top(small), 1.1, 0.06)
+	# Walk forward for a few frames at 1.3 m/s.
+	agent.animate(0.016)
+	var opposite := 0
+	var knees_forward := true
+	for i: int in 40:
+		agent.global_position += Vector3(0, 0, -1.3 * 0.05)
+		agent.animate(0.05)
+		var hips: Array[Node3D] = agent._hips
+		var shoulders: Array[Node3D] = agent._shoulders
+		var knees: Array[Node3D] = agent._knees
+		if absf(hips[0].rotation.x) > 0.05:
+			opposite += 1 if signf(hips[0].rotation.x) == -signf(hips[1].rotation.x) and signf(shoulders[0].rotation.x) == -signf(hips[0].rotation.x) else 0
+		knees_forward = knees_forward and knees[0].rotation.x <= 0.001 and knees[1].rotation.x <= 0.001
+	assert_gt(opposite, 25, "legs swing against each other and each arm against its leg")
+	assert_true(knees_forward, "knees only bend backwards")
+	assert_ne(agent.walk_phase, 0.0)
+	# Standing still, the limbs come to rest.
+	for i: int in 30:
+		agent.animate(0.05)
+	assert_almost_eq((agent._hips[0] as Node3D).rotation.x, 0.0, 0.01)
+
+
+func test_clothes_follow_the_activity() -> void:
+	var look := FigureLook.generic("worker")
+	look.work_top = Color(0.6, 0.7, 0.75)
+	var agent := PersonAgent.new(look)
+	add_child_autofree(agent)
+	agent.set_activity("working")
+	assert_eq((agent._top_parts[0].material_override as StandardMaterial3D).albedo_color, look.work_top)
+	agent.set_activity("at home")
+	assert_eq((agent._top_parts[0].material_override as StandardMaterial3D).albedo_color, look.top)

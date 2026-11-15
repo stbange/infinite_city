@@ -341,7 +341,7 @@ func _spawn_figures(world: CityWorld, player: Player, activity: String = "gang")
 	var spot := mid.lerp(ahead, 0.5)
 	var lateral := Vector3(0, 0, 1) if bridge.axis == Vector3.AXIS_X else Vector3(1, 0, 0)
 	for i in FIGURES:
-		var agent := PersonAgent.new()
+		var agent := PersonAgent.new(FigureLook.generic("%s:%d" % [gang_key, i]))
 		agent.set_activity(activity)
 		agent.person_key = gang_key
 		agent.label = gang_name()
