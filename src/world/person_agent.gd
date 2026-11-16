@@ -13,6 +13,7 @@ const TURN_RATE := 8.0
 static var _capsule: CapsuleMesh
 static var _sphere: SphereMesh
 static var _box: BoxMesh
+static var _cone: CylinderMesh
 static var _materials: Dictionary = {}
 
 var person_key: String = ""
@@ -50,6 +51,12 @@ func _init(p_look: FigureLook = null) -> void:
 		_sphere.radial_segments = 12
 		_sphere.rings = 6
 		_box = BoxMesh.new()
+		_cone = CylinderMesh.new()
+		_cone.top_radius = 0.3
+		_cone.bottom_radius = 0.5
+		_cone.height = 1.0
+		_cone.radial_segments = 12
+		_cone.rings = 1
 	configure(p_look if p_look != null else FigureLook.generic(str(get_instance_id())))
 
 
@@ -71,13 +78,25 @@ func configure(p_look: FigureLook) -> void:
 	var hip_y := 0.53 * h
 	var thigh := 0.245 * h
 	var shin := 0.245 * h
-	# Pelvis and legs.
-	_part(_body, _sphere, Vector3(0, hip_y + 0.02 * h, 0), Vector3(0.2 * h * look.hips * g, 0.11 * h, 0.13 * h * g), look.bottom)
+	var l := look.limbs
+	var dress := look.garment == FigureLook.Garment.DRESS
+	var skirted := look.garment != FigureLook.Garment.TROUSERS
+	var shin_color := look.legwear if skirted else look.bottom
+	# Pelvis and legs; a skirt or dress hangs from the waist and does not swing with the legs.
+	var pelvis := _part(_body, _sphere, Vector3(0, hip_y + 0.02 * h, 0), Vector3(0.2 * h * look.hips * g, 0.11 * h, 0.13 * h * g), look.top if dress else look.bottom)
+	if dress:
+		_top_parts.append(pelvis)
+	if skirted:
+		var hem := 0.25 * h if dress else 0.31 * h
+		var top_y := hip_y + 0.06 * h
+		var skirt := _part(_body, _cone, Vector3(0, (top_y + hem) * 0.5, 0), Vector3(0.34 * h * look.hips * g, top_y - hem, 0.28 * h * look.hips * g), look.top if dress else look.bottom)
+		if dress:
+			_top_parts.append(skirt)
 	for side: float in [-1.0, 1.0]:
 		var hip := _joint(_body, Vector3(side * 0.055 * h * look.hips, hip_y, 0))
-		_part(hip, _capsule, Vector3(0, -thigh * 0.5, 0), Vector3(0.085 * h * g, thigh * 0.58, 0.09 * h * g), look.bottom)
+		_part(hip, _capsule, Vector3(0, -thigh * 0.5, 0), Vector3(0.085 * h * g * l, thigh * 0.58, 0.09 * h * g * l), shin_color if skirted else look.bottom)
 		var knee := _joint(hip, Vector3(0, -thigh, 0))
-		_part(knee, _capsule, Vector3(0, -shin * 0.48, 0), Vector3(0.066 * h, shin * 0.56, 0.072 * h), look.bottom)
+		_part(knee, _capsule, Vector3(0, -shin * 0.48, 0), Vector3(0.066 * h * l, shin * 0.56, 0.072 * h * l), shin_color)
 		var foot := _part(knee, _box, Vector3(0, -shin - 0.012 * h, -0.03 * h), Vector3(0.055 * h, 0.04 * h, 0.14 * h), look.shoes)
 		foot.visibility_range_end = DETAIL_RANGE
 		_hips.append(hip)
@@ -86,14 +105,21 @@ func configure(p_look: FigureLook) -> void:
 	_torso = _joint(_body, Vector3(0, hip_y + 0.05 * h, 0))
 	_torso.rotation.x = -look.stoop
 	# Abdomen from the belt up, then a chest that is broadest at the shoulders.
-	_top_parts.append(_part(_torso, _capsule, Vector3(0, 0.07 * h, 0), Vector3(0.19 * h * look.hips * g, 0.09 * h, 0.12 * h * g), look.top))
+	_top_parts.append(_part(_torso, _capsule, Vector3(0, 0.07 * h, 0), Vector3(0.19 * h * look.waist * g, 0.09 * h, 0.12 * h * g), look.top))
 	_top_parts.append(_part(_torso, _capsule, Vector3(0, 0.19 * h, 0), Vector3(0.22 * h * look.shoulders * g, 0.1 * h, 0.125 * h * g), look.top))
 	_top_parts.append(_part(_torso, _capsule, Vector3(0, 0.255 * h, 0), Vector3(0.27 * h * look.shoulders * sqrt(g), 0.04 * h, 0.1 * h), look.top))
+	# A belly and a bust are soft volumes blended into the torso, wide and shallow.
+	if look.belly > 0.05:
+		_top_parts.append(_part(_torso, _sphere, Vector3(0, 0.09 * h, -0.018 * h * g), Vector3(0.2 * h * look.waist * g, 0.15 * h, 0.13 * h * g * (0.8 + 0.3 * look.belly)), look.top))
+	if look.bust > 0.05:
+		var depth := 0.05 * h * (0.7 + 0.3 * look.bust) * sqrt(g)
+		for side: float in [-1.0, 1.0]:
+			_top_parts.append(_part(_torso, _sphere, Vector3(side * 0.03 * h * look.shoulders, 0.19 * h, -0.04 * h * g), Vector3(0.1 * h * look.shoulders * sqrt(g), 0.075 * h * (0.85 + 0.15 * look.bust), depth * 2.0), look.top))
 	for side: float in [-1.0, 1.0]:
 		var shoulder := _joint(_torso, Vector3(side * 0.135 * h * look.shoulders * sqrt(g), 0.265 * h, 0))
-		_top_parts.append(_part(shoulder, _capsule, Vector3(0, -0.078 * h, 0), Vector3(0.068 * h, 0.092 * h, 0.068 * h), look.top))
+		_top_parts.append(_part(shoulder, _capsule, Vector3(0, -0.078 * h, 0), Vector3(0.068 * h * l, 0.092 * h, 0.068 * h * l), look.top))
 		var elbow := _joint(shoulder, Vector3(0, -0.155 * h, 0))
-		_top_parts.append(_part(elbow, _capsule, Vector3(0, -0.07 * h, 0), Vector3(0.056 * h, 0.084 * h, 0.056 * h), look.top))
+		_top_parts.append(_part(elbow, _capsule, Vector3(0, -0.07 * h, 0), Vector3(0.056 * h * l, 0.084 * h, 0.056 * h * l), look.top))
 		var hand := _part(elbow, _sphere, Vector3(0, -0.15 * h, 0), Vector3(0.05 * h, 0.06 * h, 0.035 * h), look.skin)
 		hand.visibility_range_end = DETAIL_RANGE
 		_shoulders.append(shoulder)

@@ -41,7 +41,7 @@ func test_heights_by_age_and_pronoun() -> void:
 	for p: PersonInfo in people:
 		var l := _look(p)
 		if p.age >= 18:
-			assert_between(l.height, 1.45, 2.0, "adult %d" % p.age)
+			assert_between(l.height, 1.4, 2.0, "adult %d" % p.age)
 			if sums.has(p.pronoun):
 				sums[p.pronoun][0] += l.height
 				sums[p.pronoun][1] += 1
@@ -83,3 +83,48 @@ func test_realistic_tones() -> void:
 		assert_has(FigureLook.SKIN, l.skin)
 		for c: Color in [l.top, l.work_top, l.bottom]:
 			assert_lte(c.s, 0.5, "muted clothes: %s" % c)
+
+
+func test_body_types_vary() -> void:
+	var counts := {}
+	var heavy_young := 0
+	var young := 0
+	var heavy_older := 0
+	var older := 0
+	var adults := 0
+	for p: PersonInfo in people:
+		if p.age < 18:
+			continue
+		adults += 1
+		var l := _look(p)
+		counts[l.build] = counts.get(l.build, 0) + 1
+		if l.build == FigureLook.Build.HEAVY:
+			assert_gt(l.belly, 0.0, "a heavy body has a belly")
+		else:
+			assert_eq(l.belly, 0.0)
+		if p.age < 30:
+			young += 1
+			heavy_young += 1 if l.build == FigureLook.Build.HEAVY else 0
+		elif p.age >= 45:
+			older += 1
+			heavy_older += 1 if l.build == FigureLook.Build.HEAVY else 0
+	for b: int in FigureLook.Build.values():
+		assert_gt(float(counts.get(b, 0)) / adults, 0.04, "build %d appears" % b)
+	assert_gt(float(heavy_older) / maxi(1, older), float(heavy_young) / maxi(1, young), "heavier with age")
+
+
+func test_womens_figures() -> void:
+	var women := 0
+	var skirted := 0
+	for p: PersonInfo in people:
+		var l := _look(p)
+		if p.pronoun == "he":
+			assert_eq(l.bust, 0.0)
+			assert_eq(l.garment, FigureLook.Garment.TROUSERS)
+		elif p.pronoun == "she" and p.age >= 18:
+			women += 1
+			assert_gt(l.bust, 0.3, "a woman has a bust")
+			assert_lt(l.waist, l.hips, "and a waist narrower than her hips")
+			skirted += 1 if l.garment != FigureLook.Garment.TROUSERS else 0
+	assert_gt(women, 50)
+	assert_between(float(skirted) / women, 0.3, 0.7, "many but not all women wear skirts or dresses")

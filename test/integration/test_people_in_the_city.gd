@@ -286,3 +286,42 @@ func test_clothes_follow_the_activity() -> void:
 	assert_eq((agent._top_parts[0].material_override as StandardMaterial3D).albedo_color, look.work_top)
 	agent.set_activity("at home")
 	assert_eq((agent._top_parts[0].material_override as StandardMaterial3D).albedo_color, look.top)
+
+
+func _width(node: Node3D) -> float:
+	var box := AABB()
+	var first := true
+	for mesh: Node in node.find_children("*", "MeshInstance3D", true, false):
+		var m := mesh as MeshInstance3D
+		var b := m.global_transform * m.get_aabb()
+		box = b if first else box.merge(b)
+		first = false
+	return box.size.x
+
+
+func test_body_types_show() -> void:
+	var slim_look := FigureLook.generic("a")
+	slim_look.build = FigureLook.Build.SLIM
+	slim_look.girth = 0.85
+	slim_look.limbs = 0.84
+	var heavy_look := FigureLook.generic("a")
+	heavy_look.build = FigureLook.Build.HEAVY
+	heavy_look.girth = 1.3
+	heavy_look.limbs = 1.22
+	heavy_look.belly = 0.8
+	var slim := PersonAgent.new(slim_look)
+	var heavy := PersonAgent.new(heavy_look)
+	add_child_autofree(slim)
+	add_child_autofree(heavy)
+	assert_gt(_width(heavy), _width(slim) * 1.15, "a heavy body is wider than a slim one")
+	var woman_look := FigureLook.generic("b")
+	woman_look.bust = 0.9
+	woman_look.garment = FigureLook.Garment.DRESS
+	var woman := PersonAgent.new(woman_look)
+	add_child_autofree(woman)
+	var cones := woman.find_children("*", "MeshInstance3D", true, false).filter(
+			func(m: Node) -> bool: return (m as MeshInstance3D).mesh is CylinderMesh)
+	assert_eq(cones.size(), 1, "she wears a dress")
+	woman.set_activity("working")
+	assert_eq(((cones[0] as MeshInstance3D).material_override as StandardMaterial3D).albedo_color, woman_look.work_top,
+			"the dress is part of her clothes")

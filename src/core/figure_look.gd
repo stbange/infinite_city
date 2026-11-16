@@ -35,6 +35,10 @@ const WORK_TOPS := {
 const SHOES := Color(0.07, 0.065, 0.06)
 
 enum Hair { BALD, SHORT, LONG, BUN }
+enum Build { SLIM, AVERAGE, ATHLETIC, STOCKY, HEAVY }
+enum Garment { TROUSERS, SKIRT, DRESS }
+## Tights for skirts and dresses (or bare legs in skin tone).
+const TIGHTS: Array[Color] = [Color(0.06, 0.06, 0.065), Color(0.18, 0.17, 0.17)]
 
 var age: int = 35
 ## Metres from the soles to the top of the head.
@@ -46,6 +50,15 @@ var hips: float = 1.0
 var girth: float = 1.0
 ## Forward lean of the upper body in radians (older people stoop).
 var stoop: float = 0.0
+var build: int = Build.AVERAGE
+## Waist width relative to an average build; bust 0 (none) to about 1.3; belly 0 (flat) to 1;
+## limbs: thickness of arms and legs.
+var waist: float = 1.0
+var bust: float = 0.0
+var belly: float = 0.0
+var limbs: float = 1.0
+var garment: int = Garment.TROUSERS
+var legwear := TIGHTS[0]
 ## Walking cadence relative to an adult (older people walk slower, children quicker).
 var pace: float = 1.0
 var skin := SKIN[2]
@@ -99,7 +112,64 @@ static func of(person: PersonInfo, seed_value: int) -> FigureLook:
 	look.top = ArtStyle.mute(CASUAL_TOPS[rng.next_int(CASUAL_TOPS.size())], 0.55)
 	look.work_top = ArtStyle.mute(WORK_TOPS.get(person.skill, CASUAL_TOPS[4]), 0.55)
 	look.bottom = ArtStyle.mute(BOTTOMS[rng.next_int(BOTTOMS.size())], 0.55)
+	_body(look, person.pronoun, person.age, rng)
 	return look
+
+
+## Body type, a woman's figure and what covers the legs.
+static func _body(look: FigureLook, pronoun: String, age: int, rng: CellRandom) -> void:
+	var roll := rng.next_float()
+	if age < 14:
+		look.build = Build.SLIM if roll < 0.4 else (Build.AVERAGE if roll < 0.85 else Build.STOCKY)
+	else:
+		# Heavier bodies become more common through middle age.
+		var heavy := 0.1 + 0.18 * smoothstep(25.0, 55.0, age)
+		var athletic := 0.2 - 0.12 * smoothstep(30.0, 65.0, age)
+		if roll < 0.22:
+			look.build = Build.SLIM
+		elif roll < 0.22 + athletic:
+			look.build = Build.ATHLETIC
+		elif roll < 0.22 + athletic + 0.14:
+			look.build = Build.STOCKY
+		elif roll < 0.22 + athletic + 0.14 + heavy:
+			look.build = Build.HEAVY
+		else:
+			look.build = Build.AVERAGE
+	look.girth = clampf(look.girth, 0.92, 1.12)
+	match look.build:
+		Build.SLIM:
+			look.girth *= 0.84
+			look.limbs = 0.84
+			look.shoulders *= 0.95
+			look.waist = 0.9
+		Build.ATHLETIC:
+			look.girth *= 0.95
+			look.limbs = 1.12
+			look.shoulders *= 1.1
+			look.waist = 0.86
+		Build.STOCKY:
+			look.girth *= 1.12
+			look.limbs = 1.16
+			look.shoulders *= 1.07
+			look.height *= 0.97
+		Build.HEAVY:
+			look.girth *= 1.28
+			look.limbs = 1.22
+			look.waist = 1.16
+			look.belly = rng.range_float(0.55, 1.0)
+	var feminine := pronoun == "she"
+	if feminine:
+		look.waist *= 0.86
+		look.hips *= 1.06
+		look.bust = rng.range_float(0.6, 1.0) * smoothstep(11.0, 16.0, age) * (1.3 if look.build == Build.HEAVY else 1.0)
+	elif pronoun != "he":
+		look.waist *= 0.94
+	var g := rng.next_float()
+	if feminine and age >= 4:
+		look.garment = Garment.TROUSERS if g < 0.5 else (Garment.SKIRT if g < 0.78 else Garment.DRESS)
+	elif pronoun != "he" and age >= 14 and g < 0.15:
+		look.garment = Garment.SKIRT
+	look.legwear = look.skin if rng.next_float() < 0.4 else TIGHTS[rng.next_int(TIGHTS.size())]
 
 
 ## A plain adult for figures without a resident (gang members, wardens, passengers).
@@ -115,4 +185,14 @@ static func generic(key: String) -> FigureLook:
 	look.top = ArtStyle.mute(CASUAL_TOPS[rng.next_int(CASUAL_TOPS.size())], 0.55)
 	look.work_top = look.top
 	look.bottom = ArtStyle.mute(BOTTOMS[rng.next_int(BOTTOMS.size())], 0.55)
+	# A third of the figures without a resident are women.
+	var pronoun := "she" if rng.next_float() < 0.35 else "he"
+	if pronoun == "she":
+		look.height -= 0.12
+		look.shoulders *= 0.9
+		look.hips = 1.06
+		if look.hair_style == Hair.BALD:
+			look.hair_style = Hair.BUN
+	_body(look, pronoun, 35, rng)
+	look.garment = Garment.TROUSERS
 	return look

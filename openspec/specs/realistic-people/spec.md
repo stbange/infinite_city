@@ -7,7 +7,7 @@ How residents look and move as figures: deterministic looks from age, pronoun an
 
 ### Requirement: Looks
 Every resident SHALL have a look that is a pure function of the person and the seed: a height
-from their pronoun and age (adults about 1.5–1.95 m, children shorter by age), a build, a skin
+from their pronoun and age (adults about 1.4–1.95 m, children shorter by age), a build, a skin
 tone from a realistic palette, hair that greys with age, an older person's stoop and slower pace,
 and everyday and work clothes in muted tones.
 
@@ -17,7 +17,7 @@ and everyday and work clothes in muted tones.
 
 #### Scenario: Heights by age and pronoun
 - **WHEN** the looks of the residents around the spawn are computed
-- **THEN** adults are 1.45–2.0 m tall, young children are under 1.4 m, and women average shorter
+- **THEN** adults are 1.4–2.0 m tall, young children are under 1.4 m, and women average shorter
   than men
 
 #### Scenario: Age shows
@@ -43,3 +43,24 @@ SHALL come to rest. It SHALL wear work clothes while working.
 #### Scenario: Clothes follow the activity
 - **WHEN** a figure starts working and then goes home
 - **THEN** it wears its work top at work and its everyday top at home
+
+### Requirement: Body types and women's figures
+Every resident SHALL have one of five body types (slim, average, athletic, stocky, heavy), with
+heavier bodies more common in middle age and only heavy bodies carrying a belly. Women SHALL have a
+bust and a waist narrower than their hips, and many but not all SHALL wear skirts or dresses; men
+SHALL wear trousers. Figures SHALL show the body type and garment.
+
+#### Scenario: Body types vary
+- **WHEN** the looks of the adults around the spawn are computed
+- **THEN** every body type is worn by more than 4 % of them, only heavy bodies have a belly, and
+  heavy bodies are more common over 45 than under 30
+
+#### Scenario: Women's figures
+- **WHEN** the looks of women and men are compared
+- **THEN** every woman has a bust and a waist narrower than her hips, 30–70 % of women wear
+  skirts or dresses, and men have no bust and wear trousers
+
+#### Scenario: Body types show
+- **WHEN** a slim and a heavy figure, and a woman in a dress, are built
+- **THEN** the heavy figure is more than 15 % wider than the slim one, and she wears a dress that
+  turns into work clothes when she works

@@ -12,7 +12,7 @@ func _initialize() -> void:
 	var population: Population = load("res://test/support/shared_city.gd").population()
 	var spawn := SpawnFinder.find_on_foot(population.layout)
 	var chosen: Array[PersonInfo] = []
-	var wanted: Array[int] = [5, 9, 15, 24, 31, 38, 47, 58, 69, 82]
+	var seen := {}
 	for dx: int in range(-4, 5):
 		for dz: int in range(-4, 5):
 			var block := population.layout.block_at(spawn.cell + Vector3i(dx, 0, dz))
@@ -21,10 +21,14 @@ func _initialize() -> void:
 			var bp := population.block_people(block)
 			for i: int in bp.size():
 				var p := population.person(bp.ids[i])
-				for w: int in wanted:
-					if absi(p.age - w) <= 2 and chosen.filter(func(c: PersonInfo) -> bool: return absi(c.age - w) <= 2).is_empty():
-						chosen.append(p)
-	chosen.sort_custom(func(a: PersonInfo, b: PersonInfo) -> bool: return a.age < b.age)
+				if p.age < 18 or chosen.size() >= 12:
+					continue
+				var look := FigureLook.of(p, population.world_seed())
+				var key := "%s|%d|%d" % [p.pronoun, look.build, look.garment]
+				if not seen.has(key):
+					seen[key] = true
+					chosen.append(p)
+	chosen.sort_custom(func(a: PersonInfo, b: PersonInfo) -> bool: return a.pronoun < b.pronoun)
 	var root := Node3D.new()
 	get_root().add_child(root)
 	var env := WorldEnvironment.new()
@@ -56,13 +60,13 @@ func _initialize() -> void:
 	for i: int in n:
 		var agent := PersonAgent.new(FigureLook.of(chosen[i], population.world_seed()))
 		root.add_child(agent)
-		agent.position = Vector3((i - (n - 1) * 0.5) * 0.85, 0, 0)
+		agent.position = Vector3((i - (n - 1) * 0.5) * 0.8, 0, 0)
 		agent.rotation.y = PI + (0.5 if i % 3 == 0 else (-0.4 if i % 3 == 1 else 0.0))
 		agent.set_activity("working" if i % 4 == 2 else "at home")
 		_agents.append(agent)
-		print("%d %s %s %.2f m" % [chosen[i].age, chosen[i].pronoun, chosen[i].skill, agent.look.height])
+		print("%d %s build %d garment %d %.2f m" % [chosen[i].age, chosen[i].pronoun, agent.look.build, agent.look.garment, agent.look.height])
 	var cam := Camera3D.new()
-	cam.position = Vector3(0, 1.3, 5.0)
+	cam.position = Vector3(0, 1.3, 5.6)
 	cam.rotation_degrees = Vector3(-7, 0, 0)
 	cam.fov = 60
 	root.add_child(cam)
