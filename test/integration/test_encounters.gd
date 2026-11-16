@@ -318,3 +318,10 @@ func test_an_escort_must_keep_up() -> void:
 	for i in 30:
 		escort.update(0.1)
 	assert_lt(escort.figure.global_position.distance_to(player.global_position), maxf(before, Escort.KEEP_DISTANCE + 0.5))
+
+
+func test_paying_in_debt() -> void:
+	_offer("toll")
+	jobs.courier.wallet.credits = -300
+	director.pay()
+	assert_eq(jobs.courier.wallet.credits, -300, "nothing to pay with, and nothing gained")

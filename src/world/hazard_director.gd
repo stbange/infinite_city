@@ -61,7 +61,7 @@ func rescue(reason: String) -> void:
 	var paid := 0
 	var lost := 0
 	if jobs != null:
-		paid = mini(FEE, jobs.courier.wallet.credits)
+		paid = clampi(jobs.courier.wallet.credits, 0, FEE)
 		jobs.courier.wallet.credits -= paid
 		lost = jobs.lose_cargo()
 	var why := "hit by a car" if reason == "car" else "after your fall"

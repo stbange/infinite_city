@@ -68,6 +68,9 @@ func test_fee_when_broke() -> void:
 	jobs.courier.wallet.credits = 10
 	player.rescued.emit("fall")
 	assert_eq(jobs.courier.wallet.credits, 0)
+	jobs.courier.wallet.credits = -200
+	player.rescued.emit("fall")
+	assert_eq(jobs.courier.wallet.credits, -200, "a rescue never pays the courier")
 
 
 func test_hit_by_a_car() -> void:

@@ -179,7 +179,7 @@ func pay() -> void:
 	if state != State.OFFER:
 		return
 	var jobs := _jobs()
-	var amount := mini(price, jobs.courier.wallet.credits)
+	var amount := clampi(jobs.courier.wallet.credits, 0, price)
 	jobs.courier.wallet.credits -= amount
 	if amount < price:
 		heat.add(gang_key, EncounterRules.SHORT_HEAT, _session().clock.total_minutes)
@@ -272,7 +272,7 @@ func _chase(world: CityWorld, player: Player, delta: float) -> void:
 		var jobs := _jobs()
 		var lost := jobs.lose_cargo()
 		jobs.courier.reputation.add(gang_key, Reputation.CAUGHT)
-		var taken := mini(price, jobs.courier.wallet.credits)
+		var taken := clampi(jobs.courier.wallet.credits, 0, price)
 		jobs.courier.wallet.credits -= taken
 		last_outcome = "Caught by %s: %d orders and ¤%d gone" % [gang_name(), lost, taken]
 		_end()
